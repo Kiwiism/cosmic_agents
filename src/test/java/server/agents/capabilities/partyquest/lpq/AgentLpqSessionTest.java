@@ -2,6 +2,8 @@ package server.agents.capabilities.partyquest.lpq;
 
 import org.junit.jupiter.api.Test;
 
+import java.awt.Point;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -168,17 +170,17 @@ class AgentLpqSessionTest {
     }
 
     @Test
-    void npcRallyAllowsNaturalNavigationBeforeItsHardCap() {
-        assertFalse(AgentLpqCoordinator.npcRallyRecoveryDue(4, 14_999L));
-        assertTrue(AgentLpqCoordinator.npcRallyRecoveryDue(4, 15_000L));
-    }
-
-    @Test
-    void couponRegroupHasAPartyLevelHardCapIndependentOfMovementJitter() {
-        assertFalse(AgentLpqCoordinator.couponRegroupPositionRecoveryDue(1, 14_999L));
-        assertTrue(AgentLpqCoordinator.couponRegroupPositionRecoveryDue(1, 15_000L));
-        assertFalse(AgentLpqCoordinator.couponRegroupPositionRecoveryDue(5, 14_999L));
-        assertTrue(AgentLpqCoordinator.couponRegroupPositionRecoveryDue(5, 15_000L));
+    void balloonRallyPlacementUsesOnlyThePartyReturnGrace() {
+        assertFalse(AgentLpqCoordinator.balloonRallyRecoveryDue(1, 14_999L));
+        assertTrue(AgentLpqCoordinator.balloonRallyRecoveryDue(1, 15_000L));
+        assertFalse(AgentLpqCoordinator.balloonRallyRecoveryDue(2, 14_999L));
+        assertTrue(AgentLpqCoordinator.balloonRallyRecoveryDue(2, 15_000L));
+        assertFalse(AgentLpqCoordinator.balloonRallyRecoveryDue(5, 14_999L));
+        assertTrue(AgentLpqCoordinator.balloonRallyRecoveryDue(5, 15_000L));
+        assertFalse(AgentLpqCoordinator.balloonRallyForceTransferDue(1, 29_999L));
+        assertTrue(AgentLpqCoordinator.balloonRallyForceTransferDue(1, 30_000L));
+        assertFalse(AgentLpqCoordinator.balloonRallyForceTransferDue(5, 29_999L));
+        assertTrue(AgentLpqCoordinator.balloonRallyForceTransferDue(5, 30_000L));
     }
 
     @Test
@@ -212,19 +214,18 @@ class AgentLpqSessionTest {
     }
 
     @Test
-    void npcRallyWatchdogRetriesAStaleRouteWithoutResettingTheHardClock() {
+    void destinationApproachRetriesAStaleRouteWithoutResettingItsHardClock() {
         AgentLpqMemberState member = new AgentLpqMemberState(
                 101, AgentLpqMemberState.MemberType.AGENT);
 
-        assertEquals(0L, member.observeNpcRallyProgress(
-                4, 922_010_400, 100_000L, 1_000L));
-        assertFalse(member.claimNpcRallyRetry(9_999L, 10_999L, 10_000L));
-        assertTrue(member.claimNpcRallyRetry(10_000L, 11_000L, 10_000L));
-        assertFalse(member.claimNpcRallyRetry(15_000L, 16_000L, 10_000L));
-        assertTrue(member.claimNpcRallyRetry(20_000L, 21_000L, 10_000L));
-        assertEquals(20_000L, member.observeNpcRallyProgress(
-                4, 922_010_400, 100_000L, 21_000L));
-        assertTrue(AgentLpqCoordinator.npcRallyRecoveryDue(4, 15_000L));
+        assertEquals(0L, member.observeDestinationApproachProgress(
+                4, 922_010_400, null, 100_000L, 1_000L));
+        assertFalse(member.claimDestinationApproachRetry(9_999L, 10_999L, 10_000L));
+        assertTrue(member.claimDestinationApproachRetry(10_000L, 11_000L, 10_000L));
+        assertFalse(member.claimDestinationApproachRetry(15_000L, 16_000L, 10_000L));
+        assertTrue(member.claimDestinationApproachRetry(20_000L, 21_000L, 10_000L));
+        assertEquals(20_000L, member.observeDestinationApproachProgress(
+                4, 922_010_400, null, 100_000L, 21_000L));
     }
 
     @Test
@@ -260,6 +261,38 @@ class AgentLpqSessionTest {
                 AgentLpqCoordinator.passHandoffExitAction(5, 15_000L));
         assertEquals(AgentLpqCoordinator.PassHandoffExitAction.MOVE_TO_STAGE,
                 AgentLpqCoordinator.passHandoffExitAction(5, 30_000L));
+    }
+
+    @Test
+    void stageFourKeepsItsGroundedExitOverlayUntilTheHardPortalDeadline() {
+        assertEquals(AgentLpqCoordinator.PassHandoffExitAction.NAVIGATE,
+                AgentLpqCoordinator.passHandoffExitAction(4, 15_000L));
+        assertEquals(AgentLpqCoordinator.PassHandoffExitAction.MOVE_TO_STAGE,
+                AgentLpqCoordinator.passHandoffExitAction(4, 30_000L));
+        assertFalse(AgentLpqCoordinator.roomExitPortalPlacementDue(
+                4, 29_999L, 29_999L));
+        assertTrue(AgentLpqCoordinator.roomExitPortalPlacementDue(
+                4, 30_000L, 30_000L));
+        assertTrue(AgentLpqCoordinator.roomExitPortalPlacementDue(
+                5, 15_000L, 15_000L));
+    }
+
+    @Test
+    void recordsOneDiagnosticDurationForEachSplitRoomVisit() {
+        AgentLpqMemberState member = new AgentLpqMemberState(
+                930, AgentLpqMemberState.MemberType.AGENT);
+
+        assertTrue(member.beginRoomTiming(922_010_502, 10_000L));
+        assertFalse(member.beginRoomTiming(922_010_502, 11_000L));
+        assertEquals(239_999L, member.roomTimingElapsed(922_010_502, 249_999L));
+        assertFalse(AgentLpqCoordinator.stageFiveRoomCeilingRecoveryDue(239_999L));
+        assertTrue(AgentLpqCoordinator.stageFiveRoomCeilingRecoveryDue(240_000L));
+        assertFalse(member.stageFiveCeilingRecoveryAppliedFor(922_010_502));
+        member.markStageFiveCeilingRecoveryApplied(922_010_502);
+        assertTrue(member.stageFiveCeilingRecoveryAppliedFor(922_010_502));
+        assertEquals(240_000L, member.finishRoomTiming(922_010_502, 250_000L));
+        assertFalse(member.stageFiveCeilingRecoveryAppliedFor(922_010_502));
+        assertEquals(-1L, member.finishRoomTiming(922_010_502, 251_000L));
     }
 
     @Test
@@ -302,11 +335,9 @@ class AgentLpqSessionTest {
         session.transition(AgentLpqSession.Phase.STAGE_1, 1_100L);
         session.beginCouponRegroup(1, 1_200L);
         assertTrue(session.couponRegrouping(1));
-        assertEquals(45_000L, session.couponRegroupElapsed(1, 46_200L));
 
         session.transition(AgentLpqSession.Phase.STAGE_2, 1_300L);
         assertFalse(session.couponRegrouping(1));
-        assertEquals(0L, session.couponRegroupElapsed(1, 46_300L));
         session.beginCouponRegroup(2, 1_400L);
         assertTrue(session.couponRegrouping(2));
 
@@ -317,16 +348,16 @@ class AgentLpqSessionTest {
     }
 
     @Test
-    void couponRegroupPositionRecoveryIsAcceptedOnlyForItsStage() {
+    void balloonRallyRecoveryIsAcceptedOnlyForItsStage() {
         AgentLpqMemberState member = new AgentLpqMemberState(
                 101, AgentLpqMemberState.MemberType.AGENT);
 
-        assertFalse(member.couponRegroupRecoveredFor(1));
-        member.markCouponRegroupRecovered(1);
-        assertTrue(member.couponRegroupRecoveredFor(1));
-        assertFalse(member.couponRegroupRecoveredFor(2));
+        assertFalse(member.balloonRallyRecoveredFor(1));
+        member.markBalloonRallyRecovered(1);
+        assertTrue(member.balloonRallyRecoveredFor(1));
+        assertFalse(member.balloonRallyRecoveredFor(2));
         assertThrows(IllegalArgumentException.class,
-                () -> member.markCouponRegroupRecovered(0));
+                () -> member.markBalloonRallyRecovered(0));
     }
 
     @Test
@@ -336,16 +367,79 @@ class AgentLpqSessionTest {
         session.transition(AgentLpqSession.Phase.STAGE_5, 2_000L);
 
         assertEquals(0L, session.observeMainMapRally(922_010_500, false, 10_000L));
-        assertEquals(0L, session.mainMapRallyElapsed(922_010_500, 30_000L));
         assertEquals(0L, session.observeMainMapRally(922_010_500, true, 40_000L));
-        assertEquals(15_000L, session.mainMapRallyElapsed(922_010_500, 55_000L));
+        assertEquals(15_000L, session.observeMainMapRally(922_010_500, true, 55_000L));
 
         assertEquals(0L, session.observeMainMapRally(922_010_500, false, 56_000L));
         assertEquals(0L, session.observeMainMapRally(922_010_500, true, 70_000L));
-        assertEquals(1_000L, session.mainMapRallyElapsed(922_010_500, 71_000L));
+        assertEquals(1_000L, session.observeMainMapRally(922_010_500, true, 71_000L));
 
         session.transition(AgentLpqSession.Phase.STAGE_6, 72_000L);
-        assertEquals(0L, session.mainMapRallyElapsed(922_010_500, 90_000L));
+        assertEquals(0L, session.observeMainMapRally(922_010_500, true, 90_000L));
+        assertEquals(0L, session.observeMainMapRally(922_010_600, true, 91_000L));
+    }
+
+    @Test
+    void stageFiveUnobservedAssistPausesWhileObservedAndResetsAfterPassPickup() {
+        AgentLpqMemberState member = new AgentLpqMemberState(
+                101, AgentLpqMemberState.MemberType.AGENT);
+
+        assertEquals(0L, member.observeStageFiveAssist(922_010_503, 1, false, 1_000L));
+        assertEquals(10_000L, member.observeStageFiveAssist(922_010_503, 1, false, 11_000L));
+        assertEquals(10_000L, member.observeStageFiveAssist(922_010_503, 1, true, 31_000L));
+        assertEquals(15_000L, member.observeStageFiveAssist(922_010_503, 1, false, 36_000L));
+
+        member.markStageFiveAssistApplied();
+        assertTrue(member.stageFiveAssistApplied());
+        assertEquals(0L, member.observeStageFiveAssist(922_010_503, 2, false, 40_000L));
+        assertFalse(member.stageFiveAssistApplied());
+    }
+
+    @Test
+    void splitCollectionStagesRetainOneRegroupStateUntilSubmission() {
+        AgentLpqSession session = new AgentLpqSession(
+                AgentLpqSession.Mode.TEST_OBSERVATION, 1L, 900, 6, 1_000L);
+        session.transition(AgentLpqSession.Phase.STAGE_5, 2_000L);
+
+        session.beginCouponRegroup(5, 3_000L);
+
+        assertTrue(session.couponRegrouping(5));
+        assertFalse(session.couponRegrouping(4));
+        session.beginCouponRegroup(6, 4_000L);
+        assertFalse(session.couponRegrouping(6));
+    }
+
+    @Test
+    void bossEdgeRegroupUsesAStageNineAbsoluteClock() {
+        AgentLpqSession session = new AgentLpqSession(
+                AgentLpqSession.Mode.TEST_OBSERVATION, 1L, 900, 6, 1_000L);
+        session.transition(AgentLpqSession.Phase.STAGE_9, 2_000L);
+
+        assertEquals(0L, session.observeBossEdgeRegroup(true, 10_000L));
+        assertEquals(15_000L, session.observeBossEdgeRegroup(true, 25_000L));
+        assertTrue(AgentLpqCoordinator.stageNineBossRegroupRecoveryDue(15_000L));
+        assertEquals(0L, session.observeBossEdgeRegroup(false, 26_000L));
+        assertEquals(0L, session.observeBossEdgeRegroup(true, 40_000L));
+
+        session.transition(AgentLpqSession.Phase.BONUS, 41_000L);
+        assertEquals(0L, session.observeBossEdgeRegroup(true, 60_000L));
+    }
+
+    @Test
+    void bossEdgeFormationKeepsThePartyInAuthoredOpenFloorSpace() {
+        assertTrue(AgentLpqCoordinator.stageNineBossAtEdge(new Point(-130, 184)));
+        assertTrue(AgentLpqCoordinator.stageNineBossAtEdge(new Point(1_030, 184)));
+        assertFalse(AgentLpqCoordinator.stageNineBossAtEdge(new Point(450, 184)));
+
+        Point awayFromLeft = AgentLpqCoordinator.stageNineOpenSpaceAnchor(
+                new Point(-200, 184), 101);
+        Point awayFromRight = AgentLpqCoordinator.stageNineOpenSpaceAnchor(
+                new Point(1_100, 184), 101);
+        assertTrue(awayFromLeft.x > awayFromRight.x);
+        assertEquals(184, awayFromLeft.y);
+        assertEquals(184, awayFromRight.y);
+        assertTrue(awayFromLeft.x >= 460 && awayFromLeft.x <= 580);
+        assertTrue(awayFromRight.x >= 320 && awayFromRight.x <= 440);
     }
 
     @Test

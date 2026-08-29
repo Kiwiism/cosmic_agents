@@ -190,6 +190,20 @@ class AgentLpqAuthoredFlowPreflightTest {
     }
 
     @Test
+    void bossFlowWaitsForTheDroppedPassAndSchedulesEveryAgentAgainstAlishar()
+            throws Exception {
+        String source = Files.readString(Path.of(
+                "src/main/java/server/agents/capabilities/partyquest/lpq/AgentLpqCoordinator.java"));
+        int start = source.indexOf("private static void boss(");
+        int end = source.indexOf("private static void assignStageNineRoles", start);
+        String bossFlow = source.substring(start, end);
+
+        assertFalse(bossFlow.contains("hitReactor("));
+        assertFalse(bossFlow.contains("assignStageNineRoles(session)"));
+        assertTrue(bossFlow.contains("ACTIONS.grind(entry, Set.of(AgentLpqDefinition.ALISHAR))"));
+    }
+
+    @Test
     void redSignOffersAQuietGm6ObserverWarp() throws Exception {
         String source = Files.readString(Path.of("scripts", "npc", "2040034.js"));
 

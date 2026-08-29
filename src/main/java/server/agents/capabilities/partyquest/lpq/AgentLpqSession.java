@@ -35,10 +35,10 @@ public final class AgentLpqSession {
     private final AgentLpqRoomAssignment rooms = new AgentLpqRoomAssignment();
     private final AgentLpqPortalMazeState maze = new AgentLpqPortalMazeState();
     private int couponRegroupStage;
-    private long couponRegroupStartedAtMs;
     private Phase mainMapRallyPhase;
     private int mainMapRallyMapId;
     private long mainMapRallyStartedAtMs;
+    private long bossEdgeRegroupStartedAtMs;
     private Phase phase = Phase.PREPARING;
     private int eventLeaderId;
     private int executionAgentId;
@@ -147,6 +147,7 @@ public final class AgentLpqSession {
         resetLoosePassRecovery();
         resetPostClearTransition();
         resetMainMapRally();
+        bossEdgeRegroupStartedAtMs = 0L;
         members.values().forEach(member -> {
             member.resetForStage(member.characterId() == eventLeaderId
                     ? AgentLpqMemberState.Role.EVENT_LEADER
@@ -155,11 +156,9 @@ public final class AgentLpqSession {
         resetStage7LootSweep();
         rooms.reset();
         members.values().forEach(AgentLpqMemberState::clearReactorWork);
-        int nextStage = next.name().startsWith("STAGE_")
-                ? Integer.parseInt(next.name().substring("STAGE_".length())) : 0;
+        int nextStage = stageNumber(next);
         if (nextStage != couponRegroupStage) {
             couponRegroupStage = 0;
-            couponRegroupStartedAtMs = 0L;
         }
         if (next != Phase.STAGE_6) maze.reset();
         if (next != Phase.BONUS) bonusDrainedAtMs = 0L;
@@ -172,11 +171,11 @@ public final class AgentLpqSession {
      * installs the new room/platform/combat ownership from the current party roster.
      */
     public synchronized boolean stageAssignmentsNeedRecalculation() {
-        return phase.name().startsWith("STAGE_") && assignmentsCalculatedPhase != phase;
+        return stageNumber(phase) > 0 && assignmentsCalculatedPhase != phase;
     }
 
     public synchronized void markStageAssignmentsRecalculated(long nowMs) {
-        if (!phase.name().startsWith("STAGE_")) {
+        if (stageNumber(phase) == 0) {
             throw new IllegalStateException("LPQ stage assignments require an active stage");
         }
         assignmentsCalculatedPhase = phase;
@@ -418,20 +417,18 @@ public final class AgentLpqSession {
     public synchronized boolean terminal() { return phase == Phase.COMPLETED || phase == Phase.FAILED; }
 
     public synchronized boolean couponRegrouping(int stage) {
-        return stage >= 1 && stage <= 3 && couponRegroupStage == stage;
+        return couponCollectionStage(stage) && couponRegroupStage == stage;
     }
 
     public synchronized void beginCouponRegroup(int stage, long nowMs) {
-        if (stage < 1 || stage > 3 || phase != Phase.valueOf("STAGE_" + stage)
+        if (!couponCollectionStage(stage) || phase != Phase.valueOf("STAGE_" + stage)
                 || couponRegroupStage == stage) return;
         couponRegroupStage = stage;
-        couponRegroupStartedAtMs = nowMs;
         markProgress(nowMs);
     }
 
-    public synchronized long couponRegroupElapsed(int stage, long nowMs) {
-        if (!couponRegrouping(stage) || couponRegroupStartedAtMs <= 0L) return 0L;
-        return Math.max(0L, nowMs - couponRegroupStartedAtMs);
+    private static boolean couponCollectionStage(int stage) {
+        return stage >= 1 && stage <= 7 && stage != 6;
     }
 
     /**
@@ -441,7 +438,10 @@ public final class AgentLpqSession {
      */
     public synchronized long observeMainMapRally(
             int mapId, boolean everyoneOnMainMap, long nowMs) {
-        if (mapId <= 0 || nowMs < 0L || !everyoneOnMainMap) {
+        int activeStage = stageNumber(phase);
+        boolean currentStageMainMap = activeStage > 0
+                && AgentLpqDefinition.stage(activeStage).mapId() == mapId;
+        if (!currentStageMainMap || nowMs < 0L || !everyoneOnMainMap) {
             resetMainMapRally();
             return 0L;
         }
@@ -455,16 +455,27 @@ public final class AgentLpqSession {
         return Math.max(0L, nowMs - mainMapRallyStartedAtMs);
     }
 
-    public synchronized long mainMapRallyElapsed(int mapId, long nowMs) {
-        if (mapId <= 0 || mainMapRallyPhase != phase || mainMapRallyMapId != mapId
-                || mainMapRallyStartedAtMs <= 0L) return 0L;
-        return Math.max(0L, nowMs - mainMapRallyStartedAtMs);
-    }
-
     private void resetMainMapRally() {
         mainMapRallyPhase = null;
         mainMapRallyMapId = 0;
         mainMapRallyStartedAtMs = 0L;
+    }
+
+    public synchronized long observeBossEdgeRegroup(boolean required, long nowMs) {
+        if (!required || phase != Phase.STAGE_9) {
+            bossEdgeRegroupStartedAtMs = 0L;
+            return 0L;
+        }
+        if (bossEdgeRegroupStartedAtMs == 0L) {
+            bossEdgeRegroupStartedAtMs = nowMs;
+            return 0L;
+        }
+        return Math.max(0L, nowMs - bossEdgeRegroupStartedAtMs);
+    }
+
+    private static int stageNumber(Phase phase) {
+        return phase != null && phase.name().startsWith("STAGE_")
+                ? Integer.parseInt(phase.name().substring("STAGE_".length())) : 0;
     }
 
     public synchronized void initializeStage8Order() {

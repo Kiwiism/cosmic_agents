@@ -42,7 +42,7 @@ public final class AgentLootEligibility {
         }
 
         int itemId = drop.getItemId();
-        if (AgentLpqSessionRegistry.preservesRoomDoorMarker(bot, itemId)) {
+        if (AgentLpqSessionRegistry.preservesRoomDoorMarker(bot, drop)) {
             return false;
         }
         AgentKpqSession kpqSession = AgentKpqSessionRegistry.forMember(bot.getId());

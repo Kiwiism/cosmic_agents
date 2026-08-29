@@ -3,11 +3,14 @@ package server.agents.capabilities.partyquest.lpq;
 import org.junit.jupiter.api.Test;
 
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentLpqStageSevenAssignmentTest {
     @Test
@@ -58,14 +61,65 @@ class AgentLpqStageSevenAssignmentTest {
     }
 
     @Test
-    void mapsEveryAuthoredTriggerToItsOppositeReachableFiringLedge() {
+    void mapsEveryAuthoredRatzToItsOppositeReachableFiringLedge() {
         assertEquals(new Point(-240, -990),
-                AgentLpqCoordinator.stageSevenFiringAnchor(new Point(228, -1_037)));
+                AgentLpqCoordinator.stageSevenFiringAnchor(new Point(224, -1_044)));
         assertEquals(new Point(-240, -1_263),
-                AgentLpqCoordinator.stageSevenFiringAnchor(new Point(230, -1_263)));
+                AgentLpqCoordinator.stageSevenFiringAnchor(new Point(219, -1_276)));
         assertEquals(new Point(-240, -1_469),
-                AgentLpqCoordinator.stageSevenFiringAnchor(new Point(230, -1_535)));
+                AgentLpqCoordinator.stageSevenFiringAnchor(new Point(228, -1_543)));
         assertNull(AgentLpqCoordinator.stageSevenFiringAnchor(new Point(0, 0)));
+    }
+
+    @Test
+    void toleratesSmallServerPositionDriftWithoutLosingTheAuthoredRatzLane() {
+        assertEquals(new Point(-240, -990),
+                AgentLpqCoordinator.stageSevenFiringAnchor(new Point(224, -1_050)));
+        assertEquals(new Point(-240, -1_263),
+                AgentLpqCoordinator.stageSevenFiringAnchor(new Point(219, -1_264)));
+        assertEquals(new Point(-240, -1_469),
+                AgentLpqCoordinator.stageSevenFiringAnchor(new Point(228, -1_520)));
+        assertNull(AgentLpqCoordinator.stageSevenFiringAnchor(new Point(228, -1_700)));
+    }
+
+    @Test
+    void groundedRangedShotIncludesTheAuthoredTriggerWithoutAJumpAttack() {
+        Rectangle ordinaryProjectile = new Rectangle(-240, -1_519, 400, 100);
+        Point trigger = new Point(228, -1_543);
+
+        Rectangle objectiveHitBox = AgentLpqCoordinator.authoredStageSevenTriggerHitBox(
+                ordinaryProjectile, trigger);
+
+        assertTrue(objectiveHitBox.contains(trigger));
+        assertTrue(objectiveHitBox.contains(ordinaryProjectile));
+        assertEquals(ordinaryProjectile.x, objectiveHitBox.x);
+        assertEquals(trigger.y, objectiveHitBox.y);
+    }
+
+    @Test
+    void stageSevenShotWaitsForTheAgentToStandOnItsFiringLedge() {
+        Point anchor = new Point(-240, -1_469);
+
+        assertTrue(AgentLpqCoordinator.stageSevenFiringReady(anchor, true, anchor));
+        assertFalse(AgentLpqCoordinator.stageSevenFiringReady(anchor, false, anchor));
+        assertFalse(AgentLpqCoordinator.stageSevenFiringReady(
+                new Point(-240, -1_350), true, anchor));
+    }
+
+    @Test
+    void stageSevenWaitsForRatzDropsReactorsAndRombardsBeforeCombatIsClear() {
+        assertFalse(AgentLpqCoordinator.stageSevenCombatCleared(1, 0, 0));
+        assertFalse(AgentLpqCoordinator.stageSevenCombatCleared(0, 1, 0));
+        assertFalse(AgentLpqCoordinator.stageSevenCombatCleared(0, 0, 1));
+        assertTrue(AgentLpqCoordinator.stageSevenCombatCleared(0, 0, 0));
+    }
+
+    @Test
+    void keepsEachRangedWorkerOnAStableAuthoredRatzLane() {
+        assertEquals(List.of(-1_044, -1_276),
+                AgentLpqCoordinator.stageSevenRatzPriorityYs(0));
+        assertEquals(List.of(-1_543), AgentLpqCoordinator.stageSevenRatzPriorityYs(1));
+        assertEquals(List.of(), AgentLpqCoordinator.stageSevenRatzPriorityYs(2));
     }
 
     private static AgentLpqMemberState member(

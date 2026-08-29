@@ -2,9 +2,11 @@ package server.agents.capabilities.partyquest.lpq;
 
 import org.junit.jupiter.api.Test;
 
+import java.awt.Point;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentLpqStageSixRouteTest {
@@ -45,5 +47,17 @@ class AgentLpqStageSixRouteTest {
 
         assertTrue(session.stage6SequenceAnnounced());
         assertEquals(200L, session.lastProgressAtMs());
+    }
+
+    @Test
+    void portalOverlayCommitsOnlyAfterGroundedArrival() {
+        Point portal = new Point(120, -900);
+
+        assertTrue(AgentLpqCoordinator.stageSixPortalApproachReady(
+                new Point(125, -900), true, portal));
+        assertFalse(AgentLpqCoordinator.stageSixPortalApproachReady(
+                new Point(125, -900), false, portal));
+        assertFalse(AgentLpqCoordinator.stageSixPortalApproachReady(
+                new Point(250, -900), true, portal));
     }
 }

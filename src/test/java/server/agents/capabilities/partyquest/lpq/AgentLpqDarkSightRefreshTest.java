@@ -2,6 +2,7 @@ package server.agents.capabilities.partyquest.lpq;
 
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -50,5 +51,19 @@ class AgentLpqDarkSightRefreshTest {
     void stageFiveRecoveryNeverSweepsHazardMobs() {
         assertFalse(AgentLpqCoordinator.missingPassMobSweepAllowed(5));
         assertTrue(AgentLpqCoordinator.missingPassMobSweepAllowed(4));
+    }
+
+    @Test
+    void darkSightRoomAlternatesProtectedTraversalAndOrdinaryBoxAttacks() {
+        assertEquals(AgentLpqCoordinator.DarkSightRoomAction.CAST_FOR_TRAVERSAL,
+                AgentLpqCoordinator.darkSightRoomAction(false, false, false));
+        assertEquals(AgentLpqCoordinator.DarkSightRoomAction.NONE,
+                AgentLpqCoordinator.darkSightRoomAction(true, false, false));
+        assertEquals(AgentLpqCoordinator.DarkSightRoomAction.CANCEL_FOR_ATTACK,
+                AgentLpqCoordinator.darkSightRoomAction(true, true, false));
+        assertEquals(AgentLpqCoordinator.DarkSightRoomAction.NONE,
+                AgentLpqCoordinator.darkSightRoomAction(false, true, false));
+        assertEquals(AgentLpqCoordinator.DarkSightRoomAction.NONE,
+                AgentLpqCoordinator.darkSightRoomAction(false, false, true));
     }
 }

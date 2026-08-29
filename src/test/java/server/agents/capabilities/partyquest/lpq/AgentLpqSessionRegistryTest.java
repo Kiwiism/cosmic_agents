@@ -92,4 +92,39 @@ class AgentLpqSessionRegistryTest {
             AgentLpqSessionRegistry.remove(session);
         }
     }
+
+    @Test
+    void onlyLeaderCanRetargetPassDropsDuringCoordinatedHandoff() {
+        AgentLpqSession session = new AgentLpqSession(
+                AgentLpqSession.Mode.TEST_OBSERVATION, 1L, 902, 5, 1_000L);
+        session.addMember(301, AgentLpqMemberState.MemberType.AGENT);
+        session.addMember(302, AgentLpqMemberState.MemberType.AGENT);
+        session.addMember(303, AgentLpqMemberState.MemberType.AGENT);
+        session.addMember(304, AgentLpqMemberState.MemberType.AGENT);
+        session.addMember(305, AgentLpqMemberState.MemberType.AGENT);
+        session.setLeadership(301, 301);
+        EventInstanceManager event = mock(EventInstanceManager.class);
+        Character leader = mock(Character.class);
+        Character member = mock(Character.class);
+        session.bindEventInstance(event);
+        session.transition(AgentLpqSession.Phase.STAGE_5, 2_000L);
+        session.beginCouponRegroup(5, 3_000L);
+        when(leader.getId()).thenReturn(301);
+        when(member.getId()).thenReturn(302);
+        when(leader.getEventInstance()).thenReturn(event);
+        when(member.getEventInstance()).thenReturn(event);
+        when(leader.getMapId()).thenReturn(922_010_500);
+        when(member.getMapId()).thenReturn(922_010_500);
+        AgentLpqSessionRegistry.registerComplete(session);
+        try {
+            assertTrue(AgentLpqSessionRegistry.canLootExclusive(
+                    leader, AgentLpqDefinition.PASS));
+            assertFalse(AgentLpqSessionRegistry.canLootExclusive(
+                    member, AgentLpqDefinition.PASS));
+            assertTrue(AgentLpqSessionRegistry.canLootExclusive(
+                    member, AgentLpqDefinition.BOSS_KEY));
+        } finally {
+            AgentLpqSessionRegistry.remove(session);
+        }
+    }
 }

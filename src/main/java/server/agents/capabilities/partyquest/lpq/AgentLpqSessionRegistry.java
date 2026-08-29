@@ -2,6 +2,7 @@ package server.agents.capabilities.partyquest.lpq;
 
 import client.BuffStat;
 import client.Character;
+import server.maps.MapItem;
 
 import java.util.Collection;
 import java.util.Map;
@@ -55,16 +56,24 @@ public final class AgentLpqSessionRegistry {
     public static boolean canLootExclusive(Character character, int itemId) {
         if (character == null || (itemId != AgentLpqDefinition.PASS && itemId != AgentLpqDefinition.BOSS_KEY)) return false;
         AgentLpqSession session = forMember(character.getId());
-        return session != null && session.eventInstance() != null
-                && character.getEventInstance() == session.eventInstance()
-                && AgentLpqDefinition.isEventMap(character.getMapId());
+        if (session == null || session.eventInstance() == null
+                || character.getEventInstance() != session.eventInstance()
+                || !AgentLpqDefinition.isEventMap(character.getMapId())) return false;
+        int stage = AgentLpqDefinition.stageNumber(character.getMapId());
+        if (itemId == AgentLpqDefinition.PASS && session.couponRegrouping(stage)) {
+            return character.getId() == session.eventLeaderId();
+        }
+        return true;
     }
 
-    /** Keeps the low-potion door claims visible while Agents fan out into Stage 4/5 rooms. */
-    public static boolean preservesRoomDoorMarker(Character character, int itemId) {
-        if (character == null || !AgentLpqDefinition.ROOM_MARKER_ITEMS.contains(itemId)) return false;
+    /** Keeps the junk-item or 10-meso door claims visible during Stage 4/5 room fan-out. */
+    public static boolean preservesRoomDoorMarker(Character character, MapItem drop) {
+        if (character == null || drop == null
+                || (drop.getMeso() != AgentLpqDefinition.ROOM_MARKER_MESOS
+                && !AgentLpqDefinition.ROOM_MARKER_ITEMS.contains(drop.getItemId()))) return false;
         AgentLpqSession session = forMember(character.getId());
-        if (session == null) return false;
+        if (session == null || session.eventInstance() == null
+                || character.getEventInstance() != session.eventInstance()) return false;
         return switch (session.phase()) {
             case STAGE_4 -> character.getMapId() == AgentLpqDefinition.stage(4).mapId();
             case STAGE_5 -> character.getMapId() == AgentLpqDefinition.stage(5).mapId();

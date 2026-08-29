@@ -15,8 +15,8 @@ class AgentMovementProfileTest {
         assertEquals(AgentMovementPhysicsConfig.configuredHorizontalForcePxs(), profile.hForcePxs());
         assertEquals(AgentMovementPhysicsConfig.configuredJumpSpeedPxs(), profile.jumpSpeedPxs());
         assertEquals(AgentMovementPhysicsConfig.configuredRopeJumpSpeedPxs(), profile.ropeJumpSpeedPxs());
-        assertEquals(160.0f, AgentMovementPhysicsConfig.configuredClimbSpeedPxs());
-        assertEquals(8, AgentMovementKinematicsService.climbStepPerTick());
+        assertEquals(140.0f, AgentMovementPhysicsConfig.configuredClimbSpeedPxs());
+        assertEquals(7, AgentMovementKinematicsService.climbStepPerTick());
         assertEquals(8, AgentMovementPhysicsConfig.configuredRopeGrabX());
         assertEquals(16, AgentMovementPhysicsConfig.configuredMaxSnapDrop());
         assertEquals(26, AgentMovementPhysicsConfig.configuredMaxSlopeUp());

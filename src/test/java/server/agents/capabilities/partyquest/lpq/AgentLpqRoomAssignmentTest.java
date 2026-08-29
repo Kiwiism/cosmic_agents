@@ -181,8 +181,9 @@ class AgentLpqRoomAssignmentTest {
         member.beginRoomExit(922_010_506, 1_000L);
         member.markRoomExitProtectionPrepared(922_010_506);
         member.observeTraversalProgress(922_010_506, 922_010_500, 10_000L, 1_000L);
-        member.observeNpcRallyProgress(5, 922_010_500, 10_000L, 1_000L);
-        member.markCouponRegroupRecovered(5);
+        member.observeDestinationApproachProgress(
+                5, 922_010_500, null, 10_000L, 1_000L);
+        member.markBalloonRallyRecovered(5);
         assertTrue(member.shouldReportPassProgress(5, 922_010_506, 1, 4));
 
         member.resetForStage(AgentLpqMemberState.Role.GENERAL);
@@ -193,11 +194,11 @@ class AgentLpqRoomAssignmentTest {
         assertEquals(0L, member.nextActionAtMs());
         assertEquals(0, member.reactorTargetObjectId());
         assertFalse(member.roomExitProtectionPreparedFor(922_010_506));
-        assertFalse(member.couponRegroupRecoveredFor(5));
+        assertFalse(member.balloonRallyRecoveredFor(5));
         assertEquals(0L, member.observeTraversalProgress(
                 922_010_500, 922_010_600, 20_000L, 2_000L));
-        assertEquals(0L, member.observeNpcRallyProgress(
-                6, 922_010_600, 20_000L, 2_000L));
+        assertEquals(0L, member.observeDestinationApproachProgress(
+                6, 922_010_600, null, 20_000L, 2_000L));
         assertTrue(member.shouldReportPassProgress(5, 922_010_506, 1, 4));
     }
 
@@ -258,19 +259,19 @@ class AgentLpqRoomAssignmentTest {
     }
 
     @Test
-    void npcRallyRecoveryDoesNotReusePortalTraversalHistory() {
+    void destinationApproachRecoveryDoesNotReusePortalTraversalHistory() {
         AgentLpqMemberState member = new AgentLpqMemberState(
                 101, AgentLpqMemberState.MemberType.AGENT);
 
         member.observeTraversalProgress(922_010_200, 922_010_201, 10_000L, 1_000L);
-        assertEquals(0L, member.observeNpcRallyProgress(
-                2, 922_010_200, 90_000L, 80_000L));
-        assertEquals(44_999L, member.observeNpcRallyProgress(
-                2, 922_010_200, 90_000L, 124_999L));
-        assertEquals(0L, member.observeNpcRallyProgress(
-                3, 922_010_300, 90_000L, 125_000L));
-        member.clearNpcRallyProgress();
-        assertEquals(0L, member.observeNpcRallyProgress(
-                3, 922_010_300, 90_000L, 200_000L));
+        assertEquals(0L, member.observeDestinationApproachProgress(
+                2, 922_010_200, null, 90_000L, 80_000L));
+        assertEquals(44_999L, member.observeDestinationApproachProgress(
+                2, 922_010_200, null, 90_000L, 124_999L));
+        assertEquals(0L, member.observeDestinationApproachProgress(
+                3, 922_010_300, null, 90_000L, 125_000L));
+        member.clearDestinationApproachProgress();
+        assertEquals(0L, member.observeDestinationApproachProgress(
+                3, 922_010_300, null, 90_000L, 200_000L));
     }
 }

@@ -3,6 +3,8 @@ package server.agents.capabilities.partyquest;
 import client.Character;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import server.agents.capabilities.movement.AgentMovementBroadcastService;
+import server.agents.capabilities.movement.AgentMovementStateResetService;
 import server.agents.capabilities.partyquest.lobby.AgentPartyQuestLobbyRuntime;
 import server.agents.capabilities.townlife.AgentTownLifeAdmissionMode;
 import server.agents.capabilities.townlife.AgentTownLifeRuntime;
@@ -154,6 +156,13 @@ public final class AgentPartyQuestLifecycleRuntime {
                 AgentClientGatewayRuntime.clients().channel(agent), recoveryMapId);
         var portal = map == null ? null : map.getRandomPlayerSpawnpoint();
         Point spawn = portal == null ? new Point(0, 0) : portal.getPosition();
-        if (map != null) AgentMapGatewayRuntime.map().changeMapNear(agent, map, spawn);
+        if (map != null) {
+            AgentMapGatewayRuntime.map().changeMapNear(agent, map, spawn);
+            AgentRuntimeEntry entry = AgentRuntimeRegistry.findByAgentCharacterId(agent.getId());
+            if (entry != null) {
+                AgentMovementStateResetService.resetEntryState(entry);
+                AgentMovementBroadcastService.broadcastMovement(entry);
+            }
+        }
     }
 }

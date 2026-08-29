@@ -70,7 +70,7 @@ public final class AgentLpqRosterRequirementPolicy {
         return physicalAttack(character) ? 2 : 3;
     }
 
-    /** Weapon-ranged branches that can close-wack the Stage 7 trigger boxes. */
+    /** Weapon-ranged branches that can shoot Stage 7's Ratz from the opposite ledges. */
     public static boolean stageSevenBoxWacker(Character character) {
         if (character == null || character.getJob() == null) return false;
         Job job = character.getJob();

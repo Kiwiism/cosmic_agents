@@ -7,7 +7,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
-/** Authored traversal order for the four boxes in each LPQ Stage 5 room. */
+/** Stable authored box order for each LPQ Stage 5 room. */
 final class AgentLpqStageFiveReactorOrder {
     private static final Map<Integer, List<Point>> ORDER_BY_ROOM = Map.of(
             922_010_501, List.of(

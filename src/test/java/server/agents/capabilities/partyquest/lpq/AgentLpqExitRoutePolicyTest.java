@@ -107,6 +107,8 @@ class AgentLpqExitRoutePolicyTest {
                     room, 922_010_400, new Point(-450, 225), portal));
             assertEquals(new Point(-1_023, 165), AgentLpqExitRoutePolicy.nextWaypoint(
                     room, 922_010_400, new Point(-720, 225), portal));
+            assertEquals(new Point(-720, 225), AgentLpqExitRoutePolicy.nextWaypoint(
+                    room, 922_010_400, new Point(-712, 225), portal));
             assertEquals(new Point(-1_260, 285), AgentLpqExitRoutePolicy.nextWaypoint(
                     room, 922_010_400, new Point(-1_023, 165), portal));
             assertEquals(new Point(-1_306, 213), AgentLpqExitRoutePolicy.nextWaypoint(

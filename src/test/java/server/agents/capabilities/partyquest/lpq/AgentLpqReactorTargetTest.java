@@ -10,6 +10,7 @@ import server.maps.MapItem;
 
 import java.awt.Point;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -82,6 +83,20 @@ class AgentLpqReactorTargetTest {
         assertSame(authoredFirst, AgentLpqCoordinator.selectCommittedReactor(
                 member, 922_010_503, new Point(215, -3_000),
                 List.of(geometricallyNearest, authoredFirst), false));
+    }
+
+    @Test
+    void stageFiveApproachRemainsProvisionalUntilTheFirstHit() {
+        AgentLpqMemberState member = new AgentLpqMemberState(
+                71_009, AgentLpqMemberState.MemberType.AGENT);
+
+        member.beginReactorApproach(922_010_503, 421);
+        assertEquals(421, member.reactorApproachObjectId());
+        assertEquals(0, member.reactorTargetObjectId());
+
+        member.commitReactorTarget(922_010_503, 421, 10_000L);
+        assertEquals(0, member.reactorApproachObjectId());
+        assertEquals(421, member.reactorTargetObjectId());
     }
 
     @Test
@@ -181,6 +196,16 @@ class AgentLpqReactorTargetTest {
 
         assertEquals(1, AgentLpqCoordinator.unpickedPassDropCount(
                 List.of(pass, pickedPass, other)));
+    }
+
+    @Test
+    void stageTwoPassBelongsToTheNearestAgentRatherThanRosterOrder() {
+        Point drop = new Point(100, -500);
+
+        assertEquals(72_006, AgentLpqCoordinator.nearestAgentIdToDrop(
+                Map.of(72_001, new Point(-400, -500),
+                        72_006, new Point(105, -500),
+                        72_004, new Point(300, -500)), drop));
     }
 
     @Test

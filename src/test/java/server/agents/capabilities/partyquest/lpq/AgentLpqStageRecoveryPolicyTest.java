@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentLpqStageRecoveryPolicyTest {
     private static final String PROFILE = "submission=30000;missingPass=45000;portal=30000;"
@@ -41,5 +42,19 @@ class AgentLpqStageRecoveryPolicyTest {
                 AgentLpqStageRecoveryPolicy.parse(4, PROFILE + ";portal=31000"));
         assertThrows(IllegalArgumentException.class, () ->
                 AgentLpqStageRecoveryPolicy.parse(4, PROFILE + ";other=1"));
+    }
+
+    @Test
+    void everyAuthoredStageHasFiniteRecoveryCaps() {
+        for (int stage = 1; stage <= 9; stage++) {
+            AgentLpqStageRecoveryPolicy policy = AgentLpqStageRecoveryPolicy.forStage(stage);
+            assertTrue(policy.submissionMs() > 0L, "stage " + stage + " submission");
+            assertTrue(policy.missingPassMs() > 0L, "stage " + stage + " missing pass");
+            assertTrue(policy.portalMs() > 0L, "stage " + stage + " portal");
+            assertTrue(policy.reactorMs() > 0L, "stage " + stage + " reactor");
+            assertTrue(policy.traversalMs() > 0L, "stage " + stage + " traversal");
+            assertTrue(policy.roomExitPlacementMs() > 0L, "stage " + stage + " room exit");
+            assertTrue(policy.rallyRecoveryMs() > 0L, "stage " + stage + " rally");
+        }
     }
 }

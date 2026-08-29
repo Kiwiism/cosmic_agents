@@ -11,7 +11,6 @@ public final class AgentLpqMemberState {
         PLATFORM_HOLDER, PLATFORM_MOVER, BOSS_ATTACKER, NPC_RALLY
     }
     public enum RewardState { PENDING, CLAIMING, CLAIMED, FORFEITED }
-
     private final int characterId;
     private final MemberType memberType;
     private Role role = Role.GENERAL;
@@ -20,6 +19,8 @@ public final class AgentLpqMemberState {
     private long nextActionAtMs;
     private int reactorTargetMapId;
     private int reactorTargetObjectId;
+    private int reactorApproachMapId;
+    private int reactorApproachObjectId;
     private long reactorTargetCommittedAtMs;
     private boolean reactorTargetHitOnce;
     private boolean reactorSpawnCleanupPending;
@@ -36,6 +37,14 @@ public final class AgentLpqMemberState {
     private long roomProgressTelemetryAtMs;
     private int roomExitMapId;
     private long roomExitStartedAtMs;
+    private int roomTimingMapId;
+    private long roomTimingStartedAtMs;
+    private int stageFiveCeilingRecoveryMapId;
+    private int stageFiveAssistMapId;
+    private int stageFiveAssistPassCount;
+    private long stageFiveAssistUnobservedMs;
+    private long stageFiveAssistLastTickAtMs;
+    private boolean stageFiveAssistApplied;
     private int roomExitProtectionMapId;
     private boolean roomExitProtectionPrepared;
     private int roomApproachMapId;
@@ -45,17 +54,18 @@ public final class AgentLpqMemberState {
     private long traversalBestDistanceSq = Long.MAX_VALUE;
     private Point traversalObservedPosition;
     private long traversalProgressAtMs;
-    private int npcRallyStage;
-    private int npcRallyMapId;
-    private long npcRallyBestDistanceSq = Long.MAX_VALUE;
-    private Point npcRallyObservedPosition;
-    private long npcRallyProgressAtMs;
-    private long npcRallyLastRetryAtMs;
+    private int destinationApproachStage;
+    private int destinationApproachMapId;
+    private long destinationApproachBestDistanceSq = Long.MAX_VALUE;
+    private Point destinationApproachObservedPosition;
+    private long destinationApproachProgressAtMs;
+    private long destinationApproachLastRetryAtMs;
     private String announcedIntentKey = "";
     private int passReportStage;
     private int passReportMapId;
     private int passReportCount;
-    private int couponRegroupRecoveredStage;
+    private int balloonRallyRecoveredStage;
+    private int stageTwoRallyBranch;
     private RewardState rewardState = RewardState.PENDING;
 
     public AgentLpqMemberState(int characterId, MemberType memberType) {
@@ -95,6 +105,8 @@ public final class AgentLpqMemberState {
     }
     public int reactorTargetMapId() { return reactorTargetMapId; }
     public int reactorTargetObjectId() { return reactorTargetObjectId; }
+    public int reactorApproachMapId() { return reactorApproachMapId; }
+    public int reactorApproachObjectId() { return reactorApproachObjectId; }
     public long reactorTargetCommittedAtMs() { return reactorTargetCommittedAtMs; }
     public boolean reactorTargetHitOnce() { return reactorTargetHitOnce; }
     public boolean reactorSpawnCleanupPending() { return reactorSpawnCleanupPending; }
@@ -113,7 +125,7 @@ public final class AgentLpqMemberState {
         if (changed) {
             nextActionAtMs = 0L;
             clearTraversalProgress();
-            clearNpcRallyProgress();
+            clearDestinationApproachProgress();
         }
         if (assignedMapId != mapId) {
             clearReactorWork();
@@ -123,6 +135,7 @@ public final class AgentLpqMemberState {
             clearRoomProgressTelemetry();
             clearRoomApproachProgress();
             clearRoomExitProgress();
+            clearRoomTiming();
         }
         this.role = role;
         this.assignedMapId = mapId;
@@ -141,14 +154,16 @@ public final class AgentLpqMemberState {
         clearRoomCombatProgress();
         clearRoomProgressTelemetry();
         clearRoomExitProgress();
+        clearRoomTiming();
         clearRoomApproachProgress();
         clearTraversalProgress();
-        clearNpcRallyProgress();
+        clearDestinationApproachProgress();
         announcedIntentKey = "";
         passReportStage = 0;
         passReportMapId = 0;
         passReportCount = 0;
-        couponRegroupRecoveredStage = 0;
+        balloonRallyRecoveredStage = 0;
+        stageTwoRallyBranch = 0;
     }
 
     public void assignPlatform(int platform) {
@@ -159,13 +174,22 @@ public final class AgentLpqMemberState {
 
     public void deferUntil(long nextActionAtMs) { this.nextActionAtMs = Math.max(0L, nextActionAtMs); }
 
-    public boolean couponRegroupRecoveredFor(int stage) {
-        return stage > 0 && couponRegroupRecoveredStage == stage;
+    public boolean balloonRallyRecoveredFor(int stage) {
+        return stage > 0 && balloonRallyRecoveredStage == stage;
     }
 
-    public void markCouponRegroupRecovered(int stage) {
+    public void markBalloonRallyRecovered(int stage) {
         if (stage <= 0) throw new IllegalArgumentException("valid LPQ regroup stage is required");
-        couponRegroupRecoveredStage = stage;
+        balloonRallyRecoveredStage = stage;
+    }
+
+    int stageTwoRallyBranch() { return stageTwoRallyBranch; }
+
+    void selectStageTwoRallyBranch(int branch) {
+        if (branch != 1 && branch != 2) {
+            throw new IllegalArgumentException("LPQ Stage 2 rally branch must be left or right");
+        }
+        if (stageTwoRallyBranch == 0) stageTwoRallyBranch = branch;
     }
 
     public void commitReactorTarget(int mapId, int objectId) {
@@ -183,6 +207,20 @@ public final class AgentLpqMemberState {
             reactorTargetCommittedAtMs = Math.max(0L, nowMs);
         }
         reactorSpawnCleanupPending = false;
+        clearReactorApproach();
+    }
+
+    public void beginReactorApproach(int mapId, int objectId) {
+        if (mapId <= 0 || objectId <= 0 || reactorTargetObjectId != 0) {
+            throw new IllegalArgumentException("valid provisional LPQ reactor approach is required");
+        }
+        reactorApproachMapId = mapId;
+        reactorApproachObjectId = objectId;
+    }
+
+    public void clearReactorApproach() {
+        reactorApproachMapId = 0;
+        reactorApproachObjectId = 0;
     }
 
     public void markReactorTargetBroken(boolean waitForSpawnCleanup) {
@@ -191,6 +229,7 @@ public final class AgentLpqMemberState {
         reactorTargetCommittedAtMs = 0L;
         reactorTargetHitOnce = false;
         reactorSpawnCleanupPending = waitForSpawnCleanup;
+        clearReactorApproach();
     }
 
     public void markReactorTargetHit() {
@@ -210,6 +249,7 @@ public final class AgentLpqMemberState {
         reactorTargetCommittedAtMs = 0L;
         reactorTargetHitOnce = false;
         reactorSpawnCleanupPending = false;
+        clearReactorApproach();
     }
 
     public void markRoomMarkerDropped(int mapId) {
@@ -314,6 +354,74 @@ public final class AgentLpqMemberState {
         roomExitProtectionPrepared = false;
     }
 
+    public boolean beginRoomTiming(int mapId, long nowMs) {
+        if (mapId <= 0 || nowMs < 0L) return false;
+        if (roomTimingMapId == mapId && roomTimingStartedAtMs > 0L) return false;
+        roomTimingMapId = mapId;
+        roomTimingStartedAtMs = nowMs;
+        return true;
+    }
+
+    public long finishRoomTiming(int mapId, long nowMs) {
+        if (mapId <= 0 || roomTimingMapId != mapId || roomTimingStartedAtMs <= 0L) return -1L;
+        long elapsedMs = Math.max(0L, nowMs - roomTimingStartedAtMs);
+        clearRoomTiming();
+        return elapsedMs;
+    }
+
+    public long roomTimingElapsed(int mapId, long nowMs) {
+        if (mapId <= 0 || roomTimingMapId != mapId || roomTimingStartedAtMs <= 0L) return 0L;
+        return Math.max(0L, nowMs - roomTimingStartedAtMs);
+    }
+
+    public boolean stageFiveCeilingRecoveryAppliedFor(int mapId) {
+        return mapId > 0 && stageFiveCeilingRecoveryMapId == mapId;
+    }
+
+    public void markStageFiveCeilingRecoveryApplied(int mapId) {
+        if (mapId <= 0 || roomTimingMapId != mapId) {
+            throw new IllegalArgumentException("Stage 5 ceiling recovery must match the active room");
+        }
+        stageFiveCeilingRecoveryMapId = mapId;
+    }
+
+    public void clearRoomTiming() {
+        roomTimingMapId = 0;
+        roomTimingStartedAtMs = 0L;
+        stageFiveCeilingRecoveryMapId = 0;
+        clearStageFiveAssist();
+    }
+
+    public long observeStageFiveAssist(
+            int mapId, int roomPassCount, boolean observed, long nowMs) {
+        if (mapId <= 0 || roomPassCount < 0 || nowMs < 0L) return 0L;
+        if (stageFiveAssistMapId != mapId
+                || stageFiveAssistPassCount != roomPassCount) {
+            stageFiveAssistMapId = mapId;
+            stageFiveAssistPassCount = roomPassCount;
+            stageFiveAssistUnobservedMs = 0L;
+            stageFiveAssistLastTickAtMs = nowMs;
+            stageFiveAssistApplied = false;
+            return 0L;
+        }
+        if (stageFiveAssistLastTickAtMs > 0L && !observed) {
+            stageFiveAssistUnobservedMs += Math.max(0L, nowMs - stageFiveAssistLastTickAtMs);
+        }
+        stageFiveAssistLastTickAtMs = nowMs;
+        return stageFiveAssistUnobservedMs;
+    }
+
+    public boolean stageFiveAssistApplied() { return stageFiveAssistApplied; }
+    public void markStageFiveAssistApplied() { stageFiveAssistApplied = true; }
+
+    public void clearStageFiveAssist() {
+        stageFiveAssistMapId = 0;
+        stageFiveAssistPassCount = 0;
+        stageFiveAssistUnobservedMs = 0L;
+        stageFiveAssistLastTickAtMs = 0L;
+        stageFiveAssistApplied = false;
+    }
+
     public boolean claimIntentAnnouncement(String key) {
         if (key == null || key.isBlank() || key.equals(announcedIntentKey)) return false;
         announcedIntentKey = key;
@@ -391,48 +499,47 @@ public final class AgentLpqMemberState {
         traversalProgressAtMs = 0L;
     }
 
-    /** Keeps NPC regroup recovery independent from portal/reactor traversal history. */
-    public long observeNpcRallyProgress(int stage, int mapId, long distanceSq, long nowMs) {
-        return observeNpcRallyProgress(stage, mapId, null, distanceSq, nowMs);
-    }
-
-    public long observeNpcRallyProgress(
+    /** Keeps a terminal NPC approach independent from portal/reactor traversal history. */
+    public long observeDestinationApproachProgress(
             int stage, int mapId, Point position, long distanceSq, long nowMs) {
         if (stage <= 0 || mapId <= 0 || distanceSq < 0L || nowMs < 0L) return 0L;
-        boolean newRally = npcRallyStage != stage || npcRallyMapId != mapId
-                || npcRallyProgressAtMs == 0L;
-        boolean closer = npcRallyBestDistanceSq != Long.MAX_VALUE
+        boolean newApproach = destinationApproachStage != stage
+                || destinationApproachMapId != mapId
+                || destinationApproachProgressAtMs == 0L;
+        boolean closer = destinationApproachBestDistanceSq != Long.MAX_VALUE
                 && distanceSq != Long.MAX_VALUE
-                && Math.sqrt(npcRallyBestDistanceSq) - Math.sqrt(distanceSq) >= 16.0d;
-        boolean moved = position != null && npcRallyObservedPosition != null
-                && npcRallyObservedPosition.distanceSq(position) >= 16L * 16L;
-        if (newRally || closer || moved) {
-            npcRallyStage = stage;
-            npcRallyMapId = mapId;
-            npcRallyBestDistanceSq = Math.min(npcRallyBestDistanceSq, distanceSq);
-            if (newRally) npcRallyBestDistanceSq = distanceSq;
-            npcRallyObservedPosition = position == null ? null : new Point(position);
-            npcRallyProgressAtMs = nowMs;
-            npcRallyLastRetryAtMs = nowMs;
+                && Math.sqrt(destinationApproachBestDistanceSq) - Math.sqrt(distanceSq) >= 16.0d;
+        boolean moved = position != null && destinationApproachObservedPosition != null
+                && destinationApproachObservedPosition.distanceSq(position) >= 16L * 16L;
+        if (newApproach || closer || moved) {
+            destinationApproachStage = stage;
+            destinationApproachMapId = mapId;
+            destinationApproachBestDistanceSq = Math.min(
+                    destinationApproachBestDistanceSq, distanceSq);
+            if (newApproach) destinationApproachBestDistanceSq = distanceSq;
+            destinationApproachObservedPosition = position == null ? null : new Point(position);
+            destinationApproachProgressAtMs = nowMs;
+            destinationApproachLastRetryAtMs = nowMs;
             return 0L;
         }
-        return Math.max(0L, nowMs - npcRallyProgressAtMs);
+        return Math.max(0L, nowMs - destinationApproachProgressAtMs);
     }
 
-    public boolean claimNpcRallyRetry(long inactiveForMs, long nowMs, long retryIntervalMs) {
+    public boolean claimDestinationApproachRetry(
+            long inactiveForMs, long nowMs, long retryIntervalMs) {
         if (inactiveForMs < retryIntervalMs || retryIntervalMs <= 0L || nowMs < 0L) return false;
-        if (npcRallyLastRetryAtMs != 0L
-                && nowMs - npcRallyLastRetryAtMs < retryIntervalMs) return false;
-        npcRallyLastRetryAtMs = nowMs;
+        if (destinationApproachLastRetryAtMs != 0L
+                && nowMs - destinationApproachLastRetryAtMs < retryIntervalMs) return false;
+        destinationApproachLastRetryAtMs = nowMs;
         return true;
     }
 
-    public void clearNpcRallyProgress() {
-        npcRallyStage = 0;
-        npcRallyMapId = 0;
-        npcRallyBestDistanceSq = Long.MAX_VALUE;
-        npcRallyObservedPosition = null;
-        npcRallyProgressAtMs = 0L;
-        npcRallyLastRetryAtMs = 0L;
+    public void clearDestinationApproachProgress() {
+        destinationApproachStage = 0;
+        destinationApproachMapId = 0;
+        destinationApproachBestDistanceSq = Long.MAX_VALUE;
+        destinationApproachObservedPosition = null;
+        destinationApproachProgressAtMs = 0L;
+        destinationApproachLastRetryAtMs = 0L;
     }
 }

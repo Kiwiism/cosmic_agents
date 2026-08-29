@@ -907,6 +907,10 @@ tuning:
     # Purpose: Defines every recovery threshold used while the LPQ session is authoritatively in Stage 5, including Teleport and Dark Sight room exits.
     # Technical: Fields are submission, missingPass, portal, reactor, traversal, roomExitPlacement, rallyRetry, and rallyRecovery; ordering constraints are validated at startup.
     server.agents.capabilities.partyquest.lpq.AgentLpqStageRecoveryPolicy.STAGE_5_PROFILE: 'submission=30000;missingPass=45000;portal=30000;reactor=90000;traversal=45000;roomExitPlacement=15000;rallyRetry=10000;rallyRecovery=15000'
+    # Values: 60000-600000 milliseconds. Recommended: 240000, based on the measured 188-second natural completion of the generic Stage 5 room route.
+    # Purpose: Gives every Stage 5 room, including Teleport and Dark Sight, four minutes of natural box navigation before a bounded completion fallback.
+    # Technical: The clock starts on room entry; at expiry the assigned member destroys unresolved authored boxes, vacuums their real pass drops, is placed at that room's authored exit portal, and enters it normally.
+    server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.STAGE_5_ROOM_CEILING_MS: '240000'
     # Values: Semicolon-delimited positive milliseconds. Recommended: tune Stage 6 independently while retaining the listed natural-navigation-first ordering.
     # Purpose: Defines every recovery threshold used while the LPQ session is authoritatively in Stage 6, keeping its fixed portal sequence isolated.
     # Technical: Fields are submission, missingPass, portal, reactor, traversal, roomExitPlacement, rallyRetry, and rallyRecovery; ordering constraints are validated at startup.
@@ -1314,7 +1318,7 @@ tuning:
     # Values: a finite non-negative integer; unit: map pixels. Recommended: 80-240 around the tested baseline 160; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls how strongly climb speed pxs changes visible movement. Higher values make its effect more noticeable; lower values make movement gentler or less pronounced.
     # Technical: the "movement physics config" component consumes this as a decimal number. Unit: MapleStory map pixels per second.
-    server.agents.capabilities.movement.AgentMovementPhysicsConfig.CLIMB_SPEED_PXS: '160.0'
+    server.agents.capabilities.movement.AgentMovementPhysicsConfig.CLIMB_SPEED_PXS: '140.0'
     # Values: a finite non-negative integer; unit: milliseconds. Recommended: 175-700 around the tested baseline 350; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls how long Agents remain in or wait for down jump grace. Higher values make that pause or state last longer; lower values make them continue sooner.
     # Technical: the "movement physics config" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled.
