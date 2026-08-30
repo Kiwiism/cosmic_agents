@@ -14,6 +14,14 @@ public final class AgentLpqRuntime {
         AgentLpqSession session = AgentLpqSessionRegistry.forMember(agent.getId());
         if (session == null) return AgentPartyQuestLifecycleRuntime.tick(agent.getId(), nowMs);
         if (session.paused()) return true;
+        // A completed split-room occupant owns a local portal traversal, not a
+        // party-wide decision. Advance it from that Agent's own runtime tick so
+        // the route cannot stop when the last combat owner releases the central
+        // coordinator lease.
+        if (AgentLpqCoordinator.tickStageFourCompletedRoomExit(
+                session, entry, agent, nowMs)) {
+            return true;
+        }
         if (!session.claimExecutionTick(agent.getId(), nowMs, LEASE_MS)) return true;
         AgentLpqCoordinator.tick(session, nowMs);
         return true;

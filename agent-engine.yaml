@@ -959,18 +959,16 @@ tuning:
     # Purpose: Reserves enough remaining Dark Sight duration for the assigned thief to traverse the King Block Golem hazard safely.
     # Technical: The coordinator compares the authoritative buff start and WZ-derived duration, then recasts through the normal combat buff runtime at a safe location.
     server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.DARK_SIGHT_REFRESH_WINDOW_MS: '10000'
-    # Values: 5000-30000 milliseconds. Recommended: 15000 to distinguish closed-eye invulnerability from a genuinely stalled Stage 4 attack.
-    # Purpose: Releases and retries an unchanged Stage 4 eye-monster target after authoritative HP fails to decrease for a bounded interval.
-    # Technical: The per-member room combat observation requires the same map, object ID, and HP before this clock can trigger a normal grind-target reselection.
+    # Values: 5000-30000 milliseconds. Recommended: 15000 to distinguish ordinary combat progress from a genuinely stalled Stage 4 room.
+    # Purpose: Requires a Stage 4 room to remain unchanged before its 60-second positioning assist is allowed to run.
+    # Technical: The recovery clock observes authoritative monster count, total HP, and collected passes without interrupting the ordinary combat target.
     server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.STAGE_4_COMBAT_STALL_MS: '15000'
-    # Values: 250-3000 milliseconds. Recommended: 750 to avoid immediately selecting the same closed-eye Stage 4 monster again.
-    # Purpose: Adds a short pause between a detected Stage 4 no-damage stall and the next legal combat target-selection attempt.
-    # Technical: AgentLpqMemberState owns this retry deadline, while all subsequent attacks still pass through shared combat legality, hitbox, and transaction handling.
+    server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.STAGE_4_ROOM_ASSIST_MS: '60000'
+    server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.STAGE_4_ROOM_HARD_RECOVERY_MS: '90000'
+    # Values: 250-3000 milliseconds. Recommended: 750 after the Stage 4 positioning assist.
+    # Purpose: Lets the recovered Agent settle on the remaining monster's foothold before resuming the direct combat loop.
+    # Technical: This delay applies only after the 60-second room assist and does not clear or cycle ordinary Stage 4 combat targets.
     server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.STAGE_4_EYE_RETRY_MS: '750'
-    # Values: 100-500 map pixels. Recommended: 250 so HP-stall observations apply only when the assigned room monster is locally engageable.
-    # Purpose: Prevents distant Stage 4 navigation time from being misclassified as a failed authoritative combat transaction.
-    # Technical: The coordinator squares this configured map-pixel radius only for the local target-position comparison and does not widen any attack hitbox.
-    server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.STAGE_4_STALL_OBSERVATION_RANGE_PX: '250'
     # Values: 5000-60000 milliseconds. Recommended: 10000 for useful split-room diagnostics without per-tick log noise.
     # Purpose: Periodically records LPQ room reactor, monster, pass, loose-drop, and active-target progress while a room remains assigned.
     # Technical: AgentLpqMemberState suppresses identical signatures until this interval elapses; changed authoritative room state is reported immediately.

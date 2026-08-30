@@ -24,6 +24,7 @@ final class AgentLpqWatchdogRuntime {
     }
     static void tick(AgentLpqSession session, long nowMs) {
         if (session == null || session.paused() || session.terminal()) return;
+        AgentLpqCoordinator.tickStageFourRoomRecoveryWatchdog(session, nowMs);
         AgentRuntimeEntry entry = session.members().stream()
                 .filter(member -> member.memberType() == AgentLpqMemberState.MemberType.AGENT)
                 .sorted(Comparator.comparingInt(AgentLpqMemberState::characterId))

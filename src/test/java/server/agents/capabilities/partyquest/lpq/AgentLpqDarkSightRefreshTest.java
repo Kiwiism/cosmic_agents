@@ -66,4 +66,23 @@ class AgentLpqDarkSightRefreshTest {
         assertEquals(AgentLpqCoordinator.DarkSightRoomAction.NONE,
                 AgentLpqCoordinator.darkSightRoomAction(false, false, true));
     }
+
+    @Test
+    void darkSightRunnerRemainsProtectedOnTheStageFiveMainMap() {
+        assertTrue(AgentLpqCoordinator.requiresStageFiveMainMapDarkSight(
+                true, 922_010_500, true));
+        assertFalse(AgentLpqCoordinator.requiresStageFiveMainMapDarkSight(
+                true, 922_010_500, false));
+        assertFalse(AgentLpqCoordinator.requiresStageFiveMainMapDarkSight(
+                false, 922_010_500, true));
+        assertFalse(AgentLpqCoordinator.requiresStageFiveMainMapDarkSight(
+                true, 922_010_600, true));
+    }
+
+    @Test
+    void darkSightIsCancelledToCollectAReachableRoomPass() {
+        assertTrue(AgentLpqCoordinator.requiresDarkSightCancellationForRoomLoot(true, true));
+        assertFalse(AgentLpqCoordinator.requiresDarkSightCancellationForRoomLoot(true, false));
+        assertFalse(AgentLpqCoordinator.requiresDarkSightCancellationForRoomLoot(false, true));
+    }
 }

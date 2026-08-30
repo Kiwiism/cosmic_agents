@@ -14,9 +14,9 @@ final class AgentLpqStageTwoRallyRoutePolicy {
 
     private static final int STAGE_TWO_MAP = 922_010_200;
     private static final List<Integer> LEFT = List.of(
-            21, 20, 19, 18, 47, 11, 45, 10, 9, 8, 7, 6, 4, 3);
+            21, 20, 19, 18, 47, 11, 45, 10, 9, 8, 7, 6, 5, 4, 3);
     private static final List<Integer> RIGHT = List.of(
-            23, 22, 46, 17, 16, 15, 14, 13, 12, 11, 45, 10, 9, 8, 7, 6, 4, 3);
+            23, 22, 46, 17, 16, 15, 14, 13, 12, 11, 45, 10, 9, 8, 7, 6, 5, 4, 3);
 
     private AgentLpqStageTwoRallyRoutePolicy() { }
 

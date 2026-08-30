@@ -296,6 +296,46 @@ class AgentLpqSessionTest {
     }
 
     @Test
+    void stageFourRoomRecoveryUsesAssistedThenHardDeadlines() {
+        assertFalse(AgentLpqCoordinator.stageFourRoomAssistRecoveryDue(
+                59_999L, 15_000L, false));
+        assertFalse(AgentLpqCoordinator.stageFourRoomAssistRecoveryDue(
+                60_000L, 14_999L, false));
+        assertTrue(AgentLpqCoordinator.stageFourRoomAssistRecoveryDue(
+                60_000L, 15_000L, false));
+        assertFalse(AgentLpqCoordinator.stageFourRoomAssistRecoveryDue(
+                60_000L, 15_000L, true));
+
+        assertFalse(AgentLpqCoordinator.stageFourRoomHardRecoveryDue(
+                89_999L, false));
+        assertTrue(AgentLpqCoordinator.stageFourRoomHardRecoveryDue(
+                90_000L, false));
+        assertFalse(AgentLpqCoordinator.stageFourRoomHardRecoveryDue(
+                90_000L, true));
+
+        assertFalse(AgentLpqCoordinator.stageFourRoomReadyToExit(
+                false, 2, 2));
+        assertFalse(AgentLpqCoordinator.stageFourRoomReadyToExit(
+                true, 1, 2));
+        assertTrue(AgentLpqCoordinator.stageFourRoomReadyToExit(
+                true, 1, 1));
+        assertTrue(AgentLpqCoordinator.stageFourRoomReadyToExit(
+                true, 2, 2));
+    }
+
+    @Test
+    void stageFourWatchdogIsStrictlyStageScoped() {
+        AgentLpqSession session = new AgentLpqSession(
+                AgentLpqSession.Mode.TEST_OBSERVATION, 1L, 900, 6, 1_000L);
+
+        assertFalse(AgentLpqCoordinator.tickStageFourRoomRecoveryWatchdog(
+                session, 90_000L));
+        session.transition(AgentLpqSession.Phase.STAGE_3, 2_000L);
+        assertFalse(AgentLpqCoordinator.tickStageFourRoomRecoveryWatchdog(
+                session, 90_000L));
+    }
+
+    @Test
     void tracksSubmissionReadinessPerStageAndResetsWhenPassesAreNoLongerReady() {
         AgentLpqSession session = new AgentLpqSession(
                 AgentLpqSession.Mode.TEST_OBSERVATION, 1L, 900, 6, 1_000L);

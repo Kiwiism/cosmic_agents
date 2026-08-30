@@ -104,6 +104,24 @@ class AgentLpqRoomAssignmentTest {
     }
 
     @Test
+    void roomRecoveryClockIgnoresMovementButResetsForAuthoritativeProgress() {
+        AgentLpqMemberState member = new AgentLpqMemberState(
+                101, AgentLpqMemberState.MemberType.AGENT);
+        member.assign(AgentLpqMemberState.Role.PHYSICAL_ATTACKER, 922_010_404);
+
+        assertEquals(0L, member.observeRoomRecoveryProgress(
+                922_010_404, 2, 7_100L, 0, 1_000L));
+        assertEquals(15_000L, member.observeRoomRecoveryProgress(
+                922_010_404, 2, 7_100L, 0, 16_000L));
+        assertEquals(0L, member.observeRoomRecoveryProgress(
+                922_010_404, 2, 6_900L, 0, 17_000L));
+        assertEquals(0L, member.observeRoomRecoveryProgress(
+                922_010_404, 1, 2_100L, 1, 18_000L));
+        assertEquals(15_000L, member.observeRoomRecoveryProgress(
+                922_010_404, 1, 2_100L, 1, 33_000L));
+    }
+
+    @Test
     void roomTelemetryReportsChangesAndPeriodicHeartbeats() {
         AgentLpqMemberState member = new AgentLpqMemberState(
                 101, AgentLpqMemberState.MemberType.AGENT);
@@ -184,6 +202,7 @@ class AgentLpqRoomAssignmentTest {
         member.observeDestinationApproachProgress(
                 5, 922_010_500, null, 10_000L, 1_000L);
         member.markBalloonRallyRecovered(5);
+        assertTrue(member.stageFiveDarkSightRunner());
         assertTrue(member.shouldReportPassProgress(5, 922_010_506, 1, 4));
 
         member.resetForStage(AgentLpqMemberState.Role.GENERAL);
@@ -195,11 +214,46 @@ class AgentLpqRoomAssignmentTest {
         assertEquals(0, member.reactorTargetObjectId());
         assertFalse(member.roomExitProtectionPreparedFor(922_010_506));
         assertFalse(member.balloonRallyRecoveredFor(5));
+        assertFalse(member.stageFiveDarkSightRunner());
         assertEquals(0L, member.observeTraversalProgress(
                 922_010_500, 922_010_600, 20_000L, 2_000L));
         assertEquals(0L, member.observeDestinationApproachProgress(
                 6, 922_010_600, null, 20_000L, 2_000L));
         assertTrue(member.shouldReportPassProgress(5, 922_010_506, 1, 4));
+    }
+
+    @Test
+    void darkSightRunnerIdentitySurvivesRoomExitUntilTheStageChanges() {
+        AgentLpqMemberState member = new AgentLpqMemberState(
+                101, AgentLpqMemberState.MemberType.AGENT);
+
+        member.assign(AgentLpqMemberState.Role.DARK_SIGHT_RUNNER, 922_010_506);
+        member.assign(AgentLpqMemberState.Role.NPC_RALLY, 0);
+
+        assertTrue(member.stageFiveDarkSightRunner());
+        member.resetForStage(AgentLpqMemberState.Role.GENERAL);
+        assertFalse(member.stageFiveDarkSightRunner());
+    }
+
+    @Test
+    void earnedStageFivePassLedgerSurvivesReviveCleanupUntilHandoff() {
+        AgentLpqMemberState member = new AgentLpqMemberState(
+                101, AgentLpqMemberState.MemberType.AGENT);
+
+        member.recordStageFiveEarnedPasses(4);
+        member.assign(AgentLpqMemberState.Role.NPC_RALLY, 0);
+        assertEquals(4, member.stageFiveUnhandedPasses());
+        assertEquals(4, AgentLpqCoordinator.stageFivePassRestoreCount(
+                member.stageFiveUnhandedPasses(), 0));
+        assertEquals(0, AgentLpqCoordinator.stageFivePassRestoreCount(
+                member.stageFiveUnhandedPasses(), 4));
+
+        member.handOffStageFivePasses(4);
+        assertEquals(0, member.stageFiveUnhandedPasses());
+
+        member.recordStageFiveEarnedPasses(4);
+        member.resetForStage(AgentLpqMemberState.Role.GENERAL);
+        assertEquals(0, member.stageFiveUnhandedPasses());
     }
 
     @Test

@@ -32,6 +32,13 @@ public final class AgentLpqMemberState {
     private int roomCombatTargetObjectId;
     private int roomCombatTargetHp;
     private long roomCombatProgressAtMs;
+    private int roomRecoveryMapId;
+    private int roomRecoveryMobCount;
+    private long roomRecoveryMobHp;
+    private int roomRecoveryPassCount;
+    private long roomRecoveryProgressAtMs;
+    private boolean roomRecoveryAssistApplied;
+    private boolean roomRecoveryHardApplied;
     private int roomProgressTelemetryMapId;
     private String roomProgressTelemetrySignature = "";
     private long roomProgressTelemetryAtMs;
@@ -66,6 +73,8 @@ public final class AgentLpqMemberState {
     private int passReportCount;
     private int balloonRallyRecoveredStage;
     private int stageTwoRallyBranch;
+    private boolean stageFiveDarkSightRunner;
+    private int stageFiveUnhandedPasses;
     private RewardState rewardState = RewardState.PENDING;
 
     public AgentLpqMemberState(int characterId, MemberType memberType) {
@@ -82,6 +91,8 @@ public final class AgentLpqMemberState {
     public int assignedMapId() { return assignedMapId; }
     public int assignedPlatform() { return assignedPlatform; }
     public long nextActionAtMs() { return nextActionAtMs; }
+    public boolean stageFiveDarkSightRunner() { return stageFiveDarkSightRunner; }
+    public int stageFiveUnhandedPasses() { return stageFiveUnhandedPasses; }
     public RewardState rewardState() { return rewardState; }
     public boolean rewardClaimed() { return rewardState == RewardState.CLAIMED; }
     public boolean rewardResolved() {
@@ -121,6 +132,7 @@ public final class AgentLpqMemberState {
 
     public void assign(Role role, int mapId) {
         if (role == null || mapId < 0) throw new IllegalArgumentException("valid LPQ assignment is required");
+        if (role == Role.DARK_SIGHT_RUNNER) stageFiveDarkSightRunner = true;
         boolean changed = this.role != role || assignedMapId != mapId;
         if (changed) {
             nextActionAtMs = 0L;
@@ -132,6 +144,7 @@ public final class AgentLpqMemberState {
             clearRoomMarker();
             clearRoomPassCollection();
             clearRoomCombatProgress();
+            clearRoomRecoveryProgress();
             clearRoomProgressTelemetry();
             clearRoomApproachProgress();
             clearRoomExitProgress();
@@ -152,6 +165,7 @@ public final class AgentLpqMemberState {
         clearRoomMarker();
         clearRoomPassCollection();
         clearRoomCombatProgress();
+        clearRoomRecoveryProgress();
         clearRoomProgressTelemetry();
         clearRoomExitProgress();
         clearRoomTiming();
@@ -164,6 +178,18 @@ public final class AgentLpqMemberState {
         passReportCount = 0;
         balloonRallyRecoveredStage = 0;
         stageTwoRallyBranch = 0;
+        stageFiveDarkSightRunner = false;
+        stageFiveUnhandedPasses = 0;
+    }
+
+    public void recordStageFiveEarnedPasses(int count) {
+        if (count < 0) throw new IllegalArgumentException("earned Stage 5 passes cannot be negative");
+        stageFiveUnhandedPasses = Math.max(stageFiveUnhandedPasses, count);
+    }
+
+    public void handOffStageFivePasses(int count) {
+        if (count < 0) throw new IllegalArgumentException("handed-off Stage 5 passes cannot be negative");
+        stageFiveUnhandedPasses = Math.max(0, stageFiveUnhandedPasses - count);
     }
 
     public void assignPlatform(int platform) {
@@ -300,6 +326,62 @@ public final class AgentLpqMemberState {
         roomCombatProgressAtMs = 0L;
     }
 
+    /** Returns time since mob HP/count or collected-pass count last improved in this room. */
+    public long observeRoomRecoveryProgress(int mapId, int mobCount, long mobHp,
+                                            int passCount, long nowMs) {
+        if (mapId <= 0 || mobCount < 0 || mobHp < 0L || passCount < 0 || nowMs < 0L) return 0L;
+        if (roomRecoveryMapId != mapId || roomRecoveryProgressAtMs == 0L) {
+            roomRecoveryMapId = mapId;
+            roomRecoveryMobCount = mobCount;
+            roomRecoveryMobHp = mobHp;
+            roomRecoveryPassCount = passCount;
+            roomRecoveryProgressAtMs = nowMs;
+            roomRecoveryAssistApplied = false;
+            roomRecoveryHardApplied = false;
+            return 0L;
+        }
+        boolean progressed = mobCount < roomRecoveryMobCount
+                || mobHp < roomRecoveryMobHp
+                || passCount > roomRecoveryPassCount;
+        roomRecoveryMobCount = mobCount;
+        roomRecoveryMobHp = mobHp;
+        roomRecoveryPassCount = passCount;
+        if (progressed) roomRecoveryProgressAtMs = nowMs;
+        return Math.max(0L, nowMs - roomRecoveryProgressAtMs);
+    }
+
+    public boolean roomRecoveryAssistAppliedFor(int mapId) {
+        return mapId > 0 && roomRecoveryMapId == mapId && roomRecoveryAssistApplied;
+    }
+
+    public void markRoomRecoveryAssistApplied(int mapId) {
+        if (mapId <= 0 || roomRecoveryMapId != mapId) {
+            throw new IllegalArgumentException("room recovery assist must match the active LPQ room");
+        }
+        roomRecoveryAssistApplied = true;
+    }
+
+    public boolean roomRecoveryHardAppliedFor(int mapId) {
+        return mapId > 0 && roomRecoveryMapId == mapId && roomRecoveryHardApplied;
+    }
+
+    public void markRoomRecoveryHardApplied(int mapId) {
+        if (mapId <= 0 || roomRecoveryMapId != mapId) {
+            throw new IllegalArgumentException("hard room recovery must match the active LPQ room");
+        }
+        roomRecoveryHardApplied = true;
+    }
+
+    public void clearRoomRecoveryProgress() {
+        roomRecoveryMapId = 0;
+        roomRecoveryMobCount = 0;
+        roomRecoveryMobHp = 0L;
+        roomRecoveryPassCount = 0;
+        roomRecoveryProgressAtMs = 0L;
+        roomRecoveryAssistApplied = false;
+        roomRecoveryHardApplied = false;
+    }
+
     public boolean shouldReportRoomProgress(int mapId, String signature,
                                             long nowMs, long intervalMs) {
         if (mapId <= 0 || signature == null || nowMs < 0L) return false;
@@ -389,6 +471,7 @@ public final class AgentLpqMemberState {
         roomTimingMapId = 0;
         roomTimingStartedAtMs = 0L;
         stageFiveCeilingRecoveryMapId = 0;
+        clearRoomRecoveryProgress();
         clearStageFiveAssist();
     }
 

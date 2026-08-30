@@ -98,8 +98,10 @@ final class AgentLpqCoordinator {
             "server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.STAGE_4_COMBAT_STALL_MS");
     private static final long STAGE_4_EYE_RETRY_MS = config.AgentTuning.longValue(
             "server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.STAGE_4_EYE_RETRY_MS");
-    private static final int STAGE_4_STALL_OBSERVATION_RANGE_PX = config.AgentTuning.intValue(
-            "server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.STAGE_4_STALL_OBSERVATION_RANGE_PX");
+    private static final long STAGE_4_ROOM_ASSIST_MS = config.AgentTuning.longValue(
+            "server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.STAGE_4_ROOM_ASSIST_MS");
+    private static final long STAGE_4_ROOM_HARD_RECOVERY_MS = config.AgentTuning.longValue(
+            "server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.STAGE_4_ROOM_HARD_RECOVERY_MS");
     private static final long ROOM_PROGRESS_LOG_INTERVAL_MS = config.AgentTuning.longValue(
             "server.agents.capabilities.partyquest.lpq.AgentLpqCoordinator.ROOM_PROGRESS_LOG_INTERVAL_MS");
     private static final int DARK_SIGHT_SAFE_PORTAL_ID = 0;
@@ -505,8 +507,16 @@ final class AgentLpqCoordinator {
                 everyoneAtNpc = false;
                 continue;
             }
+            AgentRuntimeEntry participantEntry = entry(participant.getId());
+            if (contract.number() == 5
+                    && member.memberType() == AgentLpqMemberState.MemberType.AGENT
+                    && participantEntry != null
+                    && prepareStageFiveMainMapDarkSight(
+                    member, participantEntry, participant, nowMs)) {
+                everyoneAtNpc = false;
+                continue;
+            }
             if (near(participant.getPosition(), npc, INTERACTION_RADIUS)) {
-                AgentRuntimeEntry participantEntry = entry(participant.getId());
                 if (participantEntry != null && participant.getId() != leader.getId()) {
                     ACTIONS.stop(participantEntry);
                 }
@@ -516,7 +526,6 @@ final class AgentLpqCoordinator {
                 continue;
             }
             if (member.memberType() == AgentLpqMemberState.MemberType.AGENT) {
-                AgentRuntimeEntry participantEntry = entry(participant.getId());
                 if (participantEntry != null) {
                     if (nowMs < member.nextActionAtMs()) {
                         everyoneAtNpc = false;
@@ -609,6 +618,7 @@ final class AgentLpqCoordinator {
             if (participantEntry != null && AgentScriptItemActionService.dropItem(
                     participantEntry, InventoryType.ETC, AgentLpqDefinition.PASS,
                     (short) Math.min(Short.MAX_VALUE, coupons))) {
+                if (contract.number() == 5) member.handOffStageFivePasses(coupons);
                 member.deferUntil(nowMs + INTERACTION_RETRY_MS);
                 session.markProgress(nowMs);
                 droppers++;
@@ -634,6 +644,10 @@ final class AgentLpqCoordinator {
             if (agent == null || entry == null) continue;
             if (agent.getMapId() == AgentLpqDefinition.EXIT_MAP
                     && restoreEventMember(session, agent, destination, nowMs)) {
+                if (stage == 5) {
+                    restoreStageFiveEarnedPasses(session, member, agent, nowMs);
+                    prepareStageFiveMainMapDarkSight(member, entry, agent, nowMs);
+                }
                 continue;
             }
             int currentStage = AgentLpqDefinition.stageNumber(agent.getMapId());
@@ -1079,6 +1093,7 @@ final class AgentLpqCoordinator {
             AgentInventoryGatewayRuntime.inventory().removeById(
                     participant, InventoryType.ETC, AgentLpqDefinition.PASS,
                     quantity, false, false);
+            if (contract.number() == 5) member.handOffStageFivePasses(quantity);
             transferred += quantity;
             leaderPasses += quantity;
         }
@@ -1530,17 +1545,30 @@ final class AgentLpqCoordinator {
                 // object id. Keep the cooperative claim set map-scoped.
                 Set<Integer> roomLootClaims = lootClaimsByMap.computeIfAbsent(
                         agent.getMapId(), ignored -> new LinkedHashSet<>());
-                if (agent.getMapId() == AgentLpqDefinition.STAGE_5_DARK_SIGHT_ROOM
-                        && darkSightRefreshDue(agent, nowMs)
-                        && roomPassRequiresTraversal(agent)) {
-                    ACTIONS.stop(entry);
-                    if (refreshDarkSight(entry, agent)) {
+                if (agent.getMapId() == AgentLpqDefinition.STAGE_5_DARK_SIGHT_ROOM) {
+                    if (requiresDarkSightCancellationForRoomLoot(
+                            agent.getBuffedValue(BuffStat.DARKSIGHT) != null,
+                            passDropWithinPickupRange(agent))) {
+                        ACTIONS.stop(entry);
+                        cancelDarkSight(agent);
                         member.deferUntil(nowMs + INTERACTION_RETRY_MS);
+                        continue;
                     }
-                    continue;
+                    if (darkSightRefreshDue(agent, nowMs)
+                            && roomPassRequiresTraversal(agent)) {
+                        ACTIONS.stop(entry);
+                        if (refreshDarkSight(entry, agent)) {
+                            member.deferUntil(nowMs + INTERACTION_RETRY_MS);
+                        }
+                        continue;
+                    }
                 }
                 if (collectNearestDrop(entry, agent,
                         Set.of(AgentLpqDefinition.PASS), roomLootClaims)) continue;
+            }
+            if (stage == 5 && agent.getMapId() == mainMap
+                    && prepareStageFiveMainMapDarkSight(member, entry, agent, nowMs)) {
+                continue;
             }
             int assigned = member.assignedMapId();
             if (agent.getMapId() == mainMap && assigned != 0) {
@@ -1569,6 +1597,10 @@ final class AgentLpqCoordinator {
             int roomMapId = agent.getMapId();
             session.rooms().markProgress(roomMapId, nowMs);
             if (session.rooms().completed(roomMapId)) {
+                if (stage == 4) {
+                    tickStageFourCompletedRoomExit(session, entry, agent, nowMs);
+                    continue;
+                }
                 member.beginRoomExit(roomMapId, nowMs);
                 if (prepareDarkSightRoomExit(
                         stage, roomMapId, entry, agent, member, nowMs)) {
@@ -1616,9 +1648,6 @@ final class AgentLpqCoordinator {
                             ? null : new Point(agent.getPosition());
                     enterPortalTo(entry, agent, mainMap);
                     if (agent.getMapId() == mainMap) {
-                        if (roomMapId == AgentLpqDefinition.STAGE_5_DARK_SIGHT_ROOM) {
-                            cancelDarkSight(agent);
-                        }
                         log.info("LPQ natural room exit completed: session={} stage={} "
                                         + "member={}({}) source={} sourcePosition={} destination={} elapsedMs={}",
                                 session.sessionId(), stage, agent.getName(), agent.getId(),
@@ -1637,6 +1666,14 @@ final class AgentLpqCoordinator {
                         agent.getId(), member.role());
             }
             Integer roomOwner = session.rooms().owner(roomMapId);
+            if (stage == 4 && java.util.Objects.equals(roomOwner, agent.getId())) {
+                int roomPasses = member.roomPassesCollectedFor(roomMapId,
+                        agent.getItemQuantity(AgentLpqDefinition.PASS, false));
+                if (applyStageFourRoomRecovery(
+                        session, member, entry, agent, roomPasses, nowMs)) {
+                    continue;
+                }
+            }
             boolean stageFourMagicHelper = stage == 4
                     && AgentLpqDefinition.STAGE_4_MAGIC_ROOMS.contains(roomMapId)
                     && member.assignedMapId() == roomMapId
@@ -1669,8 +1706,7 @@ final class AgentLpqCoordinator {
                         entry, agent, nowMs, member, reactorSpawnsMustBeCleared);
             }
             if (!acted && roomMobsMustBeCleared && !mobs.isEmpty()) {
-                if (stage == 4) grindStageFourEyeMonster(entry, agent, member, mobs, nowMs);
-                else ACTIONS.grind(entry, mobs);
+                ACTIONS.grind(entry, mobs);
             }
             // A Stage 5 hazard can eject the Dark Sight runner while this tick is executing.
             // Never complete or release a room using the character's new exit-map id.
@@ -1693,6 +1729,7 @@ final class AgentLpqCoordinator {
                                 + "role={} durationMs={} passes={}/{}",
                         session.sessionId(), stage, roomMapId, agent.getName(), agent.getId(),
                         member.role(), roomDurationMs, roomPasses, passQuota);
+                if (stage == 5) member.recordStageFiveEarnedPasses(passQuota);
                 session.rooms().complete(roomMapId);
                 member.beginRoomExit(roomMapId, nowMs);
                 if (prepareDarkSightRoomExit(
@@ -1707,9 +1744,6 @@ final class AgentLpqCoordinator {
                         ? null : new Point(agent.getPosition());
                 enterPortalTo(entry, agent, mainMap);
                 if (agent.getMapId() == mainMap) {
-                    if (roomMapId == AgentLpqDefinition.STAGE_5_DARK_SIGHT_ROOM) {
-                        cancelDarkSight(agent);
-                    }
                     log.info("LPQ natural room exit completed: session={} stage={} "
                                     + "member={}({}) source={} sourcePosition={} destination={} elapsedMs={}",
                             session.sessionId(), stage, agent.getName(), agent.getId(),
@@ -1909,37 +1943,228 @@ final class AgentLpqCoordinator {
         return Set.of();
     }
 
-    private static void grindStageFourEyeMonster(AgentRuntimeEntry entry, Character agent,
-                                                  AgentLpqMemberState member, Set<Integer> mobs,
-                                                  long nowMs) {
-        if (nowMs < member.nextActionAtMs()) return;
-        Monster target = AgentGrindTargetStateRuntime.activeTargetInMap(entry, agent.getMap());
-        if (target != null && (!mobs.contains(target.getId())
-                || !AgentCombatTargetRuntime.isReachableGrindTarget(entry, agent, target))) {
-            AgentGrindTargetStateRuntime.clear(entry);
-            member.clearRoomCombatProgress();
-            target = null;
-        }
-        if (target != null && target.getPosition().distanceSq(agent.getPosition())
-                <= (long) STAGE_4_STALL_OBSERVATION_RANGE_PX
-                * STAGE_4_STALL_OBSERVATION_RANGE_PX) {
-            long stalledForMs = member.observeRoomCombatTarget(
-                    agent.getMapId(), target.getObjectId(), target.getHp(), nowMs);
-            if (stalledForMs >= STAGE_4_COMBAT_STALL_MS) {
-                ACTIONS.stop(entry);
-                AgentGrindTargetStateRuntime.clear(entry);
-                member.clearRoomCombatProgress();
-                member.deferUntil(nowMs + STAGE_4_EYE_RETRY_MS);
-                log.warn("LPQ Stage 4 eye-monster attack made no authoritative HP progress; "
-                                + "retrying target selection: member={}({}) map={} mob={} oid={} stalledForMs={}",
-                        agent.getName(), agent.getId(), agent.getMapId(), target.getId(),
-                        target.getObjectId(), stalledForMs);
-                return;
+    static boolean stageFourRoomAssistRecoveryDue(
+            long roomElapsedMs, long inactiveForMs, boolean alreadyApplied) {
+        return !alreadyApplied
+                && roomElapsedMs >= STAGE_4_ROOM_ASSIST_MS
+                && inactiveForMs >= STAGE_4_COMBAT_STALL_MS;
+    }
+
+    static boolean stageFourRoomHardRecoveryDue(
+            long roomElapsedMs, boolean alreadyApplied) {
+        return !alreadyApplied
+                && roomElapsedMs >= STAGE_4_ROOM_HARD_RECOVERY_MS;
+    }
+
+    static boolean stageFourRoomReadyToExit(
+            boolean mobsCleared, int collectedPasses, int passQuota) {
+        return mobsCleared && passQuota > 0 && collectedPasses >= passQuota;
+    }
+
+    /**
+     * Runs from the LPQ watchdog so room deadlines do not depend on an
+     * individual Agent remaining runnable in the activity scheduler.
+     */
+    static boolean tickStageFourRoomRecoveryWatchdog(AgentLpqSession session, long nowMs) {
+        synchronized (session) {
+            if (session.terminal() || session.paused()
+                    || session.phase() != AgentLpqSession.Phase.STAGE_4) {
+                return false;
             }
-        } else {
-            member.clearRoomCombatProgress();
+            boolean coordinatorTickRequired = false;
+            for (AgentLpqMemberState member : session.members()) {
+                if (member.memberType() != AgentLpqMemberState.MemberType.AGENT) continue;
+                Character agent = character(member.characterId());
+                AgentRuntimeEntry entry = entry(member.characterId());
+                if (agent == null || entry == null
+                        || !AgentLpqDefinition.roomMaps(4).contains(agent.getMapId())) {
+                    continue;
+                }
+                int roomMapId = agent.getMapId();
+                // Room completion releases ownership immediately, but crossing the
+                // authored exit route still requires scheduler ticks. Keep the
+                // coordinator alive until the character is confirmed on the Stage 4
+                // main map; otherwise a fast final-pass pickup can strand the former
+                // owner inside the completed room.
+                if (session.rooms().completed(roomMapId)) {
+                    coordinatorTickRequired |= tickStageFourCompletedRoomExit(
+                            session, entry, agent, nowMs);
+                    continue;
+                }
+                if (!java.util.Objects.equals(
+                        session.rooms().owner(roomMapId), agent.getId())) {
+                    continue;
+                }
+                member.beginRoomTiming(roomMapId, nowMs);
+                int roomPasses = member.roomPassesCollectedFor(roomMapId,
+                        agent.getItemQuantity(AgentLpqDefinition.PASS, false));
+                coordinatorTickRequired |= applyStageFourRoomRecovery(
+                        session, member, entry, agent, roomPasses, nowMs);
+            }
+            return coordinatorTickRequired;
         }
-        ACTIONS.grind(entry, mobs);
+    }
+
+    /**
+     * Advances one completed Stage 4 occupant independently of the party
+     * coordinator lease. Completion is not an exit: the character remains a
+     * room occupant until the portal changes its map.
+     */
+    static boolean tickStageFourCompletedRoomExit(
+            AgentLpqSession session, AgentRuntimeEntry entry,
+            Character agent, long nowMs) {
+        synchronized (session) {
+            if (session.terminal() || session.paused()
+                    || session.phase() != AgentLpqSession.Phase.STAGE_4
+                    || entry == null || agent == null
+                    || !AgentLpqDefinition.roomMaps(4).contains(agent.getMapId())
+                    || !session.rooms().completed(agent.getMapId())) {
+                return false;
+            }
+            int roomMapId = agent.getMapId();
+            int mainMapId = AgentLpqDefinition.stage(4).mapId();
+            AgentLpqMemberState member = session.member(agent.getId());
+            if (member == null) return false;
+            member.beginRoomExit(roomMapId, nowMs);
+            long exitInactiveMs = traversalInactivity(
+                    member, agent, mainMapId, nowMs);
+            long exitElapsedMs = member.roomExitElapsed(roomMapId, nowMs);
+            if (roomExitPortalPlacementDue(4, exitInactiveMs, exitElapsedMs)) {
+                return forceRoomExitThroughPortal(
+                        session, member, entry, agent, mainMapId, nowMs);
+            }
+            reportStageFourExitRoute(
+                    session, member, entry, agent, mainMapId, exitElapsedMs);
+            Point sourcePosition = agent.getPosition() == null
+                    ? null : new Point(agent.getPosition());
+            enterPortalTo(entry, agent, mainMapId);
+            if (agent.getMapId() != mainMapId) return true;
+            log.info("LPQ natural room exit completed: session={} stage=4 "
+                            + "member={}({}) source={} sourcePosition={} destination={} elapsedMs={}",
+                    session.sessionId(), agent.getName(), agent.getId(), roomMapId,
+                    sourcePosition, mainMapId, exitElapsedMs);
+            member.assign(AgentLpqMemberState.Role.GENERAL, 0);
+            member.clearTraversalProgress();
+            session.markProgress(nowMs);
+            return true;
+        }
+    }
+
+    private static boolean applyStageFourRoomRecovery(
+            AgentLpqSession session, AgentLpqMemberState member,
+            AgentRuntimeEntry entry, Character agent, int roomPasses, long nowMs) {
+        int roomMapId = agent.getMapId();
+        Set<Integer> targetIds = stageFourCombatTargets(roomMapId);
+        List<Monster> liveTargets = agent.getMap().getAllMonsters().stream()
+                .filter(monster -> targetIds.contains(monster.getId()))
+                .toList();
+        long liveHp = liveTargets.stream().mapToLong(Monster::getHp).sum();
+        long inactiveForMs = member.observeRoomRecoveryProgress(
+                roomMapId, liveTargets.size(), liveHp, roomPasses, nowMs);
+        long roomElapsedMs = member.roomTimingElapsed(roomMapId, nowMs);
+        int passQuota = AgentLpqDefinition.roomPassQuota(roomMapId);
+
+        // Inventory completion is authoritative. Do not wait for the assigned Agent's
+        // activity tick to translate 1/1 or 2/2 into the room-exit state; that tick can
+        // become idle immediately after collecting the final pass. The independent LPQ
+        // watchdog performs the same natural portal attempt for every Stage 4 room.
+        if (stageFourRoomReadyToExit(liveTargets.isEmpty(), roomPasses, passQuota)) {
+            return completeStageFourRoomAndBeginExit(
+                    session, member, entry, agent, roomMapId, roomElapsedMs,
+                    roomPasses, passQuota, 0, nowMs, "objective-complete");
+        }
+
+        if (stageFourRoomHardRecoveryDue(
+                roomElapsedMs, member.roomRecoveryHardAppliedFor(roomMapId))) {
+            ACTIONS.stop(entry);
+            AgentGrindTargetStateRuntime.clear(entry);
+            List<Integer> mobIds = liveTargets.stream().map(Monster::getId).distinct().toList();
+            for (int mobId : mobIds) agent.getMap().killMonsterWithDrops(mobId);
+            int vacuumed = vacuumPassDrops(agent, Set.of(agent.getMap()));
+            member.markRoomRecoveryHardApplied(roomMapId);
+            member.clearRoomCombatProgress();
+            session.markProgress(nowMs);
+            int passesAfter = member.roomPassesCollectedFor(roomMapId,
+                    agent.getItemQuantity(AgentLpqDefinition.PASS, false));
+            boolean objectivesComplete = agent.getMap().getAllMonsters().stream()
+                    .noneMatch(monster -> targetIds.contains(monster.getId()))
+                    && passesAfter >= passQuota;
+            boolean exited = false;
+            if (objectivesComplete) {
+                session.rooms().complete(roomMapId);
+                member.beginRoomExit(roomMapId, nowMs);
+                member.finishRoomTiming(roomMapId, nowMs);
+                exited = forceRoomExitThroughPortal(session, member, entry, agent,
+                        AgentLpqDefinition.stage(4).mapId(), nowMs);
+            }
+            log.warn("LPQ Stage 4 90-second hard room recovery: session={} member={}({}) "
+                            + "room={} elapsedMs={} inactiveForMs={} killedMobs={} "
+                            + "vacuumedPasses={} passesBefore={}/{} passesAfter={}/{} "
+                            + "exitedThroughPortal={}",
+                    session.sessionId(), agent.getName(), agent.getId(), roomMapId,
+                    roomElapsedMs, inactiveForMs, liveTargets.size(), vacuumed, roomPasses,
+                    passQuota, passesAfter, passQuota, exited);
+            return true;
+        }
+
+        if (liveTargets.isEmpty() && roomElapsedMs >= STAGE_4_ROOM_ASSIST_MS) {
+            int vacuumed = vacuumPassDrops(agent, Set.of(agent.getMap()));
+            int passesAfter = member.roomPassesCollectedFor(roomMapId,
+                    agent.getItemQuantity(AgentLpqDefinition.PASS, false));
+            if (stageFourRoomReadyToExit(true, passesAfter, passQuota)) {
+                return completeStageFourRoomAndBeginExit(
+                        session, member, entry, agent, roomMapId, roomElapsedMs,
+                        passesAfter, passQuota, vacuumed, nowMs, "60-second-pass-loot");
+            }
+        }
+        if (!stageFourRoomAssistRecoveryDue(roomElapsedMs, inactiveForMs,
+                member.roomRecoveryAssistAppliedFor(roomMapId)) || liveTargets.isEmpty()) {
+            return false;
+        }
+
+        Monster target = liveTargets.stream()
+                .min(java.util.Comparator.comparingDouble(monster ->
+                        monster.getPosition().distanceSq(agent.getPosition())))
+                .orElse(null);
+        Point grounded = target == null ? null
+                : ACTIONS.groundPoint(agent.getMap(), target.getPosition());
+        if (grounded == null) return false;
+        ACTIONS.stop(entry);
+        AgentGrindTargetStateRuntime.clear(entry);
+        ACTIONS.stagePosition(entry, agent, grounded);
+        member.markRoomRecoveryAssistApplied(roomMapId);
+        member.clearRoomCombatProgress();
+        member.clearTraversalProgress();
+        member.deferUntil(nowMs + STAGE_4_EYE_RETRY_MS);
+        session.markProgress(nowMs);
+        log.warn("LPQ Stage 4 60-second attack-position assist: session={} member={}({}) "
+                        + "room={} elapsedMs={} inactiveForMs={} targetMob={} targetOid={} "
+                        + "targetHp={} target={}",
+                session.sessionId(), agent.getName(), agent.getId(), roomMapId,
+                roomElapsedMs, inactiveForMs, target.getId(), target.getObjectId(),
+                target.getHp(), grounded);
+        return true;
+    }
+
+    private static boolean completeStageFourRoomAndBeginExit(
+            AgentLpqSession session, AgentLpqMemberState member,
+            AgentRuntimeEntry entry, Character agent, int roomMapId,
+            long roomElapsedMs, int roomPasses, int passQuota,
+            int vacuumedPasses, long nowMs, String reason) {
+        ACTIONS.stop(entry);
+        AgentGrindTargetStateRuntime.clear(entry);
+        session.rooms().complete(roomMapId);
+        member.beginRoomExit(roomMapId, nowMs);
+        member.finishRoomTiming(roomMapId, nowMs);
+        member.clearRoomCombatProgress();
+        boolean exited = enterPortalTo(entry, agent, AgentLpqDefinition.stage(4).mapId());
+        session.markProgress(nowMs);
+        log.info("LPQ Stage 4 room-complete natural exit started: session={} "
+                        + "member={}({}) room={} reason={} elapsedMs={} vacuumedPasses={} "
+                        + "passes={}/{} exitedImmediately={}",
+                session.sessionId(), agent.getName(), agent.getId(), roomMapId,
+                reason, roomElapsedMs, vacuumedPasses, roomPasses, passQuota, exited);
+        return true;
     }
 
     private static void reportRoomProgress(AgentLpqSession session, AgentLpqMemberState member,
@@ -1994,6 +2219,38 @@ final class AgentLpqCoordinator {
                                                     boolean refreshDue) {
         return stage == 5 && roomMapId == AgentLpqDefinition.STAGE_5_DARK_SIGHT_ROOM
                 && !protectionPrepared && refreshDue;
+    }
+
+    static boolean requiresStageFiveMainMapDarkSight(
+            boolean stageFiveRunner, int mapId, boolean refreshDue) {
+        return stageFiveRunner
+                && mapId == AgentLpqDefinition.stage(5).mapId()
+                && refreshDue;
+    }
+
+    static boolean requiresDarkSightCancellationForRoomLoot(
+            boolean darkSightActive, boolean passWithinPickupRange) {
+        return darkSightActive && passWithinPickupRange;
+    }
+
+    private static boolean prepareStageFiveMainMapDarkSight(
+            AgentLpqMemberState member, AgentRuntimeEntry entry,
+            Character agent, long nowMs) {
+        if (!requiresStageFiveMainMapDarkSight(
+                member.stageFiveDarkSightRunner(), agent.getMapId(),
+                darkSightRefreshDue(agent, nowMs))) {
+            return false;
+        }
+        ACTIONS.stop(entry);
+        if (AgentMovementStateRuntime.inAir(entry)
+                || AgentMovementStateRuntime.climbing(entry)
+                || !ACTIONS.grounded(agent)) {
+            return true;
+        }
+        if (refreshDarkSight(entry, agent)) {
+            member.deferUntil(nowMs + INTERACTION_RETRY_MS);
+        }
+        return true;
     }
 
     private static boolean prepareDarkSightRoomExit(
@@ -2179,8 +2436,17 @@ final class AgentLpqCoordinator {
         if (activeAfter > 0 || roomPasses < passQuota) return;
 
         long durationMs = member.finishRoomTiming(roomMapId, nowMs);
+        member.recordStageFiveEarnedPasses(passQuota);
         session.rooms().complete(roomMapId);
         member.beginRoomExit(roomMapId, nowMs);
+        if (prepareDarkSightRoomExit(
+                5, roomMapId, entry, agent, member, nowMs)) {
+            log.info("LPQ Stage 5 room recovery prepared Dark Sight before exit: "
+                            + "session={} member={}({}) room={} passes={}/{}",
+                    session.sessionId(), agent.getName(), agent.getId(), roomMapId,
+                    roomPasses, passQuota);
+            return;
+        }
         boolean exited = forceRoomExitThroughPortal(
                 session, member, entry, agent, mainMapId, nowMs);
         log.warn("LPQ Stage 5 four-minute room recovery completed: session={} "
@@ -2283,7 +2549,12 @@ final class AgentLpqCoordinator {
             }
             if (participant.getMapId() == mainMapId) {
                 if (npc != null && member.memberType() == AgentLpqMemberState.MemberType.AGENT) {
-                    rallyMemberAtNpc(member, participant, entry(participant.getId()), npc);
+                    AgentRuntimeEntry participantEntry = entry(participant.getId());
+                    if (participantEntry != null && prepareStageFiveMainMapDarkSight(
+                            member, participantEntry, participant, nowMs)) {
+                        continue;
+                    }
+                    rallyMemberAtNpc(member, participant, participantEntry, npc);
                 } else if (member.memberType() == AgentLpqMemberState.MemberType.HUMAN
                         && npc != null && !near(
                         participant.getPosition(), npc, INTERACTION_RADIUS)
@@ -2303,7 +2574,7 @@ final class AgentLpqCoordinator {
                 if (participantEntry == null) continue;
                 int roomMapId = participant.getMapId();
                 member.beginRoomExit(roomMapId, nowMs);
-                if (exitAction == PassHandoffExitAction.NAVIGATE
+                if (exitAction != PassHandoffExitAction.MOVE_TO_STAGE
                         && prepareDarkSightRoomExit(contract.number(), roomMapId,
                         participantEntry, participant, member, nowMs)) {
                     continue;
@@ -2330,9 +2601,6 @@ final class AgentLpqCoordinator {
             if (exitAction == PassHandoffExitAction.MOVE_TO_STAGE) {
                 int sourceMapId = participant.getMapId();
                 if (moveWithinEvent(session, participant, mainMapId, nowMs)) {
-                    if (sourceMapId == AgentLpqDefinition.STAGE_5_DARK_SIGHT_ROOM) {
-                        cancelDarkSight(participant);
-                    }
                     member.assign(AgentLpqMemberState.Role.GENERAL, 0);
                     member.clearTraversalProgress();
                     log.warn("LPQ hard current-stage handoff recovery: session={} stage={} "
@@ -2384,9 +2652,6 @@ final class AgentLpqCoordinator {
         ACTIONS.stagePosition(entry, agent, portal);
         boolean exited = LPQ.enterPortal(agent, portalId);
         if (!exited) return false;
-        if (sourceMapId == AgentLpqDefinition.STAGE_5_DARK_SIGHT_ROOM) {
-            cancelDarkSight(agent);
-        }
         session.rooms().release(sourceMapId);
         member.assign(AgentLpqMemberState.Role.GENERAL, 0);
         member.clearTraversalProgress();
@@ -2505,7 +2770,7 @@ final class AgentLpqCoordinator {
     }
 
     private static boolean restoreEventMember(AgentLpqSession session, Character agent,
-                                              int destinationMapId, long nowMs) {
+                                               int destinationMapId, long nowMs) {
         var event = session.eventInstance();
         MapleMap destination = event == null ? null : event.getMapInstance(destinationMapId);
         Portal spawn = destination == null ? null : destination.getRandomPlayerSpawnpoint();
@@ -2516,6 +2781,29 @@ final class AgentLpqCoordinator {
         log.warn("LPQ event-member recovery: session={} member={}({}) destination={}",
                 session.sessionId(), agent.getName(), agent.getId(), destinationMapId);
         return true;
+    }
+
+    private static void restoreStageFiveEarnedPasses(
+            AgentLpqSession session, AgentLpqMemberState member,
+            Character agent, long nowMs) {
+        int earned = member.stageFiveUnhandedPasses();
+        int held = agent.getItemQuantity(AgentLpqDefinition.PASS, false);
+        int missing = stageFivePassRestoreCount(earned, held);
+        if (missing == 0) return;
+        if (!AgentInventoryGatewayRuntime.inventory().addItem(
+                agent, AgentLpqDefinition.PASS, (short) missing)) {
+            AgentLpqTerminationService.fail(session,
+                    "LPQ Stage 5 earned passes could not be restored after member revival", nowMs);
+            return;
+        }
+        session.markProgress(nowMs);
+        log.warn("LPQ Stage 5 restored {} earned passes after event-exclusive death cleanup: "
+                        + "session={} member={}({}) heldBefore={} earned={}",
+                missing, session.sessionId(), agent.getName(), agent.getId(), held, earned);
+    }
+
+    static int stageFivePassRestoreCount(int earned, int held) {
+        return Math.max(0, earned - held);
     }
 
     private static boolean moveWithinEvent(AgentLpqSession session, Character agent,
@@ -2600,6 +2888,7 @@ final class AgentLpqCoordinator {
                 if (recoveryDue
                         && member.memberType() == AgentLpqMemberState.MemberType.AGENT
                         && moveWithinEvent(session, participant, destination, nowMs)) {
+                    cancelStageFiveDarkSightAtTransition(stage, member, participant);
                     member.clearTraversalProgress();
                     recovered++;
                 }
@@ -2614,6 +2903,7 @@ final class AgentLpqCoordinator {
                     if (entry != null && recoveryDue) {
                         if (portal == null) {
                             if (moveWithinEvent(session, participant, destination, nowMs)) {
+                                cancelStageFiveDarkSightAtTransition(stage, member, participant);
                                 member.clearTraversalProgress();
                                 recovered++;
                             }
@@ -2646,8 +2936,16 @@ final class AgentLpqCoordinator {
             Character agent = character(member.characterId());
             AgentRuntimeEntry entry = entry(member.characterId());
             if (agent != null && entry != null && agent.getMapId() == source) {
+                cancelStageFiveDarkSightAtTransition(stage, member, agent);
                 enterPortalTo(entry, agent, destination);
             }
+        }
+    }
+
+    private static void cancelStageFiveDarkSightAtTransition(
+            int stage, AgentLpqMemberState member, Character participant) {
+        if (stage == 5 && member.stageFiveDarkSightRunner()) {
+            cancelDarkSight(participant);
         }
     }
 
@@ -3931,6 +4229,17 @@ final class AgentLpqCoordinator {
                         && drop.getItemId() == AgentLpqDefinition.PASS)
                 .anyMatch(drop -> Math.abs(drop.getPosition().x - agent.getPosition().x) > radius
                         || Math.abs(drop.getPosition().y - agent.getPosition().y) > radius);
+    }
+
+    private static boolean passDropWithinPickupRange(Character agent) {
+        if (agent == null || agent.getMap() == null || agent.getPosition() == null) return false;
+        int radius = server.agents.runtime.AgentRuntimeConfig.cfg.LOOT_RADIUS;
+        return agent.getMap().getDroppedItems().stream()
+                .filter(java.util.Objects::nonNull)
+                .filter(drop -> !drop.isPickedUp()
+                        && drop.getItemId() == AgentLpqDefinition.PASS)
+                .anyMatch(drop -> Math.abs(drop.getPosition().x - agent.getPosition().x) <= radius
+                        && Math.abs(drop.getPosition().y - agent.getPosition().y) <= radius);
     }
 
     private static void cancelDarkSight(Character agent) {
