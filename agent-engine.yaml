@@ -3122,6 +3122,10 @@ tuning:
     # Purpose: Controls the distance or margin used for interaction distance. Higher values allow action from farther away or leave more space; lower values require closer, more precise positioning.
     # Technical: the "first job journey runtime" component consumes this as an integer. Unit: MapleStory map pixels; horizontal and vertical values use the server map coordinate system.
     server.agents.progression.AgentFirstJobJourneyRuntime.INTERACTION_DISTANCE_PX: '100'
+    # Values: 200-800 map pixels. Recommended: 400, half of the generic unreachable-NPC ceiling.
+    # Purpose: Keeps first-job instructor quest completion and job advancement visibly near the instructor instead of firing from the room entrance.
+    # Technical: This narrows only the unreachable-graph fallback for first-job instructors; ordinary NPC, taxi, shop, and quest interactions retain their existing policies.
+    server.agents.progression.AgentFirstJobJourneyRuntime.INSTRUCTOR_UNREACHABLE_FALLBACK_DISTANCE_PX: '400'
     # Values: a finite non-negative integer; unit: map pixels. Recommended: 90-240 around the tested baseline 180.
     # Purpose: Controls how close a Mushroom Kingdom Agent must stand before advancing an NPC quest script.
     # Technical: Uses the server map coordinate system and the shared NPC reachability fallback before a headless quest script may advance.
@@ -3206,6 +3210,10 @@ tuning:
     # Purpose: Controls how close an Agent must approach a second-job advancement NPC before invoking its ordinary quest script.
     # Technical: AgentSecondJobAdvancementRuntime passes this bound to the shared grounded NPC reachability service without changing any other progression flow.
     server.agents.progression.AgentSecondJobAdvancementRuntime.INTERACTION_DISTANCE_PX: '180'
+    # Values: 30-80 map pixels. Recommended: 45, matching ordinary Victoria portal entry.
+    # Purpose: Controls physical entry distance for authored second-job approach shortcuts such as the Ellinia tree tunnel.
+    # Technical: The shortcut still navigates normally to the real portal and never changes maps directly.
+    server.agents.progression.AgentSecondJobAdvancementRuntime.PORTAL_DISTANCE_PX: '45'
     # Values: 5000-60000 milliseconds. Recommended: 15000 before discarding a stale second-job trial target and platform lease.
     # Purpose: Rebalances a second-job trial only after its collected-item count stops changing for a bounded observation interval.
     # Technical: The runtime preserves authoritative trial items and quest phase while clearing only Agent-owned combat, navigation, and target-selection state.

@@ -26,7 +26,14 @@ public final class AgentSecondJobAdvancementRuntime {
             "server.agents.progression.AgentSecondJobAdvancementRuntime.INTERACTION_DISTANCE_PX");
     private static final long TRIAL_REBALANCE_MS = config.AgentTuning.longValue(
             "server.agents.progression.AgentSecondJobAdvancementRuntime.TRIAL_REBALANCE_MS");
+    private static final int PORTAL_DISTANCE_PX = config.AgentTuning.intValue(
+            "server.agents.progression.AgentSecondJobAdvancementRuntime.PORTAL_DISTANCE_PX");
     private static final long TRIAL_TIMEOUT_MS = 20 * 60_000L;
+    private static final int ELLINIA_FOREST_NORTH_MAP_ID = 101_020_000;
+    private static final int ELLINIA_TREE_TUNNEL_MAP_ID = 101_020_001;
+    private static final int ELLINIA_TREE_TUNNEL_BOTTOM_PORTAL_ID = 9;
+    private static final int ELLINIA_TREE_TUNNEL_TOP_PORTAL_ID = 12;
+    private static final int ELLINIA_TREE_TUNNEL_UPPER_EXIT_Y = -1_500;
 
     private AgentSecondJobAdvancementRuntime() { }
 
@@ -146,12 +153,53 @@ public final class AgentSecondJobAdvancementRuntime {
     private static boolean instructor(AgentRuntimeEntry entry, Character agent,
                                       AgentSecondJobCatalog.Branch branch,
                                       PrimitiveCapabilityGateway gateway) {
+        if (routeMagicianThroughTreeTunnel(entry, agent, branch, gateway)) return true;
         if (!travel(entry, agent, branch, branch.instructorMapId(), gateway)) return true;
         if (!nearNpc(entry, agent, branch.instructorNpcId(), gateway)) return true;
         if (!claimTrial(agent, branch, gateway)) return false;
         gateway.stop(entry);
         gateway.runNpcScript(agent, branch.instructorNpcId());
         return true;
+    }
+
+    /** Uses the authored Ellinia tunnel shortcut before resuming generic local navigation. */
+    private static boolean routeMagicianThroughTreeTunnel(
+            AgentRuntimeEntry entry,
+            Character agent,
+            AgentSecondJobCatalog.Branch branch,
+            PrimitiveCapabilityGateway gateway) {
+        if (branch.family() != AgentSecondJobCatalog.Family.MAGICIAN) {
+            return false;
+        }
+        int mapId = gateway.mapId(agent);
+        if (mapId == ELLINIA_TREE_TUNNEL_MAP_ID) {
+            approachPortal(entry, agent, ELLINIA_TREE_TUNNEL_TOP_PORTAL_ID, gateway);
+            return true;
+        }
+        if (mapId == ELLINIA_FOREST_NORTH_MAP_ID
+                && agent.getPosition().y > ELLINIA_TREE_TUNNEL_UPPER_EXIT_Y) {
+            approachPortal(entry, agent, ELLINIA_TREE_TUNNEL_BOTTOM_PORTAL_ID, gateway);
+            return true;
+        }
+        return false;
+    }
+
+    private static void approachPortal(AgentRuntimeEntry entry,
+                                       Character agent,
+                                       int portalId,
+                                       PrimitiveCapabilityGateway gateway) {
+        Point portal = gateway.portalPosition(agent, portalId);
+        if (portal == null) {
+            gateway.refreshNavigation(entry, agent);
+            return;
+        }
+        if (agent.getPosition().distanceSq(portal)
+                <= (double) PORTAL_DISTANCE_PX * PORTAL_DISTANCE_PX) {
+            gateway.stop(entry);
+            gateway.enterPortal(agent, portalId);
+            return;
+        }
+        gateway.navigate(entry, portal, true);
     }
 
     private static boolean trial(AgentRuntimeEntry entry, Character agent,

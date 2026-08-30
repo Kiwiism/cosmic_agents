@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
+import server.agents.capabilities.objective.AgentNpcInteractionReachabilityService;
 import server.agents.integration.PrimitiveCapabilityGateway;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
@@ -24,6 +25,33 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class AgentFirstJobJourneyRuntimeTest {
+    @Test
+    void firstJobAdvanceUsesNarrowInstructorFallbackAndKeepsApproaching() {
+        Character agent = beginner("VisibleAdvance", 10, 102000003);
+        when(agent.getQuestStatus(1046)).thenReturn((byte) 2);
+        when(agent.getQuestStatus(2081)).thenReturn((byte) 2);
+        when(agent.getQuestStatus(2077)).thenReturn((byte) 2);
+        AgentRuntimeEntry entry = entry(agent, "warrior-standard-v1",
+                AgentCareerProgressionState.Stage.ADVANCE_FIRST_JOB);
+        PrimitiveCapabilityGateway gateway = mock(PrimitiveCapabilityGateway.class);
+        Point instructor = new Point(500, 0);
+        when(gateway.npcPosition(agent, 1022000)).thenReturn(instructor);
+        when(gateway.grounded(agent)).thenReturn(true);
+
+        try (MockedStatic<AgentNpcInteractionReachabilityService> reachability =
+                     mockStatic(AgentNpcInteractionReachabilityService.class)) {
+            reachability.when(() -> AgentNpcInteractionReachabilityService.canInteract(
+                    entry, agent, instructor, 100, 400)).thenReturn(false);
+
+            assertFalse(AgentFirstJobJourneyRuntime.tick(entry, agent, 100L, gateway));
+            reachability.verify(() -> AgentNpcInteractionReachabilityService.canInteract(
+                    entry, agent, instructor, 100, 400));
+        }
+
+        verify(gateway).navigate(entry, instructor, true);
+        verify(gateway, never()).runNpcScript(agent, 1022000);
+    }
+
     @Test
     void taxiArrivalWaitsInElliniaBeforeStartingTheLibraryRoute() {
         Character agent = beginner("VisibleEllinia", 10, 104000000);

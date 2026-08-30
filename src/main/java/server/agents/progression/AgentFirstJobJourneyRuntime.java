@@ -29,6 +29,8 @@ public final class AgentFirstJobJourneyRuntime {
     private static final int SHANKS_NPC_ID = 22_000;
     private static final int LITH_TAXI_NPC_ID = 1_002_000;
     private static final int INTERACTION_DISTANCE_PX = config.AgentTuning.intValue("server.agents.progression.AgentFirstJobJourneyRuntime.INTERACTION_DISTANCE_PX");
+    private static final int INSTRUCTOR_UNREACHABLE_FALLBACK_DISTANCE_PX = config.AgentTuning.intValue(
+            "server.agents.progression.AgentFirstJobJourneyRuntime.INSTRUCTOR_UNREACHABLE_FALLBACK_DISTANCE_PX");
     private static final long INTERACTION_DELAY_MS = config.AgentTuning.longValue("server.agents.progression.AgentFirstJobJourneyRuntime.INTERACTION_DELAY_MS");
 
     private AgentFirstJobJourneyRuntime() {
@@ -107,7 +109,8 @@ public final class AgentFirstJobJourneyRuntime {
             case ENTER_INSTRUCTOR_ROOM -> enterInstructorRoom(entry, agent, bundle, gateway);
             case COMPLETE_CAREER_PATH -> completeCareerPath(entry, agent, bundle, gateway);
             case ADVANCE_FIRST_JOB -> approachAndRun(entry, agent, bundle.instructorNpcId(),
-                    () -> advanceAtInstructor(entry, agent, bundle, nowMs, gateway), gateway);
+                    () -> advanceAtInstructor(entry, agent, bundle, nowMs, gateway),
+                    INSTRUCTOR_UNREACHABLE_FALLBACK_DISTANCE_PX, gateway);
             case TRAVEL_TO_INITIAL_SHOP -> travelToInitialShop(entry, agent, state, bundle, nowMs, gateway);
             case INITIAL_SHOPPING -> waitForInitialShopping(entry, agent, state, nowMs, gateway);
             case RETURN_TO_INSTRUCTOR -> returnToInstructor(entry, agent, state, bundle, nowMs, gateway);
@@ -316,7 +319,7 @@ public final class AgentFirstJobJourneyRuntime {
             return true;
         }
         interactQuestAtNpc(entry, agent, bundle.instructorNpcId(), career(bundle).olafPathQuestId(),
-                true, gateway);
+                true, INSTRUCTOR_UNREACHABLE_FALLBACK_DISTANCE_PX, gateway);
         return true;
     }
 
@@ -326,13 +329,27 @@ public final class AgentFirstJobJourneyRuntime {
                                               int questId,
                                               boolean complete,
                                               PrimitiveCapabilityGateway gateway) {
+        return interactQuestAtNpc(entry, agent, npcId, questId, complete, -1, gateway);
+    }
+
+    private static boolean interactQuestAtNpc(AgentRuntimeEntry entry,
+                                              Character agent,
+                                              int npcId,
+                                              int questId,
+                                              boolean complete,
+                                              int unreachableFallbackDistancePx,
+                                              PrimitiveCapabilityGateway gateway) {
         Point npc = gateway.npcPosition(agent, npcId);
         if (npc == null) {
             return false;
         }
+        boolean canInteract = unreachableFallbackDistancePx > 0
+                ? AgentNpcInteractionReachabilityService.canInteract(
+                entry, agent, npc, INTERACTION_DISTANCE_PX, unreachableFallbackDistancePx)
+                : AgentNpcInteractionReachabilityService.canInteract(
+                entry, agent, npc, INTERACTION_DISTANCE_PX);
         if (!gateway.grounded(agent)
-                || !AgentNpcInteractionReachabilityService.canInteract(
-                entry, agent, npc, INTERACTION_DISTANCE_PX)) {
+                || !canInteract) {
             gateway.navigate(entry, npc, true);
             return false;
         }
@@ -453,13 +470,26 @@ public final class AgentFirstJobJourneyRuntime {
                                           int npcId,
                                           Runnable interaction,
                                           PrimitiveCapabilityGateway gateway) {
+        return approachAndRun(entry, agent, npcId, interaction, -1, gateway);
+    }
+
+    private static boolean approachAndRun(AgentRuntimeEntry entry,
+                                          Character agent,
+                                          int npcId,
+                                          Runnable interaction,
+                                          int unreachableFallbackDistancePx,
+                                          PrimitiveCapabilityGateway gateway) {
         Point npc = gateway.npcPosition(agent, npcId);
         if (npc == null) {
             return true;
         }
+        boolean canInteract = unreachableFallbackDistancePx > 0
+                ? AgentNpcInteractionReachabilityService.canInteract(
+                entry, agent, npc, INTERACTION_DISTANCE_PX, unreachableFallbackDistancePx)
+                : AgentNpcInteractionReachabilityService.canInteract(
+                entry, agent, npc, INTERACTION_DISTANCE_PX);
         if (!gateway.grounded(agent)
-                || !AgentNpcInteractionReachabilityService.canInteract(
-                entry, agent, npc, INTERACTION_DISTANCE_PX)) {
+                || !canInteract) {
             gateway.navigate(entry, npc, true);
             return false;
         }

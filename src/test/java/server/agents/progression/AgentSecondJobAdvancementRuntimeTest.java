@@ -20,6 +20,52 @@ import static org.mockito.Mockito.when;
 
 class AgentSecondJobAdvancementRuntimeTest {
     @Test
+    void magicianInstructorApproachEntersTreeTunnelFromLowerForest() {
+        Character agent = mock(Character.class);
+        PrimitiveCapabilityGateway gateway = mock(PrimitiveCapabilityGateway.class);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+        AgentSecondJobCatalog.Branch branch = AgentSecondJobCatalog.require("fp-wizard");
+        entry.capabilityStates().require(AgentSecondJobAdvancementState.STATE_KEY)
+                .begin(branch.id(), 1L);
+
+        when(gateway.characterState(agent)).thenReturn(
+                new AgentCharacterStateSnapshot(200, 30, 1_000, 1_000, 500, 500, true));
+        when(gateway.mapId(agent)).thenReturn(101020000);
+        when(gateway.itemCount(agent, branch.letterItemId())).thenReturn(1);
+        when(gateway.freeSlots(agent, branch.collectionItemId())).thenReturn(1);
+        when(agent.getPosition()).thenReturn(new Point(29, 2_092));
+        when(gateway.portalPosition(agent, 9)).thenReturn(new Point(29, 2_092));
+
+        AgentSecondJobAdvancementRuntime.tick(entry, agent, 10L, gateway);
+
+        verify(gateway).enterPortal(agent, 9);
+        verify(gateway, never()).travelTo(
+                same(entry), same(agent), eq(branch.instructorMapId()), anyLong());
+    }
+
+    @Test
+    void magicianInstructorApproachExitsTreeTunnelAtTopPortal() {
+        Character agent = mock(Character.class);
+        PrimitiveCapabilityGateway gateway = mock(PrimitiveCapabilityGateway.class);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+        AgentSecondJobCatalog.Branch branch = AgentSecondJobCatalog.require("fp-wizard");
+        entry.capabilityStates().require(AgentSecondJobAdvancementState.STATE_KEY)
+                .begin(branch.id(), 1L);
+
+        when(gateway.characterState(agent)).thenReturn(
+                new AgentCharacterStateSnapshot(200, 30, 1_000, 1_000, 500, 500, true));
+        when(gateway.mapId(agent)).thenReturn(101020001);
+        when(gateway.itemCount(agent, branch.letterItemId())).thenReturn(1);
+        when(gateway.freeSlots(agent, branch.collectionItemId())).thenReturn(1);
+        when(agent.getPosition()).thenReturn(new Point(279, -2_182));
+        when(gateway.portalPosition(agent, 12)).thenReturn(new Point(279, -2_182));
+
+        AgentSecondJobAdvancementRuntime.tick(entry, agent, 10L, gateway);
+
+        verify(gateway).enterPortal(agent, 12);
+    }
+
+    @Test
     void trialUsesPhysicalGrindLootInsteadOfVacuumPickup() {
         Character agent = mock(Character.class);
         PrimitiveCapabilityGateway gateway = mock(PrimitiveCapabilityGateway.class);

@@ -196,7 +196,9 @@ public final class AgentMushroomKingdomFixtureService {
         selected.add(weaponId);
         selected.add(shoesId);
         addIfPresent(selected, pick(candidates, "Cp", random, false));
-        boolean overall = candidates.containsKey("MaPn") && random.nextBoolean();
+        boolean hasOverall = candidates.containsKey("MaPn");
+        boolean hasTopAndBottom = candidates.containsKey("Ma") && candidates.containsKey("Pn");
+        boolean overall = hasOverall && (!hasTopAndBottom || random.nextBoolean());
         if (overall) addIfPresent(selected, pick(candidates, "MaPn", random, false));
         else {
             addIfPresent(selected, pick(candidates, "Ma", random, false));

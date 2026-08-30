@@ -1,5 +1,6 @@
 package server.agents.capabilities.objective;
 
+import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.maps.MapleMap;
@@ -12,6 +13,14 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class AgentNpcInteractionReachabilityServiceTest {
+    @Test
+    void explicitFallbackCeilingRejectsAnOtherwiseGlobalFallbackInteraction() {
+        Character agent = mock(Character.class);
+
+        assertFalse(AgentNpcInteractionReachabilityService.canInteract(
+                null, agent, new Point(0, 0), new Point(500, 0), 100, 400));
+    }
+
     @Test
     void treatsNpcWithoutGraphRegionAsUnavailable() {
         MapleMap map = mock(MapleMap.class);

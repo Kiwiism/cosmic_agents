@@ -23,7 +23,16 @@ public final class AgentNpcInteractionReachabilityService {
                                       Point npcPosition,
                                       int ordinaryDistancePx) {
         return canInteract(entry, agent, agent == null ? null : agent.getPosition(),
-                npcPosition, ordinaryDistancePx);
+                npcPosition, ordinaryDistancePx, UNREACHABLE_GRAPH_INTERACTION_DISTANCE_PX);
+    }
+
+    public static boolean canInteract(AgentRuntimeEntry entry,
+                                      Character agent,
+                                      Point npcPosition,
+                                      int ordinaryDistancePx,
+                                      int unreachableGraphDistancePx) {
+        return canInteract(entry, agent, agent == null ? null : agent.getPosition(),
+                npcPosition, ordinaryDistancePx, unreachableGraphDistancePx);
     }
 
     public static boolean canInteract(AgentRuntimeEntry entry,
@@ -31,6 +40,16 @@ public final class AgentNpcInteractionReachabilityService {
                                       Point currentPosition,
                                       Point npcPosition,
                                       int ordinaryDistancePx) {
+        return canInteract(entry, agent, currentPosition, npcPosition, ordinaryDistancePx,
+                UNREACHABLE_GRAPH_INTERACTION_DISTANCE_PX);
+    }
+
+    public static boolean canInteract(AgentRuntimeEntry entry,
+                                      Character agent,
+                                      Point currentPosition,
+                                      Point npcPosition,
+                                      int ordinaryDistancePx,
+                                      int unreachableGraphDistancePx) {
         if (agent == null || currentPosition == null || npcPosition == null) {
             return false;
         }
@@ -38,8 +57,8 @@ public final class AgentNpcInteractionReachabilityService {
         if (distanceSquared <= (long) ordinaryDistancePx * ordinaryDistancePx) {
             return true;
         }
-        if (distanceSquared > (long) UNREACHABLE_GRAPH_INTERACTION_DISTANCE_PX
-                * UNREACHABLE_GRAPH_INTERACTION_DISTANCE_PX) {
+        int fallbackDistancePx = Math.max(ordinaryDistancePx, unreachableGraphDistancePx);
+        if (distanceSquared > (long) fallbackDistancePx * fallbackDistancePx) {
             return false;
         }
         MapleMap map = agent.getMap();
