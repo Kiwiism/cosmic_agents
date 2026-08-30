@@ -11,6 +11,25 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentLpqSessionTest {
     @Test
+    void mixedPartySupportsHumanAndAgentEventLeadershipWithAgentExecution() {
+        AgentLpqSession humanLed = mixedSession(1_000L);
+        humanLed.setLeadership(900, 101);
+        assertEquals(900, humanLed.eventLeaderId());
+        assertEquals(101, humanLed.executionAgentId());
+        assertEquals(AgentLpqMemberState.Role.EVENT_LEADER,
+                humanLed.member(900).role());
+        assertTrue(humanLed.claimExecutionTick(101, 1_000L, 3_000L));
+
+        AgentLpqSession agentLed = mixedSession(2_000L);
+        agentLed.setLeadership(101, 101);
+        assertEquals(101, agentLed.eventLeaderId());
+        assertEquals(101, agentLed.executionAgentId());
+        assertEquals(AgentLpqMemberState.Role.EVENT_LEADER,
+                agentLed.member(101).role());
+        assertTrue(agentLed.claimExecutionTick(101, 2_000L, 3_000L));
+    }
+
+    @Test
     void phaseTransitionClearsStaleStageAssignmentsAtomically() {
         AgentLpqSession session = new AgentLpqSession(
                 AgentLpqSession.Mode.TEST_OBSERVATION, 17L, 900, 6, 1_000L);
@@ -554,5 +573,15 @@ class AgentLpqSessionTest {
 
         assertTrue(session.member(900).rewardClaimed());
         assertTrue(session.allRewardsResolved());
+    }
+
+    private static AgentLpqSession mixedSession(long nowMs) {
+        AgentLpqSession session = new AgentLpqSession(
+                AgentLpqSession.Mode.TEST_OBSERVATION, 17L, 900, 6, nowMs);
+        session.addMember(900, AgentLpqMemberState.MemberType.HUMAN);
+        for (int id = 101; id <= 105; id++) {
+            session.addMember(id, AgentLpqMemberState.MemberType.AGENT);
+        }
+        return session;
     }
 }

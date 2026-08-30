@@ -1266,7 +1266,8 @@ final class AgentLpqCoordinator {
                 continue;
             }
             if (topIndex >= 0) {
-                Monster triggerRatz = stageSevenTriggerForWorker(liveTriggerRatz, topIndex);
+                Monster triggerRatz = stageSevenTriggerForWorker(
+                        liveTriggerRatz, topIndex, topIds.size());
                 if (triggerRatz == null) {
                     // A killed Ratz drops the authored trigger item onto its box. The
                     // server activates that item reactor after its normal five-second
@@ -1378,9 +1379,9 @@ final class AgentLpqCoordinator {
     }
 
     private static Monster stageSevenTriggerForWorker(
-            List<Monster> liveTriggerRatz, int topIndex) {
+            List<Monster> liveTriggerRatz, int topIndex, int workerCount) {
         if (liveTriggerRatz == null || liveTriggerRatz.isEmpty()) return null;
-        for (int priorityY : stageSevenRatzPriorityYs(topIndex)) {
+        for (int priorityY : stageSevenRatzPriorityYs(topIndex, workerCount)) {
             Monster target = liveTriggerRatz.stream()
                     .filter(monster -> monster != null && monster.getHp() > 0
                             && monster.getPosition() != null)
@@ -1419,6 +1420,13 @@ final class AgentLpqCoordinator {
     }
 
     static List<Integer> stageSevenRatzPriorityYs(int topIndex) {
+        return stageSevenRatzPriorityYs(topIndex, 2);
+    }
+
+    static List<Integer> stageSevenRatzPriorityYs(int topIndex, int workerCount) {
+        if (workerCount <= 1) {
+            return topIndex == 0 ? List.of(-1_044, -1_276, -1_543) : List.of();
+        }
         return switch (topIndex) {
             case 0 -> List.of(-1_044, -1_276);
             case 1 -> List.of(-1_543);
@@ -1431,12 +1439,11 @@ final class AgentLpqCoordinator {
                                                 int eventLeaderId) {
         if (members == null || rangedAttack == null) return List.of();
         return members.stream()
+                .filter(member -> member.memberType() == AgentLpqMemberState.MemberType.AGENT)
+                .filter(member -> rangedAttack.test(member.characterId()))
                 .sorted(Comparator
                         .comparing((AgentLpqMemberState member) ->
-                                !rangedAttack.test(member.characterId()))
-                        .thenComparing((AgentLpqMemberState member) ->
-                                member.memberType() == AgentLpqMemberState.MemberType.HUMAN)
-                        .thenComparing(member -> member.characterId() == eventLeaderId)
+                                member.characterId() == eventLeaderId)
                         .thenComparingInt(AgentLpqMemberState::characterId))
                 .limit(Math.min(2, members.size()))
                 .map(AgentLpqMemberState::characterId)
@@ -1507,6 +1514,7 @@ final class AgentLpqCoordinator {
                     session.sessionId(), expired.roomMapId(), expired.characterId());
         }
         for (AgentLpqMemberState member : session.members()) {
+            if (member.memberType() != AgentLpqMemberState.MemberType.AGENT) continue;
             Character participant = character(member.characterId());
             if (participant != null && rooms.contains(participant.getMapId())) {
                 if (session.rooms().completed(participant.getMapId())) continue;

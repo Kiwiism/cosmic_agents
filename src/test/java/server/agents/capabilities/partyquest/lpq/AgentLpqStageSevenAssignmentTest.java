@@ -47,6 +47,20 @@ class AgentLpqStageSevenAssignmentTest {
     }
 
     @Test
+    void neverAssignsTheHumanOrAnIncapableAgentToARequiredTriggerLane() {
+        List<AgentLpqMemberState> members = List.of(
+                member(211, AgentLpqMemberState.MemberType.AGENT),
+                member(212, AgentLpqMemberState.MemberType.AGENT),
+                member(213, AgentLpqMemberState.MemberType.AGENT),
+                member(214, AgentLpqMemberState.MemberType.AGENT),
+                member(215, AgentLpqMemberState.MemberType.AGENT),
+                member(216, AgentLpqMemberState.MemberType.HUMAN));
+
+        assertEquals(List.of(212), AgentLpqCoordinator.stageSevenTopMemberIds(
+                members, Set.of(212, 216)::contains, 211));
+    }
+
+    @Test
     void sendsTheTwoQualifiedBoxWackersTop() {
         List<AgentLpqMemberState> members = List.of(
                 member(301, AgentLpqMemberState.MemberType.AGENT),
@@ -120,6 +134,14 @@ class AgentLpqStageSevenAssignmentTest {
                 AgentLpqCoordinator.stageSevenRatzPriorityYs(0));
         assertEquals(List.of(-1_543), AgentLpqCoordinator.stageSevenRatzPriorityYs(1));
         assertEquals(List.of(), AgentLpqCoordinator.stageSevenRatzPriorityYs(2));
+    }
+
+    @Test
+    void oneQualifiedAgentOwnsAllThreeTriggerLanes() {
+        assertEquals(List.of(-1_044, -1_276, -1_543),
+                AgentLpqCoordinator.stageSevenRatzPriorityYs(0, 1));
+        assertEquals(List.of(),
+                AgentLpqCoordinator.stageSevenRatzPriorityYs(1, 1));
     }
 
     private static AgentLpqMemberState member(

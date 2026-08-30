@@ -87,8 +87,8 @@ public final class AgentLpqRosterRequirementPolicy {
         if (roster.stream().noneMatch(AgentLpqRosterRequirementPolicy::darkSight)) {
             missing.add("Dark Sight");
         }
-        if (roster.stream().noneMatch(AgentLpqRosterRequirementPolicy::rangedAttack)) {
-            missing.add("ranged attack");
+        if (roster.stream().noneMatch(AgentLpqRosterRequirementPolicy::stageSevenBoxWacker)) {
+            missing.add("Stage 7 weapon-ranged attack");
         }
         if (roster.stream().noneMatch(AgentLpqRosterRequirementPolicy::physicalAttack)) {
             missing.add("physical attack");

@@ -84,8 +84,9 @@ public final class AgentLpqAdmissionService {
         }
         List<Character> agents = unique.stream().filter(AgentLpqAdmissionService::isAgent).toList();
         if (agents.isEmpty()) return Validation.failure("Agent-assisted LPQ requires an Agent participant");
-        AgentLpqRosterRequirementPolicy.Coverage coverage = AgentLpqRosterRequirementPolicy.evaluate(unique);
-        if (!coverage.complete()) return Validation.failure("Missing LPQ capability: "
+        AgentLpqRosterRequirementPolicy.Coverage coverage =
+                AgentLpqRosterRequirementPolicy.evaluate(agents);
+        if (!coverage.complete()) return Validation.failure("Missing Agent LPQ capability: "
                 + String.join(", ", coverage.missingRequirements()));
         AgentPartySnapshot party = AgentPartyGatewayRuntime.party().snapshot(eventLeader);
         if (party == null) return Validation.failure("The LPQ leader has no party");

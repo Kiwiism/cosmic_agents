@@ -19,9 +19,9 @@ import static org.mockito.Mockito.when;
 
 class AgentLpqRosterRequirementPolicyTest {
     @Test
-    void oneCharacterMayCoverTeleportMagicAndRanged() {
+    void agentRosterMayShareCapabilitiesAcrossMembers() {
         Character mage = character(FPWizard.TELEPORT, Magician.MAGIC_CLAW);
-        Character thief = character(Rogue.DARK_SIGHT, Rogue.LUCKY_SEVEN);
+        Character thief = character(Job.ASSASSIN, Rogue.DARK_SIGHT, Rogue.LUCKY_SEVEN);
         Character warrior = character(Warrior.POWER_STRIKE);
 
         AgentLpqRosterRequirementPolicy.Coverage coverage =
@@ -34,7 +34,7 @@ class AgentLpqRosterRequirementPolicyTest {
     @Test
     void learnedTeleportWithoutMagicDamageDoesNotSatisfyRoomCoverage() {
         Character utilityOnly = character(FPWizard.TELEPORT);
-        Character archer = character(Archer.DOUBLE_SHOT);
+        Character archer = character(Job.HUNTER, Archer.DOUBLE_SHOT);
 
         AgentLpqRosterRequirementPolicy.Coverage coverage =
                 AgentLpqRosterRequirementPolicy.evaluate(List.of(utilityOnly, archer));
@@ -52,6 +52,19 @@ class AgentLpqRosterRequirementPolicyTest {
         assertTrue(AgentLpqRosterRequirementPolicy.stageSevenBoxWacker(character(Job.GUNSLINGER)));
         assertFalse(AgentLpqRosterRequirementPolicy.stageSevenBoxWacker(character(Job.IL_WIZARD)));
         assertFalse(AgentLpqRosterRequirementPolicy.stageSevenBoxWacker(character(Job.BANDIT)));
+    }
+
+    @Test
+    void magicProjectilesDoNotReplaceAStageSevenWeaponRangedAgent() {
+        Character mage = character(Job.IL_WIZARD, FPWizard.TELEPORT, Magician.MAGIC_CLAW);
+        Character bandit = character(Job.BANDIT, Rogue.DARK_SIGHT, Rogue.DOUBLE_STAB);
+
+        AgentLpqRosterRequirementPolicy.Coverage coverage =
+                AgentLpqRosterRequirementPolicy.evaluate(List.of(mage, bandit));
+
+        assertFalse(coverage.complete());
+        assertEquals(List.of("Stage 7 weapon-ranged attack"),
+                coverage.missingRequirements());
     }
 
     @Test
