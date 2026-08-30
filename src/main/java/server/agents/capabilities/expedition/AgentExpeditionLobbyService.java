@@ -14,6 +14,7 @@ import server.agents.integration.AgentCharacterGatewayRuntime;
 import server.agents.integration.AgentClientGatewayRuntime;
 import server.agents.integration.AgentExpeditionGatewayRuntime;
 import server.agents.integration.AgentMapGatewayRuntime;
+import server.agents.integration.AgentPacketGatewayRuntime;
 import server.agents.integration.AgentPartyGatewayRuntime;
 import server.agents.integration.AgentPartyQuestGatewayRuntime;
 import server.agents.integration.AgentPartySnapshot;
@@ -149,7 +150,8 @@ public final class AgentExpeditionLobbyService {
             try {
                 MapleMap stagingMap = AgentMapGatewayRuntime.map().resolveMap(
                         run.world, run.channel, run.stagingMapId);
-                Point candidate = new Point(run.stagingPosition.x + 45 + (ordinal % 6) * 34,
+                Point candidate = new Point(run.stagingPosition.x
+                        + formationOffset(ordinal, run.spec().participantCount(), 34),
                         run.stagingPosition.y);
                 Point spawn = AgentPrimitiveCapabilityGatewayRuntime.gateway()
                         .groundPoint(stagingMap, candidate);
@@ -216,6 +218,7 @@ public final class AgentExpeditionLobbyService {
                 case NAVIGATING -> navigateToEntrance(run, members, nowMs);
                 case CREATING_EXPEDITION -> createExpedition(run, nowMs);
                 case REGISTERING -> registerMembers(run, members, nowMs);
+                case READY_COUNTDOWN -> readyCountdown(run, members, nowMs);
                 case STARTING -> startEvent(run, members, nowMs);
                 case FIGHTING -> fight(run, members, nowMs);
                 case CLEARED, FAILED, STOPPED -> { }
@@ -253,6 +256,12 @@ public final class AgentExpeditionLobbyService {
     }
 
     private void navigateToEntrance(Run run, List<Character> members, long nowMs) {
+        if (rallyMembers(run, members, nowMs)) {
+            transition(run, Phase.CREATING_EXPEDITION, nowMs);
+        }
+    }
+
+    private boolean rallyMembers(Run run, List<Character> members, long nowMs) {
         boolean allReady = true;
         for (Character member : ordered(run, members)) {
             AgentRuntimeEntry entry = AgentRuntimeRegistry.findByAgentCharacterId(member.getId());
@@ -272,7 +281,8 @@ public final class AgentExpeditionLobbyService {
                     .npcPosition(member, run.spec().entryNpcId());
             if (npc == null) throw new IllegalStateException("expedition entrance NPC is unavailable");
             Member fixture = run.members.get(member.getId());
-            Point candidate = new Point(npc.x + 55 + (fixture.ordinal() % 6) * 34, npc.y);
+            Point candidate = new Point(npc.x + formationOffset(
+                    fixture.ordinal(), run.spec().participantCount(), 34), npc.y);
             Point rally = AgentPrimitiveCapabilityGatewayRuntime.gateway()
                     .groundPoint(member.getMap(), candidate);
             if (rally == null) rally = npc;
@@ -286,7 +296,7 @@ public final class AgentExpeditionLobbyService {
                         run.spec().entranceMapId(), false));
             }
         }
-        if (allReady) transition(run, Phase.CREATING_EXPEDITION, nowMs);
+        return allReady;
     }
 
     private void createExpedition(Run run, long nowMs) {
@@ -318,12 +328,39 @@ public final class AgentExpeditionLobbyService {
                     member, run.spec().entryNpcId(), selections(run.spec().joinSelections()))) {
                 throw new IllegalStateException(member.getName() + " could not register");
             }
+            log.info("Expedition registration scenario={} member={} registered={}/{}",
+                    run.spec().scenarioId(), member.getName(), expedition.getMembers().size(),
+                    run.spec().participantCount());
             return;
         }
         if (expedition.getMembers().size() != run.spec().participantCount()) {
             throw new IllegalStateException("expedition roster is not the requested size");
         }
-        transition(run, Phase.STARTING, nowMs);
+        run.readyAtMs = 0L;
+        transition(run, Phase.READY_COUNTDOWN, nowMs);
+    }
+
+    private void readyCountdown(Run run, List<Character> members, long nowMs) {
+        if (!rallyMembers(run, members, nowMs)) {
+            run.readyAtMs = 0L;
+            return;
+        }
+        if (run.readyAtMs == 0L) {
+            run.readyAtMs = nowMs + run.spec().readyCountdownMs();
+            Character leader = character(run.expeditionLeaderId);
+            if (leader != null) {
+                AgentPacketGatewayRuntime.packets().broadcastChatText(
+                        leader, run.spec().displayName() + " party ready. Entering in "
+                                + Math.max(0L, run.spec().readyCountdownMs()) / 1_000L + " seconds.",
+                        false, 0);
+            }
+            log.info("Expedition ready scenario={} registered={} parties={} startsInMs={}",
+                    run.spec().scenarioId(), run.expedition == null ? 0
+                            : run.expedition.getMembers().size(), run.spec().partyCount(),
+                    run.spec().readyCountdownMs());
+            if (run.spec().readyCountdownMs() > 0L) return;
+        }
+        if (nowMs >= run.readyAtMs) transition(run, Phase.STARTING, nowMs);
     }
 
     private void startEvent(Run run, List<Character> members, long nowMs) {
@@ -363,6 +400,9 @@ public final class AgentExpeditionLobbyService {
                     .forEach(AgentPrimitiveCapabilityGatewayRuntime.gateway()::stop);
             transition(run, Phase.CLEARED, nowMs);
             boolean returned = returnToLobby(run);
+            log.info("Agent expedition cleared scenario={} members={} returnedToLobby={} total={} {}",
+                    run.spec().scenarioId(), run.spec().participantCount(), returned,
+                    formattedDuration(nowMs - run.startedAtMs), timingSummary(run, nowMs));
             run.operator.dropMessage(6, run.spec().displayName() + " cleared by "
                     + run.spec().participantCount() + " Agents in " + seconds(nowMs - run.startedAtMs)
                     + "; returned-to-lobby=" + returned + ". " + timingSummary(run, nowMs));
@@ -391,7 +431,7 @@ public final class AgentExpeditionLobbyService {
         run.event = null;
         run.expedition = null;
         return members(run).stream().allMatch(
-                member -> member.getMapId() == run.spec().entranceMapId());
+                member -> member.getMapId() == run.spec().returnMapId());
     }
 
     private List<String> watch(Character operator) {
@@ -412,7 +452,9 @@ public final class AgentExpeditionLobbyService {
         ArrayList<String> lines = new ArrayList<>();
         lines.add(run.spec().displayName() + " phase=" + run.phase + " elapsed="
                 + seconds(nowMs - run.startedAtMs) + " members=" + run.members.size() + '/'
-                + run.spec().participantCount() + " parties=" + run.spec().partyCount() + '.');
+                + run.spec().participantCount() + " parties=" + run.spec().partyCount()
+                + (run.phase == Phase.READY_COUNTDOWN && run.readyAtMs > nowMs
+                ? " starts-in=" + seconds(run.readyAtMs - nowMs) : "") + '.');
         for (Character member : ordered(run, members(run))) {
             Member fixture = run.members.get(member.getId());
             AgentRouteOutcome route = run.routes.get(member.getId());
@@ -450,6 +492,9 @@ public final class AgentExpeditionLobbyService {
     private void release(Run run, Phase terminal) {
         run.phase = terminal;
         EventInstanceManager event = run.event;
+        Expedition expedition = run.expedition;
+        run.event = null;
+        run.expedition = null;
         if (event != null && !event.isEventDisposed()) {
             for (Character participant : new ArrayList<>(event.getPlayers())) {
                 try {
@@ -459,10 +504,9 @@ public final class AgentExpeditionLobbyService {
                 }
             }
             event.dispose();
-        }
-        if (run.expedition != null) {
-            run.expedition.dispose(false);
-            AgentExpeditionGatewayRuntime.expedition().remove(run.operator, run.expedition);
+        } else if (event == null && expedition != null) {
+            expedition.dispose(false);
+            AgentExpeditionGatewayRuntime.expedition().remove(run.operator, expedition);
         }
         members(run).stream()
                 .sorted(Comparator.comparingInt(member -> run.partyLeaderIds.contains(member.getId()) ? 1 : 0))
@@ -512,6 +556,14 @@ public final class AgentExpeditionLobbyService {
         return ordinal / partyCapacity;
     }
 
+    static int formationOffset(int ordinal, int memberCount, int spacingPx) {
+        if (ordinal < 0 || ordinal >= memberCount || memberCount < 1 || memberCount > 30
+                || spacingPx < 1) {
+            throw new IllegalArgumentException("a valid formation slot is required");
+        }
+        return ordinal * spacingPx - (memberCount - 1) * spacingPx / 2;
+    }
+
     private static int[] selections(List<Integer> selections) {
         return selections.stream().mapToInt(Integer::intValue).toArray();
     }
@@ -530,6 +582,7 @@ public final class AgentExpeditionLobbyService {
                 + " rally=" + duration(run, Phase.NAVIGATING)
                 + " create=" + duration(run, Phase.CREATING_EXPEDITION)
                 + " register=" + duration(run, Phase.REGISTERING)
+                + " ready=" + duration(run, Phase.READY_COUNTDOWN)
                 + " start=" + duration(run, Phase.STARTING)
                 + " fight=" + duration(run, Phase.FIGHTING)
                 + " total=" + formattedDuration(nowMs - run.startedAtMs) + '.';
@@ -555,6 +608,7 @@ public final class AgentExpeditionLobbyService {
         NAVIGATING,
         CREATING_EXPEDITION,
         REGISTERING,
+        READY_COUNTDOWN,
         STARTING,
         FIGHTING,
         CLEARED,
@@ -583,6 +637,7 @@ public final class AgentExpeditionLobbyService {
         private volatile long phaseStartedAtMs;
         private volatile int expeditionLeaderId;
         private volatile boolean startRequested;
+        private volatile long readyAtMs;
         private volatile Expedition expedition;
         private volatile EventInstanceManager event;
 

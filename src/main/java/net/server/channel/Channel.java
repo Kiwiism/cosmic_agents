@@ -497,7 +497,7 @@ public final class Channel {
 
     public void removeExpedition(Expedition exped) {
         synchronized (expeditions) {
-            expeditions.remove(exped.getType());
+            expeditions.remove(exped.getType(), exped);
         }
     }
 

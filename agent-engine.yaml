@@ -4257,3 +4257,11 @@ tuning:
     # Purpose: Defines when a travelling expedition Agent is close enough to its assigned entrance rally position to stop moving and begin registration.
     # Technical: Compared as squared map-space distance after ground-point resolution; values that are too small can cause movement oscillation, while large values loosen visual formation.
     server.agents.capabilities.expedition.AgentExpeditionLobbyService.RALLY_DISTANCE_PX: '90'
+    # Values: an integer from 1 to 100 inclusive. Recommended: 65-80; 75 survived the validated level-60 Easy Balrog environmental-damage run without excessive potion use.
+    # Purpose: Sets the HP or MP percentage at which an Easy Balrog Agent consumes its provisioned Power Elixir during the expedition fight.
+    # Technical: Compared with current and buff-adjusted maximum HP and MP on every combat policy tick; keeping headroom above the map drain prevents deaths between normal autopot checks.
+    server.agents.capabilities.expedition.balrog.AgentEasyBalrogScenario.RECOVERY_THRESHOLD_PERCENT: '75'
+    # Values: a positive integer in milliseconds. Recommended: 15000-60000; 30000 provides useful party-health diagnostics without flooding a full boss run log.
+    # Purpose: Controls how frequently Easy Balrog writes one aggregate health, mana, Magic Guard, and formation diagnostic for the expedition party.
+    # Technical: Used only by the Balrog scenario telemetry gate during combat and does not change scheduler cadence, attack decisions, recovery timing, or lobby behavior.
+    server.agents.capabilities.expedition.balrog.AgentEasyBalrogScenario.VITALS_LOG_INTERVAL_MS: '30000'

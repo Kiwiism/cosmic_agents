@@ -1,7 +1,11 @@
 package server.agents.capabilities.expedition.balrog;
 
 import client.Character;
+import client.BuffStat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import scripting.event.EventInstanceManager;
+import server.agents.capabilities.combat.AgentCombatBuffRuntime;
 import server.agents.capabilities.expedition.AgentExpeditionPreparedMember;
 import server.agents.capabilities.expedition.AgentExpeditionScenario;
 import server.agents.capabilities.expedition.AgentExpeditionSpec;
@@ -17,11 +21,20 @@ import java.util.Set;
 
 /** Easy Balrog's build pool, claw/body phase policy, and battle status. */
 public final class AgentEasyBalrogScenario implements AgentExpeditionScenario {
+    private static final Logger log = LoggerFactory.getLogger(AgentEasyBalrogScenario.class);
+    private static final int POWER_ELIXIR_ITEM_ID = 2_000_005;
+    private static final int RECOVERY_THRESHOLD_PERCENT = config.AgentTuning.intValue(
+            "server.agents.capabilities.expedition.balrog.AgentEasyBalrogScenario.RECOVERY_THRESHOLD_PERCENT");
+    private static final long VITALS_LOG_INTERVAL_MS = config.AgentTuning.longValue(
+            "server.agents.capabilities.expedition.balrog.AgentEasyBalrogScenario.VITALS_LOG_INTERVAL_MS");
     private static final List<String> MEMBER_NAMES = List.of(
-            "Balrog01", "Balrog02", "Balrog03", "Balrog04", "Balrog05", "Balrog06");
+            "Balrog01", "Balrog02", "Balrog03", "Balrog04", "Balrog05", "Balrog06",
+            "Balrog07", "Balrog08", "Balrog09", "Balrog10", "Balrog11", "Balrog12");
 
     private final List<AgentBalrogTestFixtureService.Build> roster;
     private final AgentExpeditionSpec spec;
+    private CombatPhase combatPhase;
+    private long nextVitalsLogAtMs;
 
     public AgentEasyBalrogScenario(long seed) {
         roster = AgentBalrogTestFixtureService.selectRoster(seed);
@@ -31,8 +44,10 @@ public final class AgentEasyBalrogScenario implements AgentExpeditionScenario {
                 ExpeditionType.BALROG_EASY,
                 AgentBalrogDefinition.RECRUIT_MAP,
                 AgentBalrogDefinition.BATTLE_MAP,
+                AgentBalrogDefinition.RECRUIT_MAP,
                 AgentBalrogDefinition.ENTRY_NPC,
                 6,
+                5_000L,
                 MEMBER_NAMES,
                 List.of(1, 1),
                 List.of(1),
@@ -67,12 +82,23 @@ public final class AgentEasyBalrogScenario implements AgentExpeditionScenario {
                 && AgentBalrogDefinition.CLAW_MOBS.contains(mob.getId()));
         boolean realBody = monsters.stream().anyMatch(mob -> mob.isAlive()
                 && mob.getId() == AgentBalrogDefinition.BODY_MOB && !mob.isFake());
+        boolean seal = monsters.stream().anyMatch(mob -> mob.isAlive()
+                && mob.getId() == AgentBalrogDefinition.RELEASE_SEAL_MOB);
+        CombatPhase nextPhase = liveClaw
+                ? (seal ? CombatPhase.SEALED_CLAW : CombatPhase.CLAW)
+                : (realBody ? CombatPhase.BODY : CombatPhase.TRANSITION);
+        if (nextPhase != combatPhase) {
+            combatPhase = nextPhase;
+            log.info("Easy Balrog combat phase={} members={} mobs={}",
+                    combatPhase, members.size(), battleStatus(members.getFirst()));
+        }
         for (Character member : members) {
             AgentRuntimeEntry entry = AgentRuntimeRegistry.findByAgentCharacterId(member.getId());
             if (entry == null) continue;
+            maintainBattleResources(entry, member);
             if (liveClaw) {
                 AgentPrimitiveCapabilityGatewayRuntime.gateway().grind(
-                        entry, AgentBalrogDefinition.CLAW_MOBS, Set.of(AgentBalrogDefinition.BODY_MOB));
+                        entry, AgentBalrogDefinition.CLAW_MOBS);
             } else if (realBody) {
                 AgentPrimitiveCapabilityGatewayRuntime.gateway().grind(
                         entry, Set.of(AgentBalrogDefinition.BODY_MOB));
@@ -80,6 +106,30 @@ public final class AgentEasyBalrogScenario implements AgentExpeditionScenario {
                 AgentPrimitiveCapabilityGatewayRuntime.gateway().stop(entry);
             }
         }
+        if (nowMs >= nextVitalsLogAtMs) {
+            nextVitalsLogAtMs = nowMs + VITALS_LOG_INTERVAL_MS;
+            log.info("Easy Balrog party vitals phase={} {}", combatPhase,
+                    members.stream().map(AgentEasyBalrogScenario::vitals).toList());
+        }
+    }
+
+    private static void maintainBattleResources(AgentRuntimeEntry entry, Character member) {
+        AgentCombatBuffRuntime.tryCastCriticalSurvivalBuff(entry, member);
+        if (needsExpeditionRecovery(member.getHp(), member.getCurrentMaxHp())
+                || needsExpeditionRecovery(member.getMp(), member.getCurrentMaxMp())) {
+            AgentPrimitiveCapabilityGatewayRuntime.gateway().useItem(member, POWER_ELIXIR_ITEM_ID);
+        }
+    }
+
+    static boolean needsExpeditionRecovery(int current, int maximum) {
+        return maximum > 0 && (long) current * 100L <= (long) maximum * RECOVERY_THRESHOLD_PERCENT;
+    }
+
+    private static String vitals(Character member) {
+        return member.getName() + "=" + member.getHp() + '/' + member.getCurrentMaxHp()
+                + "hp," + member.getMp() + '/' + member.getCurrentMaxMp() + "mp"
+                + (member.getBuffedValue(BuffStat.MAGIC_GUARD) == null ? "" : ",MG")
+                + "@(" + member.getPosition().x + ',' + member.getPosition().y + ')';
     }
 
     @Override
@@ -96,6 +146,13 @@ public final class AgentEasyBalrogScenario implements AgentExpeditionScenario {
 
     public List<AgentBalrogTestFixtureService.Build> roster() {
         return roster;
+    }
+
+    enum CombatPhase {
+        SEALED_CLAW,
+        CLAW,
+        TRANSITION,
+        BODY
     }
 
     @Override

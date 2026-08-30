@@ -22,9 +22,9 @@ class AgentBalrogTestFixtureServiceTest {
     void poolCoversEverySupportedSecondJobWeaponClass() {
         List<AgentBalrogTestFixtureService.Build> builds = AgentBalrogTestFixtureService.ALL_BUILDS;
 
-        assertEquals(AgentBalrogTestFixtureService.WeaponClass.values().length, builds.size());
-        assertEquals(builds.size(), builds.stream().map(
-                AgentBalrogTestFixtureService.Build::weaponClass).distinct().count());
+        assertEquals(AgentBalrogTestFixtureService.WeaponClass.values().length,
+                builds.stream().map(AgentBalrogTestFixtureService.Build::weaponClass)
+                        .distinct().count());
         assertTrue(builds.stream().allMatch(build -> {
             int jobId = build.job().getId();
             return jobId >= 110 && jobId <= 520 && switch (jobId % 100) {
@@ -35,7 +35,7 @@ class AgentBalrogTestFixtureServiceTest {
     }
 
     @Test
-    void eachBuildSpendsExactlyTheLevel60SecondJobBudgetInItsJobTree() {
+    void eachBuildSpendsExactlyTheLevel60SecondJobBudgetInItsJobTree() throws Exception {
         for (AgentBalrogTestFixtureService.Build build : AgentBalrogTestFixtureService.ALL_BUILDS) {
             Map<Integer, Integer> finalTargets = new HashMap<>();
             build.spBuild().forEach(step -> finalTargets.put(step.skillId(), step.targetLevel()));
@@ -43,6 +43,10 @@ class AgentBalrogTestFixtureServiceTest {
                     build.buildId());
             assertTrue(finalTargets.keySet().stream().allMatch(
                     skillId -> GameConstants.isInJobTree(skillId, build.job().getId())), build.buildId());
+            for (Map.Entry<Integer, Integer> target : finalTargets.entrySet()) {
+                assertTrue(target.getValue() <= wzSkillMax(target.getKey()),
+                        build.buildId() + ":" + target.getKey());
+            }
         }
     }
 
@@ -72,16 +76,16 @@ class AgentBalrogTestFixtureServiceTest {
     }
 
     @Test
-    void seededSelectionIsStableAndDistinct() {
+    void seededSelectionIsStableAndCoversEverySecondJobPath() {
         List<AgentBalrogTestFixtureService.Build> first =
                 AgentBalrogTestFixtureService.selectRoster(99L);
         List<AgentBalrogTestFixtureService.Build> second =
                 AgentBalrogTestFixtureService.selectRoster(99L);
 
         assertEquals(first, second);
-        assertEquals(6, first.size());
-        assertEquals(6, first.stream().map(
-                AgentBalrogTestFixtureService.Build::weaponClass).distinct().count());
+        assertEquals(12, first.size());
+        assertEquals(12, first.stream().map(
+                AgentBalrogTestFixtureService.Build::job).distinct().count());
     }
 
     private static WzEquip wzEquip(int itemId) throws Exception {
@@ -118,6 +122,33 @@ class AgentBalrogTestFixtureServiceTest {
         return new WzEquip(values.getOrDefault("reqLevel", 0), values.getOrDefault("reqJob", 0),
                 values.getOrDefault("reqSTR", 0), values.getOrDefault("reqDEX", 0),
                 values.getOrDefault("reqINT", 0), values.getOrDefault("reqLUK", 0), slot);
+    }
+
+    private static int wzSkillMax(int skillId) throws Exception {
+        int jobId = skillId / 10_000;
+        Path path = Path.of("wz", "Skill.wz", jobId + ".img.xml");
+        assertTrue(Files.isRegularFile(path), skillId + " must exist in Skill.wz");
+        var document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(path.toFile());
+        NodeList directories = document.getElementsByTagName("imgdir");
+        for (int index = 0; index < directories.getLength(); index++) {
+            Element skill = (Element) directories.item(index);
+            if (!Integer.toString(skillId).equals(skill.getAttribute("name"))) continue;
+            NodeList children = skill.getChildNodes();
+            for (int childIndex = 0; childIndex < children.getLength(); childIndex++) {
+                if (children.item(childIndex) instanceof Element child
+                        && "imgdir".equals(child.getTagName())
+                        && "level".equals(child.getAttribute("name"))) {
+                    int levels = 0;
+                    NodeList levelChildren = child.getChildNodes();
+                    for (int levelIndex = 0; levelIndex < levelChildren.getLength(); levelIndex++) {
+                        if (levelChildren.item(levelIndex) instanceof Element level
+                                && "imgdir".equals(level.getTagName())) levels++;
+                    }
+                    return levels;
+                }
+            }
+        }
+        throw new AssertionError("missing WZ skill " + skillId);
     }
 
     private static int expectedWeaponCategory(AgentBalrogTestFixtureService.WeaponClass weaponClass) {

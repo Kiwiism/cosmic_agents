@@ -11,8 +11,10 @@ public record AgentExpeditionSpec(
         ExpeditionType expeditionType,
         int entranceMapId,
         int battleMapId,
+        int returnMapId,
         int entryNpcId,
         int partyCapacity,
+        long readyCountdownMs,
         List<String> memberNames,
         List<Integer> createSelections,
         List<Integer> joinSelections,
@@ -22,8 +24,9 @@ public record AgentExpeditionSpec(
 
     public AgentExpeditionSpec {
         if (scenarioId == null || scenarioId.isBlank() || displayName == null || displayName.isBlank()
-                || expeditionType == null || entranceMapId <= 0 || battleMapId <= 0 || entryNpcId <= 0
-                || partyCapacity < 1 || partyCapacity > 6 || memberNames == null || memberNames.isEmpty()
+                || expeditionType == null || entranceMapId <= 0 || battleMapId <= 0 || returnMapId <= 0
+                || entryNpcId <= 0 || partyCapacity < 1 || partyCapacity > 6 || readyCountdownMs < 0L
+                || memberNames == null || memberNames.isEmpty()
                 || memberNames.size() > MAX_EXPEDITION_MEMBERS
                 || memberNames.size() > expeditionType.getMaxSize()
                 || memberNames.stream().anyMatch(name -> name == null || name.isBlank())

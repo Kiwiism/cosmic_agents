@@ -9,13 +9,27 @@ import java.nio.file.Path;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentBalrogDefinitionTest {
+
     @Test
-    void easyRunSelectsSixLevel60Members() {
-        assertEquals(6, AgentBalrogTestFixtureService.ROSTER_SIZE);
-        assertEquals(6, new AgentEasyBalrogScenario(1234L).roster().size());
+    void easyBalrogRecoveryCoversEnvironmentalDrainBeforeAutopotWouldTrigger() {
+        assertFalse(AgentEasyBalrogScenario.needsExpeditionRecovery(751, 1_000));
+        assertTrue(AgentEasyBalrogScenario.needsExpeditionRecovery(750, 1_000));
+        assertTrue(AgentEasyBalrogScenario.needsExpeditionRecovery(0, 1_000));
+        assertFalse(AgentEasyBalrogScenario.needsExpeditionRecovery(0, 0));
+    }
+
+    @Test
+    void easyRunSelectsTwelveLevel60SecondJobPaths() {
+        assertEquals(12, AgentBalrogTestFixtureService.ROSTER_SIZE);
+        var scenario = new AgentEasyBalrogScenario(1234L);
+        assertEquals(12, scenario.roster().size());
+        assertEquals(12, scenario.roster().stream().map(
+                AgentBalrogTestFixtureService.Build::job).distinct().count());
+        assertEquals(2, scenario.spec().partyCount());
         assertEquals(60, AgentBalrogDefinition.LEVEL);
     }
 
@@ -40,6 +54,8 @@ class AgentBalrogDefinitionTest {
         var spec = new AgentEasyBalrogScenario(1234L).spec();
 
         assertEquals(ExpeditionType.BALROG_EASY, spec.expeditionType());
+        assertEquals(5_000L, spec.readyCountdownMs());
+        assertEquals(AgentBalrogDefinition.RECRUIT_MAP, spec.returnMapId());
         assertEquals(List.of(1, 1), spec.createSelections());
         assertEquals(List.of(1), spec.joinSelections());
         assertEquals(List.of(1, 2, 0), spec.startSelections());

@@ -16,13 +16,15 @@ class AgentExpeditionSpecTest {
                 .mapToObj(index -> "Exped" + index).toList();
         AgentExpeditionSpec spec = new AgentExpeditionSpec(
                 "future", "Future Expedition", ExpeditionType.ZAKUM,
-                1, 2, 3, 6, names, List.of(1), List.of(), List.of(2));
+                1, 2, 1, 3, 6, 5_000L, names, List.of(1), List.of(), List.of(2));
 
         assertEquals(30, spec.participantCount());
         assertEquals(5, spec.partyCount());
         assertEquals(0, AgentExpeditionLobbyService.partyIndex(5, 6));
         assertEquals(1, AgentExpeditionLobbyService.partyIndex(6, 6));
         assertEquals(4, AgentExpeditionLobbyService.partyIndex(29, 6));
+        assertEquals(-187, AgentExpeditionLobbyService.formationOffset(0, 12, 34));
+        assertEquals(187, AgentExpeditionLobbyService.formationOffset(11, 12, 34));
     }
 
     @Test
@@ -31,7 +33,7 @@ class AgentExpeditionSpecTest {
                 .mapToObj(index -> "Exped" + index).toList();
         assertThrows(IllegalArgumentException.class, () -> new AgentExpeditionSpec(
                 "too-many", "Too Many", ExpeditionType.ZAKUM,
-                1, 2, 3, 6, names, List.of(), List.of(), List.of()));
+                1, 2, 1, 3, 6, 5_000L, names, List.of(), List.of(), List.of()));
     }
 
     @Test
@@ -40,6 +42,6 @@ class AgentExpeditionSpecTest {
                 .mapToObj(index -> "Ariant" + index).toList();
         assertThrows(IllegalArgumentException.class, () -> new AgentExpeditionSpec(
                 "oversized-ariant", "Oversized Ariant", ExpeditionType.ARIANT,
-                1, 2, 3, 6, names, List.of(), List.of(), List.of()));
+                1, 2, 1, 3, 6, 5_000L, names, List.of(), List.of(), List.of()));
     }
 }

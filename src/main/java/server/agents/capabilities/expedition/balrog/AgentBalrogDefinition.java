@@ -13,6 +13,7 @@ public final class AgentBalrogDefinition {
     public static final int PARTY_SIZE = 6;
     public static final int LEVEL = AgentBalrogTestFixtureService.LEVEL;
     public static final int BODY_MOB = 8830007;
+    public static final int RELEASE_SEAL_MOB = 8830013;
     public static final Set<Integer> CLAW_MOBS = Set.of(8830008, 8830009);
     public static final Set<Integer> COMBAT_MOBS = AgentBalrogTestFixtureService.BALROG_COMBAT_MOBS;
 

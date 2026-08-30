@@ -171,6 +171,8 @@ final class AgentFieldObservationFixtureService {
             AgentApBuildProfileService.autoAssign(entry, agent);
             AgentSpBuildProfileService.autoAssign(entry, agent);
         }
+        AgentApBuildProfileService.autoAssign(entry, agent);
+        AgentSpBuildProfileService.autoAssign(entry, agent);
         entry.apBuildProfileState().clear();
         entry.spBuildProfileState().clear();
         AgentBuildStateRuntime.setApBuild(entry, build.apBuild());

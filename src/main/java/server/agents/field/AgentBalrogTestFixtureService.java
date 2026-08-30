@@ -8,8 +8,10 @@ import constants.skills.Brawler;
 import constants.skills.Cleric;
 import constants.skills.Crossbowman;
 import constants.skills.Fighter;
+import constants.skills.FPWizard;
 import constants.skills.Gunslinger;
 import constants.skills.Hunter;
+import constants.skills.ILWizard;
 import constants.skills.Page;
 import constants.skills.Spearman;
 import server.agents.capabilities.build.AgentBuildService;
@@ -21,6 +23,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.SplittableRandom;
 import java.util.Set;
@@ -29,7 +32,7 @@ import java.util.Set;
 public final class AgentBalrogTestFixtureService {
     public static final int LEVEL = 60;
     public static final int MINIMUM_WEAPON_LEVEL = 40;
-    public static final int ROSTER_SIZE = 6;
+    public static final int ROSTER_SIZE = 12;
     public static final Set<Integer> BALROG_COMBAT_MOBS = Set.of(8830007, 8830008, 8830009);
 
     private static final List<Integer> WARRIOR_MALE = List.of(
@@ -68,8 +71,14 @@ public final class AgentBalrogTestFixtureService {
                     1_432_006, 0, spearmanSpear()),
             warrior("spearman-polearm", Job.SPEARMAN, WeaponClass.POLEARM,
                     1_442_010, 0, spearmanPolearm()),
-            magician("cleric-wand", WeaponClass.WAND, 1_372_008, 1_092_029),
-            magician("cleric-staff", WeaponClass.STAFF, 1_382_006, 0),
+            magician("fp-wizard-wand", Job.FP_WIZARD, WeaponClass.WAND,
+                    1_372_008, 1_092_029, fpWizard()),
+            magician("il-wizard-staff", Job.IL_WIZARD, WeaponClass.STAFF,
+                    1_382_006, 0, ilWizard()),
+            magician("cleric-wand", Job.CLERIC, WeaponClass.WAND,
+                    1_372_008, 1_092_029, cleric()),
+            magician("cleric-staff", Job.CLERIC, WeaponClass.STAFF,
+                    1_382_006, 0, cleric()),
             bowman("hunter-bow", Job.HUNTER, WeaponClass.BOW, 1_452_004, 65, hunter()),
             bowman("crossbowman-crossbow", Job.CROSSBOWMAN, WeaponClass.CROSSBOW,
                     1_462_008, 60, crossbowman()),
@@ -88,15 +97,20 @@ public final class AgentBalrogTestFixtureService {
     }
 
     public static List<Build> selectRoster(long seed) {
-        ArrayList<Build> shuffled = new ArrayList<>(ALL_BUILDS);
         SplittableRandom random = new SplittableRandom(seed);
-        for (int i = shuffled.size() - 1; i > 0; i--) {
-            int selected = random.nextInt(i + 1);
-            Build swap = shuffled.get(i);
-            shuffled.set(i, shuffled.get(selected));
-            shuffled.set(selected, swap);
+        ArrayList<Build> roster = new ArrayList<>(ROSTER_SIZE);
+        for (Job job : List.of(Job.FIGHTER, Job.PAGE, Job.SPEARMAN,
+                Job.FP_WIZARD, Job.IL_WIZARD, Job.CLERIC,
+                Job.HUNTER, Job.CROSSBOWMAN, Job.ASSASSIN, Job.BANDIT,
+                Job.BRAWLER, Job.GUNSLINGER)) {
+            List<Build> candidates = ALL_BUILDS.stream()
+                    .filter(build -> build.job() == job).toList();
+            if (candidates.isEmpty()) {
+                throw new IllegalStateException("missing Easy Balrog fixture for " + job);
+            }
+            roster.add(candidates.get(random.nextInt(candidates.size())));
         }
-        return List.copyOf(shuffled.subList(0, ROSTER_SIZE));
+        return List.copyOf(roster);
     }
 
     public static PreparationResult prepare(
@@ -113,7 +127,9 @@ public final class AgentBalrogTestFixtureService {
                 AgentFieldObservationFixtureService.prepareForBalrog(
                         entry, build, LEVEL, BALROG_COMBAT_MOBS, nowMs);
         if (!prepared.completeBuild()) {
-            throw new IllegalStateException("Balrog fixture left unspent AP/SP for " + prepared.name());
+            throw new IllegalStateException("Balrog fixture left unspent AP/SP for " + prepared.name()
+                    + " ap=" + prepared.remainingAp() + " sp="
+                    + Arrays.toString(prepared.remainingSps()));
         }
         return new PreparationResult(prepared.level(), prepared.minimumHitChance(), build.job(),
                 build.weaponClass(), build.buildId(), prepared.completeBuild(), prepared.remainingAp(),
@@ -128,11 +144,12 @@ public final class AgentBalrogTestFixtureService {
                 spBuild);
     }
 
-    private static Build magician(String id, WeaponClass weaponClass, int weapon, int shield) {
-        return new Build(id, "magician", Job.CLERIC, weaponClass, weapon, shield,
+    private static Build magician(String id, Job job, WeaponClass weaponClass, int weapon,
+                                  int shield, List<BuildStep> spBuild) {
+        return new Build(id, "magician", job, weaponClass, weapon, shield,
                 new AgentBuildService.ApBuild(
                         AgentBuildService.StatType.INT, AgentBuildService.StatType.LUK, 63),
-                cleric());
+                spBuild);
     }
 
     private static Build bowman(String id, Job job, WeaponClass weaponClass, int weapon,
@@ -196,6 +213,16 @@ public final class AgentBalrogTestFixtureService {
                 s(Cleric.BLESS, 20), s(Cleric.MP_EATER, 16));
     }
 
+    private static List<BuildStep> fpWizard() {
+        return List.of(s(FPWizard.MP_EATER, 20), s(FPWizard.MEDITATION, 20),
+                s(FPWizard.TELEPORT, 20), s(FPWizard.FIRE_ARROW, 30), s(FPWizard.SLOW, 1));
+    }
+
+    private static List<BuildStep> ilWizard() {
+        return List.of(s(ILWizard.MP_EATER, 20), s(ILWizard.MEDITATION, 20),
+                s(ILWizard.TELEPORT, 20), s(ILWizard.COLD_BEAM, 30), s(ILWizard.SLOW, 1));
+    }
+
     private static List<BuildStep> hunter() {
         return List.of(s(Hunter.BOW_MASTERY, 20), s(Hunter.BOW_BOOSTER, 20),
                 s(Hunter.SOUL_ARROW, 20), s(Hunter.ARROW_BOMB, 30), s(Hunter.POWER_KNOCKBACK, 1));
@@ -219,8 +246,8 @@ public final class AgentBalrogTestFixtureService {
 
     private static List<BuildStep> brawler() {
         return List.of(s(Brawler.IMPROVE_MAX_HP, 10), s(Brawler.KNUCKLER_MASTERY, 20),
-                s(Brawler.KNUCKLER_BOOSTER, 20), s(Brawler.CORKSCREW_BLOW, 30),
-                s(Brawler.BACK_SPIN_BLOW, 11));
+                s(Brawler.KNUCKLER_BOOSTER, 20), s(Brawler.CORKSCREW_BLOW, 20),
+                s(Brawler.BACK_SPIN_BLOW, 20), s(Brawler.DOUBLE_UPPERCUT, 1));
     }
 
     private static List<BuildStep> gunslinger() {
@@ -237,7 +264,9 @@ public final class AgentBalrogTestFixtureService {
         if (job == Job.FIGHTER || job == Job.PAGE || job == Job.SPEARMAN) {
             return gender == 0 ? WARRIOR_MALE : WARRIOR_FEMALE;
         }
-        if (job == Job.CLERIC) return gender == 0 ? MAGICIAN_MALE : MAGICIAN_FEMALE;
+        if (job == Job.FP_WIZARD || job == Job.IL_WIZARD || job == Job.CLERIC) {
+            return gender == 0 ? MAGICIAN_MALE : MAGICIAN_FEMALE;
+        }
         if (job == Job.HUNTER || job == Job.CROSSBOWMAN) {
             return gender == 0 ? BOWMAN_MALE : BOWMAN_FEMALE;
         }
