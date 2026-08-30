@@ -22,6 +22,10 @@ public final class AgentLpqRuntime {
                 session, entry, agent, nowMs)) {
             return true;
         }
+        if (AgentLpqCoordinator.tickStageFiveRoomContinuation(
+                session, entry, agent, nowMs)) {
+            return true;
+        }
         if (!session.claimExecutionTick(agent.getId(), nowMs, LEASE_MS)) return true;
         AgentLpqCoordinator.tick(session, nowMs);
         return true;

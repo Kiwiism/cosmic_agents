@@ -118,6 +118,58 @@ class AgentLpqReactorTargetTest {
     }
 
     @Test
+    void darkSightFinalBoxUsesTheAuthoredTwoRopeAscent() {
+        int room = AgentLpqDefinition.STAGE_5_DARK_SIGHT_ROOM;
+        Point finalBox = new Point(-70, -3_535);
+
+        assertTrue(AgentLpqStageFiveReactorOrder.isDarkSightFinalBox(room, finalBox));
+        assertEquals(new Point(-8, -1_518),
+                AgentLpqStageFiveReactorOrder.authoredApproachWaypoint(
+                        room, new Point(-24, -1_427), finalBox));
+        assertEquals(new Point(-8, -2_488),
+                AgentLpqStageFiveReactorOrder.authoredApproachWaypoint(
+                        room, new Point(-8, -1_518), finalBox));
+        assertEquals(new Point(13, -2_562),
+                AgentLpqStageFiveReactorOrder.authoredApproachWaypoint(
+                        room, new Point(-8, -2_488), finalBox));
+        assertEquals(new Point(13, -3_533),
+                AgentLpqStageFiveReactorOrder.authoredApproachWaypoint(
+                        room, new Point(13, -2_562), finalBox));
+        assertNull(AgentLpqStageFiveReactorOrder.authoredApproachWaypoint(
+                room, new Point(13, -3_533), finalBox));
+        assertNull(AgentLpqStageFiveReactorOrder.authoredApproachWaypoint(
+                room, new Point(-24, -1_427), new Point(-81, -1_459)));
+    }
+
+    @Test
+    void stageFiveReplacesOnlyOneMissingPassAfterTheFinalDropGracePeriod() {
+        assertTrue(AgentLpqCoordinator.stageFiveMissingRoomPassRecoveryDue(
+                5, 0, false, 3, 4, 3_000L));
+        assertFalse(AgentLpqCoordinator.stageFiveMissingRoomPassRecoveryDue(
+                5, 0, false, 3, 4, 2_999L));
+        assertFalse(AgentLpqCoordinator.stageFiveMissingRoomPassRecoveryDue(
+                5, 0, true, 3, 4, 10_000L));
+        assertFalse(AgentLpqCoordinator.stageFiveMissingRoomPassRecoveryDue(
+                5, 1, false, 3, 4, 10_000L));
+        assertFalse(AgentLpqCoordinator.stageFiveMissingRoomPassRecoveryDue(
+                5, 0, false, 2, 4, 10_000L));
+        assertFalse(AgentLpqCoordinator.stageFiveMissingRoomPassRecoveryDue(
+                4, 0, false, 3, 4, 10_000L));
+    }
+
+    @Test
+    void stageFiveTerminalWatchdogRecoversOnlyTheFinalLoosePassAfterPickupGrace() {
+        assertTrue(AgentLpqCoordinator.stageFiveFinalLoosePassRecoveryDue(
+                3, 4, 2_000L));
+        assertFalse(AgentLpqCoordinator.stageFiveFinalLoosePassRecoveryDue(
+                3, 4, 1_999L));
+        assertFalse(AgentLpqCoordinator.stageFiveFinalLoosePassRecoveryDue(
+                2, 4, 10_000L));
+        assertFalse(AgentLpqCoordinator.stageFiveFinalLoosePassRecoveryDue(
+                4, 4, 10_000L));
+    }
+
+    @Test
     void reactorRecoveryClockRestartsForEveryBoxAndClearsOnExit() {
         AgentLpqMemberState member = new AgentLpqMemberState(
                 71_007, AgentLpqMemberState.MemberType.AGENT);

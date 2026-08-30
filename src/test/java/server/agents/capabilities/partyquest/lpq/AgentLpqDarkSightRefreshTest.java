@@ -36,15 +36,13 @@ class AgentLpqDarkSightRefreshTest {
     @Test
     void darkSightIsOnlyRecastBeforeRoomExitWhenItsRefreshWindowIsDue() {
         assertTrue(AgentLpqCoordinator.requiresDarkSightBeforeRoomExit(
-                5, 922_010_506, false, true));
+                5, 922_010_506, true));
         assertFalse(AgentLpqCoordinator.requiresDarkSightBeforeRoomExit(
-                5, 922_010_506, false, false));
+                5, 922_010_506, false));
         assertFalse(AgentLpqCoordinator.requiresDarkSightBeforeRoomExit(
-                5, 922_010_506, true, true));
+                4, 922_010_506, true));
         assertFalse(AgentLpqCoordinator.requiresDarkSightBeforeRoomExit(
-                4, 922_010_506, false, true));
-        assertFalse(AgentLpqCoordinator.requiresDarkSightBeforeRoomExit(
-                5, 922_010_505, false, true));
+                5, 922_010_505, true));
     }
 
     @Test
@@ -77,6 +75,20 @@ class AgentLpqDarkSightRefreshTest {
                 false, 922_010_500, true));
         assertFalse(AgentLpqCoordinator.requiresStageFiveMainMapDarkSight(
                 true, 922_010_600, true));
+    }
+
+    @Test
+    void darkSightRunnerCancelsProtectionOnlyAfterReachingTheStageFiveBalloon() {
+        assertTrue(AgentLpqCoordinator.shouldCancelStageFiveDarkSightAtBalloon(
+                true, 922_010_500, true, true));
+        assertFalse(AgentLpqCoordinator.shouldCancelStageFiveDarkSightAtBalloon(
+                true, 922_010_500, false, true));
+        assertFalse(AgentLpqCoordinator.shouldCancelStageFiveDarkSightAtBalloon(
+                true, 922_010_506, true, true));
+        assertFalse(AgentLpqCoordinator.shouldCancelStageFiveDarkSightAtBalloon(
+                false, 922_010_500, true, true));
+        assertFalse(AgentLpqCoordinator.shouldCancelStageFiveDarkSightAtBalloon(
+                true, 922_010_500, true, false));
     }
 
     @Test

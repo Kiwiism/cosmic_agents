@@ -9,6 +9,17 @@ import java.util.Map;
 
 /** Stable authored box order for each LPQ Stage 5 room. */
 final class AgentLpqStageFiveReactorOrder {
+    private static final int DARK_SIGHT_ROOM = 922_010_506;
+    private static final Point DARK_SIGHT_FINAL_BOX = new Point(-70, -3_535);
+    /**
+     * The final Dark Sight box sits above the long centre rope and the short top
+     * rope. Asking the generic planner for the box platform in one operation can
+     * leave the runner committed to rope 7 far below it. Keep the last ascent on
+     * the authored rope endpoints instead.
+     */
+    private static final List<Point> DARK_SIGHT_FINAL_ASCENT = List.of(
+            new Point(-8, -1_518), new Point(-8, -2_488),
+            new Point(13, -2_562), new Point(13, -3_533));
     private static final Map<Integer, List<Point>> ORDER_BY_ROOM = Map.of(
             922_010_501, List.of(
                     new Point(-106, -3_379), new Point(-78, -2_350),
@@ -46,6 +57,21 @@ final class AgentLpqStageFiveReactorOrder {
         return ORDER_BY_ROOM.getOrDefault(roomMapId, List.of()).stream()
                 .map(Point::new)
                 .toList();
+    }
+
+    static boolean isDarkSightFinalBox(int roomMapId, Point reactorPosition) {
+        return roomMapId == DARK_SIGHT_ROOM
+                && DARK_SIGHT_FINAL_BOX.equals(reactorPosition);
+    }
+
+    static Point authoredApproachWaypoint(
+            int roomMapId, Point currentPosition, Point reactorPosition) {
+        if (!isDarkSightFinalBox(roomMapId, reactorPosition)
+                || currentPosition == null) return null;
+        for (Point waypoint : DARK_SIGHT_FINAL_ASCENT) {
+            if (waypoint.y < currentPosition.y - 12) return new Point(waypoint);
+        }
+        return null;
     }
 
     private static int orderIndex(List<Point> order, Point position) {
