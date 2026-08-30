@@ -2435,6 +2435,22 @@ final class AgentLpqCoordinator {
         }
         if (activeAfter > 0 || roomPasses < passQuota) return;
 
+        // A failed box approach commonly leaves the Dark Sight runner attached to
+        // the centre rope. Ground it at the authored exit before asking the normal
+        // utility-buff runtime to cast; that runtime correctly rejects rope casts.
+        if (roomMapId == AgentLpqDefinition.STAGE_5_DARK_SIGHT_ROOM) {
+            Integer exitPortalId = portalIdTo(agent, mainMapId);
+            Point exitPortal = exitPortalId == null
+                    ? null : ACTIONS.portalPosition(agent, exitPortalId);
+            Point groundedExit = exitPortal == null
+                    ? null : ACTIONS.groundPoint(agent.getMap(), exitPortal);
+            Point recoveryPosition = groundedExit == null ? exitPortal : groundedExit;
+            if (recoveryPosition != null) {
+                ACTIONS.stop(entry);
+                ACTIONS.stagePosition(entry, agent, recoveryPosition);
+            }
+        }
+
         long durationMs = member.finishRoomTiming(roomMapId, nowMs);
         member.recordStageFiveEarnedPasses(passQuota);
         session.rooms().complete(roomMapId);
@@ -2445,7 +2461,9 @@ final class AgentLpqCoordinator {
                             + "session={} member={}({}) room={} passes={}/{}",
                     session.sessionId(), agent.getName(), agent.getId(), roomMapId,
                     roomPasses, passQuota);
-            return;
+            // The ceiling recovery has already committed the room and raised the
+            // party pass total. Do not yield here: coupon regroup can take over on
+            // the next coordinator pass and stop ticking split-room traversal.
         }
         boolean exited = forceRoomExitThroughPortal(
                 session, member, entry, agent, mainMapId, nowMs);
