@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
 import server.maps.MapObject;
 import server.maps.MapObjectType;
 import server.maps.MapleMap;
+import net.server.services.task.channel.ServerMobAutonomyService;
 import server.maps.Mist;
 import tools.Randomizer;
 
@@ -364,6 +365,7 @@ public class MobSkill {
                         } else {
                             map.spawnMonsterWithEffect(toSpawn, spawnEffect, toSpawn.getPosition());
                         }
+                        ServerMobAutonomyService.inheritAuthorityInstances(monster, toSpawn);
                         monster.addSummonedMob(toSpawn);
                     }
                 }
@@ -435,6 +437,14 @@ public class MobSkill {
 
     public long getCoolTime() {
         return cooltime;
+    }
+
+    public Point getLt() {
+        return lt == null ? null : new Point(lt);
+    }
+
+    public Point getRb() {
+        return rb == null ? null : new Point(rb);
     }
 
     public boolean makeChanceResult() {

@@ -2307,14 +2307,25 @@ public class PacketCreator {
 
     public static Packet moveMonster(int oid, int rawActivity, Point startPos,
                                      List<LifeMovementFragment> movements) {
+        return moveMonster(oid, rawActivity, 0, 0, startPos, movements);
+    }
+
+    public static Packet moveMonster(int oid, int rawActivity, int skillId, int skillLevel,
+                                     Point startPos, List<LifeMovementFragment> movements) {
+        return moveMonster(oid, rawActivity, skillId, skillLevel, 0, startPos, movements);
+    }
+
+    public static Packet moveMonster(int oid, int rawActivity, int skillId, int skillLevel,
+                                     int pOption, Point startPos,
+                                     List<LifeMovementFragment> movements) {
         final OutPacket p = OutPacket.create(SendOpcode.MOVE_MONSTER);
         p.writeInt(oid);
         p.writeByte(0);
         p.writeBool(false);
         p.writeByte(rawActivity);
-        p.writeByte(0);
-        p.writeByte(0);
-        p.writeShort(0);
+        p.writeByte(skillId);
+        p.writeByte(skillLevel);
+        p.writeShort(pOption);
         p.writePos(startPos);
         serializeMovementList(p, movements);
         return p;

@@ -39,6 +39,19 @@ public final class MobPhysicsSimulator {
         boolean turnAtEdges = false;
         double speedMultiplier = tuning.speedMultiplier();
 
+        if (session.serverCombatActionActive(session.tickNowNanos())) {
+            if (body.grounded() && !profile.flying()) {
+                body.setVelocity(0.0, 0.0);
+            }
+            session.setMotion(MobMotionState.IDLE);
+            PhysicsStepResult result = integrator.step(body,
+                    new PhysicsInput(0.0, 0.0, false, false,
+                            tuning.leftEdgeInsetPx(), tuning.rightEdgeInsetPx()),
+                    session.terrain());
+            session.afterStep(result);
+            return result;
+        }
+
         if (session.motion() == MobMotionState.PENDING_IMPACT
                 && body.grounded() && !profile.flying()) {
             turnAtEdges = true;

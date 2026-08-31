@@ -5,10 +5,10 @@ import client.Client;
 import client.command.Command;
 import server.agents.capabilities.expedition.balrog.AgentBalrogTestService;
 
-/** GM-only six-Agent Easy Balrog expedition harness. */
+/** GM-only twelve-Agent Easy Balrog expedition harness. */
 public final class BalrogTestCommand extends Command {
     {
-        setDescription("Run or quick-stage a six-Agent second-job Easy Balrog expedition.");
+        setDescription("Run or quick-stage a twelve-Agent second-job Easy Balrog expedition.");
     }
 
     @Override

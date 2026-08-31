@@ -156,7 +156,11 @@ public final class AgentDefenseDataProvider {
     }
 
     public int rollPhysicalTouchDamage(Character bot, Monster mob) {
-        int physicalAttackDamage = Math.max(0, mob.getPADamage());
+        return rollPhysicalTouchDamage(bot, mob, mob.getPADamage());
+    }
+
+    public int rollPhysicalTouchDamage(Character bot, Monster mob, int attackOverride) {
+        int physicalAttackDamage = Math.max(0, attackOverride);
         if (physicalAttackDamage <= 0) {
             return 1;
         }
@@ -174,6 +178,27 @@ public final class AgentDefenseDataProvider {
         double damage = (physicalAttackDamage * (double) physicalAttackDamage * randomFactor)
                 - (wdef * a)
                 - ((wdef - standardPdd) * b);
+        return Math.max(1, (int) Math.floor(damage));
+    }
+
+    /** Rolls incoming WZ magic-attack damage for server-owned monster actions. */
+    public int rollMagicAttackDamage(Character character, Monster mob) {
+        return rollMagicAttackDamage(character, mob, mob.getMADamage());
+    }
+
+    public int rollMagicAttackDamage(Character character, Monster mob, int attackOverride) {
+        int magicAttackDamage = Math.max(0, attackOverride);
+        if (magicAttackDamage <= 0) {
+            return 1;
+        }
+        if (!server.combat.CombatFormulaProvider.getInstance().doesMobHit(character, mob)) {
+            return 0;
+        }
+
+        double randomFactor = ThreadLocalRandom.current().nextDouble(
+                MIN_DAMAGE_FACTOR, Math.nextUp(MAX_DAMAGE_FACTOR));
+        double damage = (magicAttackDamage * (double) magicAttackDamage * randomFactor)
+                - Math.max(0, character.getTotalMdef()) * 0.5d;
         return Math.max(1, (int) Math.floor(damage));
     }
 

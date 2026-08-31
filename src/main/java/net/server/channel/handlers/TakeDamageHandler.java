@@ -40,6 +40,7 @@ import net.AbstractPacketHandler;
 import net.packet.InPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import net.server.services.task.channel.ServerMobAutonomyService;
 import server.StatEffect;
 import server.combat.PhysicalContactDamagePolicy;
 import server.life.LifeFactory.loseItem;
@@ -92,6 +93,9 @@ public final class TakeDamageHandler extends AbstractPacketHandler {
                 }
 
                 if (attacker != null) {
+                    if (damagefrom >= 0 && ServerMobAutonomyService.isActiveInstance(attacker)) {
+                        return;
+                    }
                     if (attacker.isBuffed(MonsterStatus.NEUTRALISE)) {
                         return;
                     }

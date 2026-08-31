@@ -31,6 +31,7 @@ import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentSchedulerRuntime;
 import server.agents.runtime.activity.AgentActivityBootstrap;
 import server.maps.MapleMap;
+import scripting.event.EventInstanceManager;
 
 import java.awt.Point;
 import java.util.ArrayList;
@@ -56,9 +57,14 @@ public final class AgentLpqTestService {
         if (params == null || params.length == 0) return help();
         try {
             return switch (params[0].toLowerCase()) {
-                case "start" -> start(operator, seed(params, 1, nowMs), Flow.AGENTS_ONLY, nowMs);
-                case "withme", "humanleader" -> start(operator, seed(params, 1, nowMs), Flow.HUMAN_LEADER, nowMs);
-                case "agentleader" -> start(operator, seed(params, 1, nowMs), Flow.AGENT_LEADER, nowMs);
+                case "start" -> start(operator, seed(params, 1, nowMs), Flow.AGENTS_ONLY,
+                        StartStage.FULL_RUN, nowMs);
+                case "boss" -> start(operator, seed(params, 1, nowMs), Flow.AGENTS_ONLY,
+                        StartStage.BOSS, nowMs);
+                case "withme", "humanleader" -> start(operator, seed(params, 1, nowMs), Flow.HUMAN_LEADER,
+                        StartStage.FULL_RUN, nowMs);
+                case "agentleader" -> start(operator, seed(params, 1, nowMs), Flow.AGENT_LEADER,
+                        StartStage.FULL_RUN, nowMs);
                 case "invite" -> invite(operator);
                 case "spectate", "attach" -> spectate(operator);
                 case "follow" -> follow(operator, params);
@@ -79,7 +85,8 @@ public final class AgentLpqTestService {
         }
     }
 
-    private static List<String> start(Character operator, long seed, Flow flow, long nowMs) throws Exception {
+    private static List<String> start(
+            Character operator, long seed, Flow flow, StartStage startStage, long nowMs) throws Exception {
         if (operator.getMapId() != AgentLpqDefinition.RECRUIT_MAP) {
             return List.of("Stand at the Ludibrium PQ entrance (221024500) first.");
         }
@@ -103,7 +110,7 @@ public final class AgentLpqTestService {
                 seed, operator.getId(), 6, nowMs);
         if (flow != Flow.AGENTS_ONLY) engagement.addMember(
                 operator.getId(), AgentPartyQuestEngagement.MemberType.HUMAN, nowMs);
-        Run run = new Run(operator, engagement, seed, flow, new LinkedHashSet<>(names));
+        Run run = new Run(operator, engagement, seed, flow, startStage, new LinkedHashSet<>(names));
         run.eventLeaderId = flow == Flow.HUMAN_LEADER ? operator.getId() : 0;
         RUNS.put(operator.getId(), run);
         AgentPartyQuestEngagementRegistry.register(engagement);
@@ -114,7 +121,9 @@ public final class AgentLpqTestService {
                     SPAWN_STAGGER_MS * index);
         }
         return switch (flow) {
-            case AGENTS_ONLY -> List.of("Six LPQ Agents are preparing off-screen, then will form up at the Red Sign and announce the five-second start. Use !lpqtest spectate after entry.");
+            case AGENTS_ONLY -> List.of(startStage == StartStage.BOSS
+                    ? "Six LPQ Agents are preparing for a direct boss-stage test. They will enter the real event, then move together to Stage 9; use !lpqtest spectate after entry."
+                    : "Six LPQ Agents are preparing off-screen, then will form up at the Red Sign and announce the five-second start. Use !lpqtest spectate after entry.");
             case HUMAN_LEADER -> List.of("Five LPQ Agents are preparing off-screen. Create a party, invite all five, gather at the Red Sign, then talk to it after the five-second announcement.");
             case AGENT_LEADER -> List.of("Five LPQ Agents are preparing off-screen. Chat 'looking for LPQ' or 'invite me LPQ', accept the invitation, and gather for the five-second start. !lpqtest invite remains a manual resend.");
         };
@@ -213,6 +222,8 @@ public final class AgentLpqTestService {
         if (RUNS.get(run.operator.getId()) != run) return;
         try {
             if (run.session == null) attemptHandoff(run);
+            if (run.session != null && run.startStage == StartStage.BOSS
+                    && !run.startStageApplied) attemptBossStageShortcut(run);
             if (run.spectating && run.autoFollow) updateSpectator(run);
             if (run.session != null && run.session.terminal()) {
                 if (run.session.phase() == AgentLpqSession.Phase.COMPLETED) holdCompletedRun(run);
@@ -224,6 +235,56 @@ public final class AgentLpqTestService {
             return;
         }
         AgentSchedulerRuntime.schedule(() -> monitor(run), 500L);
+    }
+
+    /**
+     * Moves a fully registered test party into the real Stage 9 instance without
+     * synthesizing the Black Ratz trigger, Alishar, or the boss key. This keeps the
+     * shortcut useful as an end-to-end test of the authored trigger and server boss
+     * runtime rather than reducing it to a pre-spawned combat fixture.
+     */
+    private static void attemptBossStageShortcut(Run run) {
+        synchronized (run.lock) {
+            if (run.startStageApplied || run.session == null) return;
+            Character leader = online(run.session.eventLeaderId());
+            EventInstanceManager event = leader == null ? null : leader.getEventInstance();
+            if (event == null || event.isEventDisposed()) return;
+            List<Character> members = run.session.members().stream()
+                    .map(member -> online(member.characterId()))
+                    .filter(java.util.Objects::nonNull)
+                    .toList();
+            if (!directBossEntryReady(run.session.requestedPartySize(), event, members)) return;
+            MapleMap bossMap = event.getMapInstance(AgentLpqDefinition.stage(9).mapId());
+            if (bossMap == null) throw new IllegalStateException("LPQ boss map is unavailable");
+            var portal = bossMap.getPortal(0);
+            Point spawn = portal == null ? new Point(0, 0) : portal.getPosition();
+            synchronized (run.session) {
+                // This property makes the direct state consistent with the authored
+                // Stage 8 portal, while deliberately leaving Stage 9 uncleared.
+                event.setProperty("8stageclear", "true");
+                for (Character member : members) {
+                    AgentMapGatewayRuntime.map().changeMapNear(member, bossMap, spawn);
+                }
+                run.session.bindEventInstance(event);
+                run.session.transition(AgentLpqSession.Phase.STAGE_9, System.currentTimeMillis());
+            }
+            run.startStageApplied = true;
+            run.operator.dropMessage(6,
+                    "Direct LPQ boss test is ready: all six Agents entered Stage 9. The Black Ratz trigger remains live and Alishar was not pre-spawned.");
+            log.info("LPQ direct boss-stage test activated: session={} leader={} members={}",
+                    run.session.sessionId(), run.session.eventLeaderId(),
+                    members.stream().map(Character::getId).toList());
+        }
+    }
+
+    static boolean directBossEntryReady(
+            int requestedPartySize, EventInstanceManager event, List<Character> members) {
+        return requestedPartySize > 0 && event != null && !event.isEventDisposed()
+                && members != null && members.size() == requestedPartySize
+                && members.stream().allMatch(member -> member != null
+                && member.getEventInstance() == event
+                && member.getMap() != null
+                && AgentLpqDefinition.isEventMap(member.getMapId()));
     }
 
     private static void attemptHandoff(Run run) {
@@ -631,6 +692,7 @@ public final class AgentLpqTestService {
     }
     private static List<String> help() {
         return List.of("!lpqtest start [seed] (six Agents; spectator remains outside party)",
+                "!lpqtest boss [seed] (six Agents enter the real event directly at Stage 9)",
                 "!lpqtest humanleader [seed] (you lead five Agents)",
                 "!lpqtest agentleader [seed] (chat a join request; Agent leads you and four other Agents)",
                 "!lpqtest invite (manual Agent-leader invitation resend)",
@@ -641,12 +703,14 @@ public final class AgentLpqTestService {
     }
 
     private enum Flow { AGENTS_ONLY, HUMAN_LEADER, AGENT_LEADER }
+    private enum StartStage { FULL_RUN, BOSS }
     private static final class Run {
         final Object lock = new Object();
         final Character operator;
         final AgentPartyQuestEngagement engagement;
         final long seed;
         final Flow flow;
+        final StartStage startStage;
         @SuppressWarnings("unused") final Set<String> names;
         volatile AgentPartyQuestLobbySession lobby;
         volatile AgentLpqSession session;
@@ -655,10 +719,12 @@ public final class AgentLpqTestService {
         volatile boolean spectating;
         volatile boolean autoFollow;
         volatile boolean stage8AssignmentChatEnabled;
+        volatile boolean startStageApplied;
         volatile int followId;
-        Run(Character operator, AgentPartyQuestEngagement engagement, long seed, Flow flow, Set<String> names) {
+        Run(Character operator, AgentPartyQuestEngagement engagement, long seed, Flow flow,
+            StartStage startStage, Set<String> names) {
             this.operator = operator; this.engagement = engagement; this.seed = seed;
-            this.flow = flow; this.names = Set.copyOf(names);
+            this.flow = flow; this.startStage = startStage; this.names = Set.copyOf(names);
         }
     }
 }

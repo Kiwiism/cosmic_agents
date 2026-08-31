@@ -46,7 +46,7 @@ public final class AgentEasyBalrogScenario implements AgentExpeditionScenario {
                 AgentBalrogDefinition.BATTLE_MAP,
                 AgentBalrogDefinition.RECRUIT_MAP,
                 AgentBalrogDefinition.ENTRY_NPC,
-                6,
+                AgentBalrogDefinition.PARTY_CAPACITY,
                 5_000L,
                 MEMBER_NAMES,
                 List.of(1, 1),

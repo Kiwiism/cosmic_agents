@@ -25,6 +25,8 @@ class AgentBalrogDefinitionTest {
     @Test
     void easyRunSelectsTwelveLevel60SecondJobPaths() {
         assertEquals(12, AgentBalrogTestFixtureService.ROSTER_SIZE);
+        assertEquals(12, AgentBalrogDefinition.ROSTER_SIZE);
+        assertEquals(6, AgentBalrogDefinition.PARTY_CAPACITY);
         var scenario = new AgentEasyBalrogScenario(1234L);
         assertEquals(12, scenario.roster().size());
         assertEquals(12, scenario.roster().stream().map(
@@ -67,5 +69,9 @@ class AgentBalrogDefinitionTest {
 
         assertTrue(script.contains("var exitMap = 105100100;"));
         assertTrue(script.contains("player.changeMap(exitMap, 0);"));
+        assertTrue(script.contains("EasyBalrogEncounterService"));
+        assertTrue(script.contains("Encounter.start"));
+        assertFalse(script.contains("eim.schedule(\"releaseLeftClaw\""));
+        assertFalse(script.contains("spawnSealedBalrog"));
     }
 }

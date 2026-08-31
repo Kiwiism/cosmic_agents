@@ -15,3 +15,5 @@ Current game-content design:
 
 - [Free Market convenience shop and Gachapon V2](FREE_MARKET_SHOP_AND_GACHAPON_DESIGN.md)
 - [Deterministic HP/MP progression and no-washing policy](DETERMINISTIC_HP_MP_PROGRESSION.md)
+- [Server boss combat runtime architecture](SERVER_BOSS_COMBAT_RUNTIME_ARCHITECTURE.md)
+- [Easy Balrog server combat implementation and validation plan](EASY_BALROG_SERVER_COMBAT_IMPLEMENTATION_PLAN.md)

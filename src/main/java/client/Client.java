@@ -67,6 +67,7 @@ import server.agents.diagnostics.MobReactionCaptureRuntime;
 import server.agents.diagnostics.MapTransitionPacketTraceRuntime;
 import server.agents.runtime.AgentRuntimeCleanupService;
 import server.life.Monster;
+import server.life.autonomy.BossClientSimulationCapability;
 import server.maps.FieldLimit;
 import server.maps.MapleMap;
 import server.maps.MiniDungeonInfo;
@@ -166,10 +167,23 @@ public class Client extends ChannelInboundHandlerAdapter {
     private final MalformedPacketTracker malformedPacketTracker = new MalformedPacketTracker();
     private final PacketRateLimiter packetRateLimiter;
     private int lang = 0;
+    private volatile BossClientSimulationCapability bossSimulationCapability =
+            BossClientSimulationCapability.NATIVE_MOB_SIMULATION;
 
     public enum Type {
         LOGIN,
         CHANNEL
+    }
+
+    public BossClientSimulationCapability getBossSimulationCapability() {
+        return bossSimulationCapability;
+    }
+
+    public void setBossSimulationCapability(
+            BossClientSimulationCapability bossSimulationCapability) {
+        this.bossSimulationCapability = bossSimulationCapability == null
+                ? BossClientSimulationCapability.RENDER_ONLY
+                : bossSimulationCapability;
     }
 
     public Client(Type type, long sessionId, String remoteAddress, PacketProcessor packetProcessor, int world, int channel) {

@@ -67,6 +67,7 @@ public final class MobSimulationSession {
     private long directionChangeAtNanos;
     private boolean edgeJumpOpportunity;
     private boolean platformConstrainedKnockback;
+    private long serverCombatActionUntilNanos;
     private final boolean initialSupportCorrected;
 
     public MobSimulationSession(MapleMap map, Monster monster, Character agent,
@@ -179,6 +180,22 @@ public final class MobSimulationSession {
         return generation > 0 && (motion == MobMotionState.PENDING_IMPACT
                 || motion == MobMotionState.KNOCKBACK
                 || motion == MobMotionState.FLINCH);
+    }
+
+    public synchronized void beginServerCombatAction(long untilNanos) {
+        serverCombatActionUntilNanos = Math.max(serverCombatActionUntilNanos, untilNanos);
+        if (!reactionInProgress()) {
+            motion = MobMotionState.IDLE;
+            chasing = false;
+            if (body.grounded() && !profile.flying()) {
+                body.setVelocity(0.0, 0.0);
+            }
+        }
+        immediatePublication = true;
+    }
+
+    public synchronized boolean serverCombatActionActive(long nowNanos) {
+        return nowNanos < serverCombatActionUntilNanos && !reactionInProgress();
     }
 
     public synchronized long generation() {
@@ -411,6 +428,7 @@ public final class MobSimulationSession {
         return step / (double) chaseRampStepsTotal;
     }
     public boolean chasing() { return chasing; }
+    public long tickNowNanos() { return tickNowNanos; }
     public void setChasing(boolean chasing) { this.chasing = chasing; }
     public boolean blockedAhead(double dx) {
         int direction = Double.compare(dx, 0.0);

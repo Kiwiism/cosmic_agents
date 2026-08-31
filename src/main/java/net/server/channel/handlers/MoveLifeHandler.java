@@ -27,6 +27,8 @@ import config.YamlConfig;
 import net.packet.InPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import net.server.services.task.channel.ServerMobAutonomyService;
+import net.server.services.type.ChannelServices;
 import server.life.MobSkill;
 import server.life.MobSkillFactory;
 import server.life.MobSkillId;
@@ -68,6 +70,11 @@ public final class MoveLifeHandler extends AbstractMovementPacketHandler {
         }
 
         Monster monster = (Monster) mmo;
+        if (ServerMobAutonomyService.isActiveInstance(monster)) {
+            c.sendPacket(PacketCreator.moveMonsterResponse(
+                    objectid, moveid, monster.getMp(), false));
+            return;
+        }
         List<Character> banishPlayers = null;
 
         byte pNibbles = p.readByte();
@@ -144,6 +151,10 @@ public final class MoveLifeHandler extends AbstractMovementPacketHandler {
         Boolean aggro = monster.aggroMoveLifeUpdate(player);
         if (aggro == null) {
             return;
+        }
+        if (map.getChannelServer().getServiceAccess(ChannelServices.MOB_AUTONOMY)
+                instanceof ServerMobAutonomyService autonomy) {
+            autonomy.recordAcceptedClientMovement(monster, player);
         }
 
         if (nextUse != null) {

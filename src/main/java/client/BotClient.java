@@ -1,6 +1,7 @@
 package client;
 
 import net.packet.Packet;
+import server.life.autonomy.BossClientSimulationCapability;
 
 /**
  * A headless client for bot/companion characters that have no real network connection.
@@ -11,6 +12,7 @@ public class BotClient extends Client {
 
     public BotClient(int world, int channel) {
         super(null, -1, "bot", null, world, channel);
+        setBossSimulationCapability(BossClientSimulationCapability.HEADLESS);
     }
 
     @Override

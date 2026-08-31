@@ -44,6 +44,7 @@ import net.server.coordinator.world.MonsterAggroCoordinator;
 import net.server.services.task.channel.MobMistService;
 import net.server.services.task.channel.MobPhysicsService;
 import net.server.services.task.channel.OverallService;
+import net.server.services.task.channel.ServerMobAutonomyService;
 import net.server.services.type.ChannelServices;
 import net.server.world.Party;
 import net.server.world.World;
@@ -68,6 +69,7 @@ import server.events.gm.Snowball;
 import server.life.LifeFactory;
 import server.life.LifeFactory.selfDestruction;
 import server.life.Monster;
+import server.life.autonomy.balrog.EasyBalrogEncounterService;
 import server.life.MonsterDropEntry;
 import server.life.MonsterGlobalDropEntry;
 import server.life.MonsterInformationProvider;
@@ -1458,6 +1460,7 @@ public class MapleMap {
 
             MobPhysicsService.releaseMonsterInstances(
                     monster, MobPhysicsService.ReleaseReason.MONSTER_GONE);
+            ServerMobAutonomyService.releaseMonsterInstances(monster);
             spawnedMonstersOnMap.decrementAndGet();
             removeMapObject(monster);
             monster.disposeMapObject();
@@ -1993,6 +1996,7 @@ public class MapleMap {
 
         monster.aggroUpdateController();
         updateBossSpawn(monster);
+        registerBossCombat(monster);
 
         spawnedMonstersOnMap.incrementAndGet();
         addSelfDestructive(monster);
@@ -2080,6 +2084,7 @@ public class MapleMap {
 
         monster.aggroUpdateController();
         updateBossSpawn(monster);
+        registerBossCombat(monster);
 
         if ((monster.getTeam() == 1 || monster.getTeam() == 0) && (isCPQMap() || isCPQMap2())) {
             List<MCSkill> teamS = null;
@@ -2141,6 +2146,7 @@ public class MapleMap {
 
         monster.aggroUpdateController();
         updateBossSpawn(monster);
+        registerBossCombat(monster);
 
         spawnedMonstersOnMap.incrementAndGet();
         addSelfDestructive(monster);
@@ -2161,6 +2167,15 @@ public class MapleMap {
         broadcastMessage(PacketCreator.makeMonsterReal(monster));
         monster.aggroUpdateController();
         updateBossSpawn(monster);
+        registerBossCombat(monster);
+    }
+
+    private void registerBossCombat(Monster monster) {
+        if (getChannelServer() != null
+                && getChannelServer().getServiceAccess(ChannelServices.MOB_AUTONOMY)
+                instanceof ServerMobAutonomyService autonomy) {
+            autonomy.registerSpawnedBoss(monster);
+        }
     }
 
     public void spawnReactor(final Reactor reactor) {
@@ -4429,6 +4444,7 @@ public class MapleMap {
     }
 
     public void clearMapObjects() {
+        EasyBalrogEncounterService.stop(this, "map-reset");
         clearDrops();
         killAllMonsters();
         resetReactors();

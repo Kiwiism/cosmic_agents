@@ -79,7 +79,7 @@ public class EventInstanceManager {
     private final Map<String, Object> objectProps = new HashMap<>();
     private long timeStarted = 0;
     private long eventTime = 0;
-    private Expedition expedition = null;
+    private volatile Expedition expedition = null;
     private final List<Integer> mapIds = new LinkedList<>();
 
     private final Lock readLock;
@@ -432,6 +432,10 @@ public class EventInstanceManager {
         } finally {
             readLock.unlock();
         }
+    }
+
+    public Expedition getExpedition() {
+        return expedition;
     }
 
     private List<Character> getPlayerList() {

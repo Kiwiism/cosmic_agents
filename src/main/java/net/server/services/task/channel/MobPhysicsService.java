@@ -254,6 +254,18 @@ public final class MobPhysicsService extends BaseService {
     MobSimulationSession sessionForTest(Monster monster) { return registry.get(monster); }
     int activeSessionCountForTest() { return registry.size(); }
 
+    public void beginServerCombatAction(Monster monster, long untilNanos) {
+        MobSimulationSession session = registry.get(monster);
+        if (session != null) {
+            session.beginServerCombatAction(untilNanos);
+        }
+    }
+
+    public boolean reactionInProgress(Monster monster) {
+        MobSimulationSession session = registry.get(monster);
+        return session != null && session.reactionInProgress();
+    }
+
     private void tickSession(MobSimulationSession session, long now,
                              ReleaseReason mapInvalidReason,
                              MobPhysicsTuningSnapshot tuning,

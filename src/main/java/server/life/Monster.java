@@ -50,6 +50,7 @@ import net.server.services.task.channel.MobClearSkillService;
 import net.server.services.task.channel.MobStatusService;
 import net.server.services.task.channel.MobPhysicsService;
 import net.server.services.task.channel.OverallService;
+import net.server.services.task.channel.ServerMobAutonomyService;
 import net.server.services.type.ChannelServices;
 import net.server.world.Party;
 import net.server.world.PartyCharacter;
@@ -103,6 +104,7 @@ public class Monster extends AbstractLoadedLife {
     private WeakReference<Character> controller = new WeakReference<>(null);
     private boolean controllerHasAggro, controllerKnowsAboutAggro, controllerHasPuppet;
     private long controllerAssignmentHoldUntilNanos;
+    private volatile int pinnedBossControllerId;
     private volatile MobControlAuthority controlAuthority = MobControlAuthority.NONE;
     private volatile MobMovementSnapshot lastClientMovement;
     private final Collection<MonsterListener> listeners = new LinkedList<>();
@@ -112,6 +114,7 @@ public class Monster extends AbstractLoadedLife {
     private int VenomMultiplier = 0;
     private boolean fake = false;
     private boolean dropsDisabled = false;
+    private volatile boolean revivesSuppressed;
     private final Set<MobSkillId> usedSkills = new HashSet<>();
     private final Set<Integer> usedAttacks = new HashSet<>();
     private Set<Integer> calledMobOids = null;
@@ -823,7 +826,7 @@ public class Monster extends AbstractLoadedLife {
         distributeExperience(killer != null ? killer.getId() : 0);
 
         final Pair<Character, Boolean> lastController = aggroRemoveController();
-        final List<Integer> toSpawn = this.getRevives();
+        final List<Integer> toSpawn = revivesSuppressed ? List.of() : this.getRevives();
         if (toSpawn != null) {
             final MapleMap reviveMap = map;
             if (toSpawn.contains(MobId.TRANSPARENT_ITEM) && reviveMap.getId() > 925000000 && reviveMap.getId() < 926000000) {
@@ -1048,6 +1051,22 @@ public class Monster extends AbstractLoadedLife {
 
     public Character getController() {
         return controller.get();
+    }
+
+    public void pinBossController(Character controller) {
+        pinnedBossControllerId = controller == null ? 0 : controller.getId();
+    }
+
+    public void clearBossControllerPin() {
+        pinnedBossControllerId = 0;
+    }
+
+    public int getPinnedBossControllerId() {
+        return pinnedBossControllerId;
+    }
+
+    public void suppressRevives() {
+        revivesSuppressed = true;
     }
 
     public MobControlAuthority getControlAuthority() {
@@ -1896,6 +1915,10 @@ public class Monster extends AbstractLoadedLife {
         return stats.getPADamage();
     }
 
+    public int getMADamage() {
+        return stats.getMADamage();
+    }
+
     public int getAccuracy() {
         return stats.getAccuracy();
     }
@@ -2173,6 +2196,10 @@ public class Monster extends AbstractLoadedLife {
     public void aggroSwitchController(Character newController, boolean immediateAggro) {
         if (aggroUpdateLock.tryLock()) {
             try {
+                if (newController != null && pinnedBossControllerId != 0
+                        && newController.getId() != pinnedBossControllerId) {
+                    return;
+                }
                 if (controlAuthority == MobControlAuthority.AGENT_PHYSICS
                         && newController != getController()) {
                     return;
@@ -2508,6 +2535,7 @@ public class Monster extends AbstractLoadedLife {
     public void dispose() {
         MobPhysicsService.releaseMonsterInstances(
                 this, MobPhysicsService.ReleaseReason.MONSTER_GONE);
+        ServerMobAutonomyService.releaseMonsterInstances(this);
         if (monsterItemDrop != null) {
             monsterItemDrop.cancel(false);
         }

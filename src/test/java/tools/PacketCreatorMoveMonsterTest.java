@@ -10,6 +10,7 @@ import java.awt.Point;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class PacketCreatorMoveMonsterTest {
 
@@ -49,5 +50,26 @@ class PacketCreatorMoveMonsterTest {
                 (byte) standState,
                 (byte) 0xF0, 0x00
         }, packet.getBytes());
+    }
+
+    @org.junit.jupiter.api.Test
+    void serializesDistributedAttackRegionMaskInPOption() {
+        AbsoluteLifeMovement movement = new AbsoluteLifeMovement(
+                0, new Point(112, 202), 0, 4);
+        movement.setPixelsPerSecond(new Point(0, 0));
+        movement.setFh(42);
+
+        Packet packet = PacketCreator.moveMonster(
+                0x12345678,
+                30,
+                0,
+                0,
+                0x1005,
+                new Point(100, 200),
+                List.<LifeMovementFragment>of(movement));
+
+        byte[] bytes = packet.getBytes();
+        assertEquals(0x05, Byte.toUnsignedInt(bytes[11]));
+        assertEquals(0x10, Byte.toUnsignedInt(bytes[12]));
     }
 }

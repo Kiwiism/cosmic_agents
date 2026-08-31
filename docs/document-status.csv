@@ -7,6 +7,7 @@ docs/agents/TIER_1_INDEPENDENT_AGENT_PROGRESSION_IMPLEMENTATION_PLAN.md,current,
 docs/agents/VICTORIA_LEVEL15_MVP_IMPLEMENTATION_PLAN.md,current,,Active five-job Victoria level-15 validation plan.
 docs/SERVER_PLAYER_SCALE_IMPLEMENTATION_PLAN.md,current,,Active server-side player scaling guidance.
 docs/SERVER_SCALE_TODO.md,current,,Active uptime and population scaling backlog.
+docs/current/EASY_BALROG_SERVER_COMBAT_IMPLEMENTATION_PLAN.md,current,,Implemented Easy Balrog combat design and validation ledger for native-client simulation with sticky server failover.
 docs/agents/AMHERST_MVP_PHASED_IMPLEMENTATION_PLAN.md,completed,,Delivered primitive capability and Amherst MVP foundation.
 docs/agents/MAPLE_ISLAND_MVP_IMPLEMENTATION_PLAN.md,completed,,Delivered Maple Island plan foundation retained as acceptance history.
 docs/agents/AGENT_FULL_CENTRALIZED_SCHEDULER_IMPLEMENTATION_PLAN.md,historical,docs/current/AGENT_SCHEDULER_PARITY_DECISION.md,Implementation history contains outdated rollout defaults; current safety decision is separate.
