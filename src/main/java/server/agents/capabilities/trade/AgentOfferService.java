@@ -156,6 +156,8 @@ public final class AgentOfferService {
         Character owner = AgentRelationshipRuntime.interactionTarget(entry);
         long now = System.currentTimeMillis();
         if (owner == null
+                || !owner.isLoggedinWorld()
+                || !owner.hasInventoryState()
                 || item == null
                 || AgentOfferStateRuntime.hasPendingGearPromptAfter(entry, now)
                 || AgentOfferRuntime.isOwnerIdleForOffer(entry)

@@ -84,6 +84,22 @@ class AgentOfferServiceTest {
     }
 
     @Test
+    void passiveLootOfferDefersForReleasedInteractionTargetInventory() {
+        Character bot = mock(Character.class);
+        Character owner = mock(Character.class);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, owner, null);
+        Item item = new Item(1002000, (short) 1, (short) 1);
+        when(owner.isLoggedinWorld()).thenReturn(true);
+        when(owner.hasInventoryState()).thenReturn(false);
+
+        try (MockedStatic<AgentEquipmentService> equipment = mockStatic(AgentEquipmentService.class)) {
+            AgentOfferService.scheduleLootOfferPrompt(entry, bot, item, 0L);
+
+            equipment.verifyNoInteractions();
+        }
+    }
+
+    @Test
     void positiveOwnerUpgradeResponseSchedulesAgentReplyAdapter() {
         Character bot = mock(Character.class);
         Character owner = mock(Character.class);

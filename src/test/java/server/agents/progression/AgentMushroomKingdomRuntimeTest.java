@@ -139,6 +139,28 @@ class AgentMushroomKingdomRuntimeTest {
         assertEquals(106020200, harness.state.selectedHuntMap(2312));
     }
 
+    @Test
+    void stalledHuntReleasesItsReservationSoTheNextTickCanSelectAnotherMap() {
+        Harness harness = new Harness(520, List.of(3300005, 3300006, 3300007));
+        harness.completeBefore(2312);
+        harness.statuses.put(2312, QuestStatus.Status.STARTED.getId());
+        harness.items.put(4000499, 0);
+
+        harness.tick();
+        int stalledMap = harness.state.selectedHuntMap(2312);
+        assertTrue(stalledMap > 0);
+
+        harness.nowMs += 3 * 60_000L;
+        harness.tick();
+
+        assertEquals(0, harness.state.selectedHuntMap(2312));
+        assertTrue(harness.state.reason().contains("recovering quest 2312"));
+
+        harness.tick();
+        assertTrue(harness.state.selectedHuntMap(2312) > 0);
+        assertFalse(stalledMap == harness.state.selectedHuntMap(2312));
+    }
+
     private static final List<Integer> EXPLORER_SECOND_JOBS = List.of(
             110, 120, 130, 210, 220, 230, 310, 320, 410, 420, 510, 520);
 
@@ -336,6 +358,28 @@ class AgentMushroomKingdomRuntimeTest {
     }
 
     @Test
+    void stalledUnobservedYetiLeaderStagesAtTheBossDoorAndEnters() {
+        Harness harness = new Harness(110, List.of(3300005, 3300006, 3300007));
+        harness.completeBefore(2330);
+        harness.statuses.put(2330, QuestStatus.Status.STARTED.getId());
+        harness.mapId = AgentMushroomKingdomYetiPartyRuntime.LOBBY_MAP_ID;
+        harness.position = new Point(-190, 141);
+        Point bossDoor = new Point(268, -699);
+        when(harness.gateway.portalPosition(harness.agent, 2)).thenReturn(bossDoor);
+
+        harness.tick();
+        assertEquals(new Point(-190, 141), harness.position);
+
+        harness.nowMs += 20_001L;
+        harness.tick();
+        assertEquals(bossDoor, harness.position);
+        assertEquals(AgentMushroomKingdomYetiPartyRuntime.LOBBY_MAP_ID, harness.mapId);
+
+        harness.tick();
+        assertEquals(106021500, harness.mapId);
+    }
+
+    @Test
     void lowerIntoxicatedPigFieldUsesItsExplicitReturnPortal() {
         Harness harness = new Harness(210, List.of(3300005, 3300006, 3300007));
         harness.completeBefore(2323);
@@ -528,6 +572,31 @@ class AgentMushroomKingdomRuntimeTest {
         harness.tick();
 
         assertEquals(node.startMapId(), harness.mapId);
+        assertEquals(AgentMushroomKingdomRecoveryPolicy.CHECKPOINT_STAGE,
+                harness.state.recoveryStage());
+        assertTrue(harness.state.reason().contains("clean checkpoint"));
+    }
+
+    @Test
+    void prolongedCastleApproachStallRecoversAtTheCastleNpcInsteadOfTheEntrance() {
+        Harness harness = new Harness(520, List.of(3300005, 3300006, 3300007));
+        harness.completeBefore(2325);
+        harness.statuses.put(2325, QuestStatus.Status.STARTED.getId());
+        harness.mapId = 106020700;
+        when(harness.gateway.travelTo(eq(harness.entry), eq(harness.agent),
+                eq(106021201), anyLong())).thenReturn(new AgentRouteOutcome(
+                AgentRouteStatus.MOVING, 106020700, 106021201, 106020700, false));
+        when(harness.gateway.recoverToMap(harness.entry, harness.agent, 106021201))
+                .thenAnswer(ignored -> {
+                    harness.mapId = 106021201;
+                    return true;
+                });
+
+        harness.tick();
+        harness.nowMs += 3 * 60_000L;
+        harness.tick();
+
+        assertEquals(106021201, harness.mapId);
         assertEquals(AgentMushroomKingdomRecoveryPolicy.CHECKPOINT_STAGE,
                 harness.state.recoveryStage());
         assertTrue(harness.state.reason().contains("clean checkpoint"));

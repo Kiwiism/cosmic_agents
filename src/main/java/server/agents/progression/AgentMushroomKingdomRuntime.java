@@ -19,6 +19,7 @@ import server.maps.MapleMap;
 
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -134,6 +135,11 @@ public final class AgentMushroomKingdomRuntime {
         switch (action) {
             case RESET_TRANSIENT -> {
                 gateway.stop(entry);
+                if (node.hunting()) {
+                    int stalledMapId = state.selectedHuntMap(node.questId());
+                    releaseHuntMap(agent, state);
+                    if (stalledMapId > 0) state.avoidHuntMap(node.questId(), stalledMapId);
+                }
                 gateway.refreshNavigation(entry, agent);
                 state.recoveryApplied(stage, "cleared transient movement and combat state");
                 state.active("recovering quest " + node.questId() + " after no durable progress");
@@ -196,6 +202,7 @@ public final class AgentMushroomKingdomRuntime {
                                           AgentMushroomKingdomCatalog.QuestNode node,
                                           PrimitiveCapabilityGateway gateway) {
         return switch (node.questId()) {
+            case 2325 -> 106021201;
             case 2330 -> AgentMushroomKingdomYetiPartyRuntime.LOBBY_MAP_ID;
             case 2332, 2333 -> 106021402;
             case 2334, 2335, 2336 -> gateway.questStatus(agent, 2333)
@@ -323,8 +330,16 @@ public final class AgentMushroomKingdomRuntime {
             state.clearHuntMap();
         }
 
-        var rankedMaps = AgentMushroomKingdomCatalog.huntMapsFor(node);
+        var rankedMaps = new ArrayList<>(AgentMushroomKingdomCatalog.huntMapsFor(node));
         if (rankedMaps.isEmpty()) return node.huntMapId();
+        int avoidedMapId = state.avoidedHuntMap(node.questId());
+        if (avoidedMapId > 0 && rankedMaps.size() > 1) {
+            rankedMaps.stream().filter(map -> map.mapId() == avoidedMapId).findFirst()
+                    .ifPresent(map -> {
+                        rankedMaps.remove(map);
+                        rankedMaps.add(map);
+                    });
+        }
         Map<Integer, Integer> occupancy = new LinkedHashMap<>();
         for (AgentMushroomKingdomCatalog.HuntMap map : rankedMaps) {
             int count = Math.max(0, gateway.characterCount(agent, map.mapId()));
@@ -557,7 +572,6 @@ public final class AgentMushroomKingdomRuntime {
                     "empty Yeti instance reroll exit", state, gateway, nowMs);
         }
         if (!travel(entry, agent, 106021400, state, gateway, nowMs)) return true;
-        boolean atPortal = nearPortal(entry, agent, 2, gateway);
         AgentMushroomKingdomYetiPartyRuntime.Decision partyDecision =
                 AgentMushroomKingdomYetiPartyRuntime.prepare(
                         agent, state, gateway, nowMs,
@@ -566,7 +580,11 @@ public final class AgentMushroomKingdomRuntime {
             state.active("approaching King Pepe while matching up to three compatible party members");
             return true;
         }
-        if (!atPortal) return true;
+        if (!nearPortal(entry, agent, 2, gateway)) {
+            stageStalledUnobservedPortalApproach(
+                    entry, agent, 2, "King Pepe instance", state, gateway, nowMs);
+            return true;
+        }
         gateway.stop(entry);
         if (!gateway.runPortalNpcScript(agent, 2, 1300013, 1)) {
             return capabilityFailure(entry, state, gateway,

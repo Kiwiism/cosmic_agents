@@ -80,7 +80,7 @@ public final class AgentMushroomKingdomLiveSmokeMain {
                 for (int ordinal = 0; ordinal < branches.size(); ordinal++) {
                     agents.add(launch(branches.get(ordinal), ordinal, startAtQuestId, snapshot));
                 }
-                observeToCompletion(agents);
+                observeToCompletion(agents, startAtQuestId);
                 passed = true;
             }
         } catch (Throwable failure) {
@@ -249,7 +249,8 @@ public final class AgentMushroomKingdomLiveSmokeMain {
                 branch.id(), startAtQuestId);
     }
 
-    private static void observeToCompletion(List<LiveAgent> agents) throws Exception {
+    private static void observeToCompletion(List<LiveAgent> agents,
+                                            int startAtQuestId) throws Exception {
         long deadline = System.nanoTime() + RUN_TIMEOUT.toNanos();
         long nextStatusAt = 0L;
         long nextMapMaintenanceAt = 0L;
@@ -284,12 +285,13 @@ public final class AgentMushroomKingdomLiveSmokeMain {
             if (allComplete) {
                 for (LiveAgent live : agents) {
                     if (TEN_PERCENT_MODE) {
-                        require(recoveryCoverageComplete(
+                        require(recoveryCoverageComplete(startAtQuestId,
                                         live.killerSporeLossInjected,
                                         live.killerSporeRecoveryConfirmed,
                                         live.royalSealLossInjected,
                                         live.royalSealRecoveryConfirmed),
-                                live.branch.id() + " completed q2336 without proving q2338/q2342 recovery");
+                                live.branch.id() + " completed q2336 without proving all recoveries"
+                                        + " in scope for start q" + startAtQuestId);
                     }
                     System.out.printf("[MUSHROOM-LIVE] complete branch=%s level=%d exp=%d map=%d accelerated=%s%n",
                             live.branch.id(), live.agent.getLevel(), live.agent.getExp(),
@@ -496,8 +498,22 @@ public final class AgentMushroomKingdomLiveSmokeMain {
                                             boolean killerSporeRecoveryConfirmed,
                                             boolean royalSealLossInjected,
                                             boolean royalSealRecoveryConfirmed) {
-        return killerSporeLossInjected && killerSporeRecoveryConfirmed
-                && royalSealLossInjected && royalSealRecoveryConfirmed;
+        return recoveryCoverageComplete(0, killerSporeLossInjected,
+                killerSporeRecoveryConfirmed, royalSealLossInjected,
+                royalSealRecoveryConfirmed);
+    }
+
+    static boolean recoveryCoverageComplete(int startAtQuestId,
+                                            boolean killerSporeLossInjected,
+                                            boolean killerSporeRecoveryConfirmed,
+                                            boolean royalSealLossInjected,
+                                            boolean royalSealRecoveryConfirmed) {
+        boolean requiresKillerSporeRecovery = startAtQuestId == 0 || startAtQuestId <= 2322;
+        boolean requiresRoyalSealRecovery = startAtQuestId == 0 || startAtQuestId <= 2333;
+        return (!requiresKillerSporeRecovery
+                || killerSporeLossInjected && killerSporeRecoveryConfirmed)
+                && (!requiresRoyalSealRecovery
+                || royalSealLossInjected && royalSealRecoveryConfirmed);
     }
 
     private static boolean accelerateRepeatedCastleTravel(LiveAgent live, int questId,
@@ -512,9 +528,10 @@ public final class AgentMushroomKingdomLiveSmokeMain {
         if (firstCollectionStarted && live.firstCollectionRouteProven
                 && AgentPrimitiveCapabilityGatewayRuntime.gateway()
                 .itemCount(live.agent, 4000502) < 200
-                && mapId != 106021100) {
+                && mapId != 106021100
+                && !live.stagedFirstCollection) {
             stageForLiveProof(live, 106021100, "first collection field",
-                    !live.stagedFirstCollection);
+                    true);
             live.stagedFirstCollection = true;
             return true;
         }
@@ -532,9 +549,10 @@ public final class AgentMushroomKingdomLiveSmokeMain {
         if (secondCollectionStarted
                 && AgentPrimitiveCapabilityGatewayRuntime.gateway()
                 .itemCount(live.agent, 4000503) < 200
-                && live.agent.getMapId() != 106021300) {
+                && live.agent.getMapId() != 106021300
+                && !live.stagedSecondCollection) {
             stageForLiveProof(live, 106021300, "second collection field",
-                    !live.stagedSecondCollection);
+                    true);
             live.stagedSecondCollection = true;
             return true;
         }

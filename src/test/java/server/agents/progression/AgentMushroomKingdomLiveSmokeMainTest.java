@@ -75,4 +75,16 @@ class AgentMushroomKingdomLiveSmokeMainTest {
         assertFalse(AgentMushroomKingdomLiveSmokeMain.recoveryCoverageComplete(
                 true, true, true, false));
     }
+
+    @Test
+    void diagnosticRecoveryCoverageOnlyRequiresRecoveriesAfterItsStartQuest() {
+        assertTrue(AgentMushroomKingdomLiveSmokeMain.recoveryCoverageComplete(
+                2328, false, false, true, true));
+        assertFalse(AgentMushroomKingdomLiveSmokeMain.recoveryCoverageComplete(
+                2328, false, false, true, false));
+        assertTrue(AgentMushroomKingdomLiveSmokeMain.recoveryCoverageComplete(
+                2335, false, false, false, false));
+        assertTrue(AgentMushroomKingdomLiveSmokeMain.recoveryCoverageComplete(
+                2336, false, false, false, false));
+    }
 }

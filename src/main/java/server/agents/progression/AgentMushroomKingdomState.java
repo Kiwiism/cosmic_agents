@@ -30,6 +30,8 @@ public final class AgentMushroomKingdomState implements AgentMushroomKingdomYeti
     private int yetiUnwantedRolls;
     private int huntMapQuestId;
     private int selectedHuntMapId;
+    private int avoidedHuntMapQuestId;
+    private int avoidedHuntMapId;
     private long yetiLobbyVisitStartedAtMs;
     private long yetiHumanInviteSentAtMs;
     private List<Integer> yetiHumanInviteeIds = List.of();
@@ -54,6 +56,8 @@ public final class AgentMushroomKingdomState implements AgentMushroomKingdomYeti
         yetiUnwantedRolls = 0;
         huntMapQuestId = 0;
         selectedHuntMapId = 0;
+        avoidedHuntMapQuestId = 0;
+        avoidedHuntMapId = 0;
         clearYetiLobbyVisit();
         yetiBossDefeatedAtMs = 0L;
     }
@@ -73,6 +77,8 @@ public final class AgentMushroomKingdomState implements AgentMushroomKingdomYeti
             recoveryStage = 0;
             checkpointRecoveries = 0;
             lastRecovery = "";
+            avoidedHuntMapQuestId = 0;
+            avoidedHuntMapId = 0;
         }
         if (questChanged) {
             huntMapQuestId = 0;
@@ -147,6 +153,15 @@ public final class AgentMushroomKingdomState implements AgentMushroomKingdomYeti
     public synchronized void clearHuntMap() {
         huntMapQuestId = 0;
         selectedHuntMapId = 0;
+    }
+
+    public synchronized void avoidHuntMap(int questId, int mapId) {
+        avoidedHuntMapQuestId = questId;
+        avoidedHuntMapId = mapId;
+    }
+
+    public synchronized int avoidedHuntMap(int questId) {
+        return avoidedHuntMapQuestId == questId ? avoidedHuntMapId : 0;
     }
 
     public synchronized void beginYetiLobbyVisit(long nowMs) {

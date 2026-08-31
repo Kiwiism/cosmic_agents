@@ -35,6 +35,8 @@ For the shortened story-flow test, start one branch at the Mushroom Kingdom entr
 
 The live runner uses disposable characters, so it does not apply the production cohort command's x9 EXP/meso catch-up payout; that payout remains covered by the cohort service tests.
 
+A full entrance run must exercise both recovery quests. A diagnostic start requires only the recovery branches still reachable from that checkpoint: starts after `2322` do not require `2338`, and starts after `2333` do not require `2342`.
+
 Named diagnostic snapshots provide reproducible development checkpoints without replacing the final full run:
 
 ```powershell
