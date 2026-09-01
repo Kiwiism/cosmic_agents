@@ -45,6 +45,8 @@ public final class AgentEpqTestService {
             "EPQer01", "EPQer02", "EPQer03", "EPQer04", "EPQer05");
     private static final long SPAWN_STAGGER_MS = config.AgentTuning.longValue(
             "server.agents.capabilities.partyquest.epq.AgentEpqTestService.SPAWN_STAGGER_MS");
+    private static final long PREPARATION_TIMEOUT_MS = config.AgentTuning.longValue(
+            "server.agents.capabilities.partyquest.epq.AgentEpqTestService.PREPARATION_TIMEOUT_MS");
 
     private AgentEpqTestService() { }
 
@@ -227,6 +229,12 @@ public final class AgentEpqTestService {
         try {
             if (run.flow == Flow.AGENT_LEADER) maybeInvite(run);
             if (run.session == null) attemptHandoff(run);
+            if (run.session == null
+                    && System.currentTimeMillis() - run.startedAtMs >= PREPARATION_TIMEOUT_MS) {
+                fail(run, "EPQ party preparation timed out after "
+                        + (PREPARATION_TIMEOUT_MS / 1_000L) + " seconds");
+                return;
+            }
             if (run.spectating) updateSpectator(run);
             if (run.session != null && run.session.terminal()) {
                 if (run.session.phase() == AgentEpqSession.Phase.FAILED) {
@@ -427,6 +435,7 @@ public final class AgentEpqTestService {
         final Character operator;
         final AgentPartyQuestEngagement engagement;
         final long seed;
+        final long startedAtMs;
         final Flow flow;
         final List<Job> agentBranches;
         final Set<Integer> agents = new LinkedHashSet<>();
@@ -442,6 +451,7 @@ public final class AgentEpqTestService {
             this.operator = operator;
             this.engagement = engagement;
             this.seed = seed;
+            this.startedAtMs = engagement.startedAtMs();
             this.flow = flow;
             this.agentBranches = List.copyOf(agentBranches);
         }

@@ -1021,6 +1021,10 @@ tuning:
     # Purpose: Spaces the five dedicated EPQ observation fixtures without affecting production Agent admission.
     # Technical: Used only by !epqtest when scheduling EPQer01 through EPQer05.
     server.agents.capabilities.partyquest.epq.AgentEpqTestService.SPAWN_STAGGER_MS: '350'
+    # Values: 60000-600000 milliseconds. Recommended: 180000 so five local fixtures have ample time to spawn, join, and pass roster admission.
+    # Purpose: Cleans up an EPQ observation run if its party never reaches a complete five-class roster.
+    # Technical: Applies before event admission only; it does not shorten the authored event timer or the per-stage watchdog.
+    server.agents.capabilities.partyquest.epq.AgentEpqTestService.PREPARATION_TIMEOUT_MS: '180000'
     # Values: 60000-600000 milliseconds. Recommended: 240000 for an autonomous party whose maps, mob HP, items, and reactors should keep changing.
     # Purpose: Terminates a genuinely stalled Agent-only EPQ stage with a phase-specific diagnostic.
     # Technical: The signature observes authoritative EPQ state and never advances a script, damages a mob, or changes a map.

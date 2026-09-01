@@ -59,6 +59,26 @@ class AgentEpqSessionTest {
         assertTrue(session.failure().contains("stalled"));
     }
 
+    @Test
+    void stageFiveHasOneStoneCollectorAndStillAcceptsHumanLeadership() {
+        AgentEpqSession agentsOnly = session(5);
+        assertTrue(AgentEpqCoordinator.mayCollectStageFiveStone(agentsOnly, 1));
+        assertFalse(AgentEpqCoordinator.mayCollectStageFiveStone(agentsOnly, 2));
+
+        AgentEpqSession mixed = new AgentEpqSession(
+                AgentEpqSession.Mode.HUMAN_ASSISTED, 7L, 10, 10L);
+        mixed.addMember(10, AgentEpqMemberState.MemberType.HUMAN);
+        mixed.addMember(11, AgentEpqMemberState.MemberType.AGENT);
+        mixed.addMember(12, AgentEpqMemberState.MemberType.AGENT);
+        mixed.addMember(13, AgentEpqMemberState.MemberType.AGENT);
+        mixed.addMember(14, AgentEpqMemberState.MemberType.AGENT);
+        mixed.setLeadership(10, 11);
+
+        assertTrue(AgentEpqCoordinator.mayCollectStageFiveStone(mixed, 11));
+        assertFalse(AgentEpqCoordinator.mayCollectStageFiveStone(mixed, 12));
+        assertFalse(AgentEpqCoordinator.mayCollectStageFiveStone(mixed, 10));
+    }
+
     private static AgentEpqSession session(int memberCount) {
         AgentEpqSession session = new AgentEpqSession(AgentEpqSession.Mode.TEST_OBSERVATION, 7L, 1, 10L);
         for (int id = 1; id <= memberCount; id++) {

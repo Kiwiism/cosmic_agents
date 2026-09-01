@@ -49,16 +49,19 @@ public final class AgentEpqCoordinator {
     private AgentEpqCoordinator() { }
 
     public static void tickSession(AgentEpqSession session, long nowMs) {
+        if (nowMs - session.startedAtMs() >= EVENT_TIMEOUT_MS && !session.terminal()) {
+            session.fail("EPQ event timer expired", nowMs);
+            return;
+        }
         Character leader = character(session.eventLeaderId());
-        if (leader == null) return;
+        if (leader == null) {
+            AgentEpqWatchdogRuntime.tick(session, nowMs);
+            return;
+        }
         if (session.eventInstance() == null && leader.getEventInstance() != null
                 && AgentEpqDefinition.isEventMap(leader.getMapId())) {
             session.bindEventInstance(leader.getEventInstance());
             session.markProgress(nowMs);
-        }
-        if (nowMs - session.startedAtMs() >= EVENT_TIMEOUT_MS && !session.terminal()) {
-            session.fail("EPQ event timer expired", nowMs);
-            return;
         }
         AgentEpqSession.Phase observed = phaseForMap(leader.getMapId());
         if (observed != null) session.transition(observed, nowMs);
@@ -213,27 +216,32 @@ public final class AgentEpqCoordinator {
 
     private static void stageFive(AgentEpqSession session, AgentRuntimeEntry entry, Character agent,
                                   AgentEpqMemberState member, long nowMs) {
-        ACTIONS.lootNearby(agent, Set.of(AgentEpqDefinition.MAGIC_STONE));
-        if (agent.getId() == session.eventLeaderId()
-                && ACTIONS.itemCount(agent, AgentEpqDefinition.MAGIC_STONE) > 0) {
-            if (runNearbyNpc(entry, agent, AgentEpqDefinition.STONE_NPC)) member.deferUntil(nowMs + ACTION_RETRY_MS);
-            return;
-        }
-        if (agent.getId() != workAgentId(session)) { ACTIONS.stop(entry); return; }
-        if (agent.getId() != session.eventLeaderId()
-                && ACTIONS.itemCount(agent, AgentEpqDefinition.MAGIC_STONE) > 0) {
-            dropStackNearNpc(entry, agent, AgentEpqDefinition.MAGIC_STONE,
-                    AgentEpqDefinition.STONE_NPC, member, nowMs);
-            if (ACTIONS.itemCount(agent, AgentEpqDefinition.MAGIC_STONE) == 0) {
-                announce(member, agent, "stage5-human-handoff",
-                        "I dropped the Magic Stone beside Yuris. Leader, please pick it up and continue.");
+        int magicStones = ACTIONS.itemCount(agent, AgentEpqDefinition.MAGIC_STONE);
+        if (magicStones > 0) {
+            if (agent.getId() == session.eventLeaderId()) {
+                if (runNearbyNpc(entry, agent, AgentEpqDefinition.STONE_NPC)) {
+                    member.deferUntil(nowMs + ACTION_RETRY_MS);
+                }
+            } else {
+                dropStackNearNpc(entry, agent, AgentEpqDefinition.MAGIC_STONE,
+                        AgentEpqDefinition.STONE_NPC, member, nowMs);
+                if (ACTIONS.itemCount(agent, AgentEpqDefinition.MAGIC_STONE) == 0) {
+                    announce(member, agent, "stage5-human-handoff",
+                            "I dropped the Magic Stone beside Yuris. Leader, please pick it up and continue.");
+                }
             }
             return;
         }
+        if (!mayCollectStageFiveStone(session, agent.getId())) { ACTIONS.stop(entry); return; }
+        ACTIONS.lootNearby(agent, Set.of(AgentEpqDefinition.MAGIC_STONE));
         Reactor target = nearestActiveReactor(agent,
                 Set.of(AgentEpqDefinition.STONE_BOX, AgentEpqDefinition.EMPTY_BOX));
         if (target == null) { ACTIONS.stop(entry); return; }
         hitReactor(entry, agent, target, member, nowMs);
+    }
+
+    static boolean mayCollectStageFiveStone(AgentEpqSession session, int characterId) {
+        return session != null && characterId == workAgentId(session);
     }
 
     private static void boss(AgentEpqSession session, AgentRuntimeEntry entry, Character agent,
