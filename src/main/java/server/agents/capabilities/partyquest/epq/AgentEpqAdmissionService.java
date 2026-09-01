@@ -10,6 +10,7 @@ import server.agents.integration.AgentClientGatewayRuntime;
 import server.agents.integration.AgentPartyGatewayRuntime;
 import server.agents.integration.AgentPartySnapshot;
 import server.agents.runtime.AgentRuntimeRegistry;
+import server.agents.runtime.simulation.AgentAbstractExecutionScope;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -49,6 +50,11 @@ public final class AgentEpqAdmissionService {
             AgentEpqSessionRegistry.registerComplete(session);
             lobby.beginHandoff(nowMs);
             engagement.activateSession(session.sessionId(), nowMs);
+            validation.members().stream().filter(AgentEpqAdmissionService::isAgent).forEach(agent -> {
+                var entry = AgentRuntimeRegistry.findByAgentCharacterId(agent.getId());
+                if (entry != null) entry.simulationState()
+                        .clearAbstractExecution(AgentAbstractExecutionScope.TOWN_LIFE);
+            });
             AgentPartyQuestLobbyRuntime.unregister(lobby.lobbyId(), nowMs);
             return new AdmissionResult(true, "EPQ party admitted", session);
         } catch (RuntimeException failure) {

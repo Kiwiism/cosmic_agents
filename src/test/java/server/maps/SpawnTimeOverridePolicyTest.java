@@ -31,4 +31,14 @@ class SpawnTimeOverridePolicyTest {
         assertEquals(-1_000,
                 SpawnTimeOverridePolicy.reactorRespawnMilliseconds(922_010_200, -1_000));
     }
+
+    @Test
+    void ellinPqPreservesPersistentZeroDelayReactors() {
+        assertEquals(0,
+                SpawnTimeOverridePolicy.reactorRespawnMilliseconds(930_000_200, 0));
+        assertEquals(0,
+                SpawnTimeOverridePolicy.reactorRespawnMilliseconds(930_000_500, 0));
+        assertEquals(0,
+                SpawnTimeOverridePolicy.reactorRespawnMilliseconds(930_000_600, 0));
+    }
 }

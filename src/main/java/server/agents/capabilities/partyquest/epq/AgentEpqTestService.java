@@ -27,10 +27,13 @@ import server.agents.runtime.AgentRuntimeCleanupService;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentSchedulerRuntime;
+import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.runtime.activity.AgentActivityBootstrap;
+import server.agents.runtime.activity.AgentActivityOwnershipState;
 import server.maps.MapleMap;
 
 import java.awt.Point;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -170,6 +173,8 @@ public final class AgentEpqTestService {
                 Job branch = run.agentBranches.get(ordinal);
                 var prepared = AgentEpqTestFixtureService.prepare(
                         entry, branch, run.seed + ordinal * 10_007L, System.currentTimeMillis());
+                AgentMapGatewayRuntime.map().changeMapNear(
+                        launched, recruit, spawn == null ? candidate : spawn);
                 if (!AgentActivityBootstrap.admission().prepare(
                         AgentActivityBootstrap.PARTY_QUEST_CONTROLLER_ID, entry, launched,
                         "entering EPQ observation", System.currentTimeMillis())) {
@@ -356,10 +361,89 @@ public final class AgentEpqTestService {
         if (run == null) return List.of("No EPQ test is active.");
         if (run.session == null) return List.of("EPQ Agents prepared: " + run.agents.size()
                 + "/" + run.agentBranches.size(), "flow: " + run.flow);
-        return List.of("EPQ phase: " + run.session.phase(),
-                "members: " + run.session.memberCount(),
-                "last progress: " + run.session.lastProgressAtMs(),
-                run.session.failure().isBlank() ? "failure: none" : "failure: " + run.session.failure());
+        Character leader = online(run.session.eventLeaderId());
+        AgentRuntimeEntry entry = leader == null ? null
+                : AgentRuntimeRegistry.findByAgentCharacterId(leader.getId());
+        String leaderState = leader == null ? "leader: offline"
+                : "leader: " + leader.getName() + " map=" + leader.getMapId()
+                + " pos=" + leader.getPosition()
+                + (entry == null ? " runtime=missing"
+                : " target=" + AgentMoveTargetStateRuntime.moveTarget(entry)
+                + " simulation=" + entry.simulationState().mode()
+                + "/" + entry.simulationState().abstractExecutionScope()
+                + " ownership=" + entry.capabilityStates()
+                .require(AgentActivityOwnershipState.STATE_KEY).snapshot().status());
+        String stageState = stageState(run, leader);
+        List<String> lines = new ArrayList<>();
+        lines.add("EPQ phase: " + run.session.phase());
+        lines.add("members: " + run.session.memberCount());
+        lines.add("last progress: " + run.session.lastProgressAtMs());
+        lines.add(leaderState);
+        lines.add(stageState);
+        if (leader != null && (leader.getMapId() == AgentEpqDefinition.STAGE_TWO_MAP
+                || leader.getMapId() == AgentEpqDefinition.STAGE_FOUR_MAP)) {
+            for (AgentEpqMemberState member : run.session.members()) {
+                Character character = online(member.characterId());
+                if (character == null) continue;
+                AgentRuntimeEntry memberEntry = AgentRuntimeRegistry.findByAgentCharacterId(character.getId());
+                lines.add("stage member: " + character.getName()
+                        + " pos=" + character.getPosition()
+                        + " target=" + (memberEntry == null ? "runtime-missing"
+                        : AgentMoveTargetStateRuntime.moveTarget(memberEntry))
+                        + " poison=" + character.countItem(AgentEpqDefinition.POISON)
+                        + " purified=" + character.countItem(AgentEpqDefinition.PURIFIED_POISON)
+                        + " capture=" + character.countItem(AgentEpqDefinition.PURIFICATION_MARBLE)
+                        + " marbles=" + character.countItem(AgentEpqDefinition.MONSTER_MARBLE));
+            }
+        }
+        lines.add(run.session.failure().isBlank() ? "failure: none" : "failure: " + run.session.failure());
+        return List.copyOf(lines);
+    }
+
+    private static String stageState(Run run, Character leader) {
+        if (leader == null || leader.getMap() == null) {
+            return "stage state: n/a";
+        }
+        if (leader.getMapId() == AgentEpqDefinition.STAGE_FOUR_MAP) {
+            var flowers = leader.getMap().getAllMonsters().stream()
+                    .filter(monster -> monster.isAlive()
+                            && monster.getId() == AgentEpqDefinition.POISON_FLOWER)
+                    .toList();
+            long minimumHp = flowers.stream().mapToLong(server.life.Monster::getHp).min().orElse(0L);
+            long maximumHp = flowers.stream().mapToLong(server.life.Monster::getHp).max().orElse(0L);
+            int captures = 0;
+            int marbles = 0;
+            for (AgentEpqMemberState member : run.session.members()) {
+                Character character = online(member.characterId());
+                if (character == null) continue;
+                captures += character.countItem(AgentEpqDefinition.PURIFICATION_MARBLE);
+                marbles += character.countItem(AgentEpqDefinition.MONSTER_MARBLE);
+            }
+            return "stage 4: flowers=" + flowers.size() + " hp=" + minimumHp + ".." + maximumHp
+                    + " capture=" + captures + " marbles=" + marbles;
+        }
+        if (leader.getMapId() != AgentEpqDefinition.STAGE_TWO_MAP) return "stage state: n/a";
+        int poison = 0;
+        int purified = 0;
+        for (AgentEpqMemberState member : run.session.members()) {
+            Character character = online(member.characterId());
+            if (character == null) continue;
+            poison += character.countItem(AgentEpqDefinition.POISON);
+            purified += character.countItem(AgentEpqDefinition.PURIFIED_POISON);
+        }
+        int poisonDrops = 0;
+        int purifiedDrops = 0;
+        for (var drop : leader.getMap().getDroppedItems()) {
+            if (drop.getItemId() == AgentEpqDefinition.POISON) poisonDrops++;
+            if (drop.getItemId() == AgentEpqDefinition.PURIFIED_POISON) purifiedDrops++;
+        }
+        var pond = leader.getMap().getReactorById(AgentEpqDefinition.POND_REACTOR);
+        var spine = leader.getMap().getReactorById(AgentEpqDefinition.SPINE_REACTOR);
+        return "stage 2: mobs=" + leader.getMap().countMonsters()
+                + " poison=" + poison + "/drops=" + poisonDrops
+                + " purified=" + purified + "/drops=" + purifiedDrops
+                + " pond=" + (pond == null ? "missing" : pond.getState())
+                + " spine=" + (spine == null ? "missing" : spine.getState());
     }
 
     private static List<String> pause(Character operator, boolean paused) {
@@ -378,6 +462,8 @@ public final class AgentEpqTestService {
 
     private static void fail(Run run, String reason) {
         if (run == null || !RUNS.remove(run.operator.getId(), run)) return;
+        log.warn("EPQ observation stopped operator={} reason={}",
+                run.operator.getName(), reason);
         close(run, reason, System.currentTimeMillis());
         run.operator.dropMessage(6, "EPQ stopped safely: " + reason);
     }

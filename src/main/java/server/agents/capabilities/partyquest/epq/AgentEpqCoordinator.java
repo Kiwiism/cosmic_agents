@@ -39,6 +39,8 @@ public final class AgentEpqCoordinator {
             "server.agents.capabilities.partyquest.epq.AgentEpqCoordinator.EVENT_TIMEOUT_MS");
     private static final long BOSS_LOOT_SETTLE_MS = config.AgentTuning.longValue(
             "server.agents.capabilities.partyquest.epq.AgentEpqCoordinator.BOSS_LOOT_SETTLE_MS");
+    private static final long ITEM_REACTOR_SETTLE_MS = 5_500L;
+    private static final int ITEM_REACTOR_DROP_RADIUS = 40;
     private static final int PORTAL_RADIUS = config.AgentTuning.intValue(
             "server.agents.capabilities.partyquest.epq.AgentEpqCoordinator.PORTAL_RADIUS");
     private static final int NPC_RADIUS = config.AgentTuning.intValue(
@@ -131,20 +133,23 @@ public final class AgentEpqCoordinator {
             enterPortal(entry, agent, 3, member, nowMs);
             return;
         }
-        if (carrier && ACTIONS.itemCount(agent, AgentEpqDefinition.PURIFIED_POISON) > 0 && spine != null) {
-            dropAt(entry, agent, InventoryType.ETC, AgentEpqDefinition.PURIFIED_POISON,
+        if (ACTIONS.itemCount(agent, AgentEpqDefinition.PURIFIED_POISON) > 0 && spine != null) {
+            dropAt(session, entry, agent, InventoryType.ETC, AgentEpqDefinition.PURIFIED_POISON,
                     spine.getPosition(), member, nowMs);
             return;
         }
         Reactor pond = agent.getMap().getReactorById(AgentEpqDefinition.POND_REACTOR);
-        if (carrier && ACTIONS.itemCount(agent, AgentEpqDefinition.POISON) > 0 && pond != null) {
-            dropAt(entry, agent, InventoryType.ETC, AgentEpqDefinition.POISON,
+        if (ACTIONS.itemCount(agent, AgentEpqDefinition.POISON) > 0 && pond != null) {
+            dropAt(session, entry, agent, InventoryType.ETC, AgentEpqDefinition.POISON,
                     pond.getPosition(), member, nowMs);
             return;
         }
         if (ACTIONS.liveMonsterCount(agent, Set.of(AgentEpqDefinition.STAGE_TWO_MOB)) > 0) {
-            if (carrier) ACTIONS.grind(entry, Set.of(AgentEpqDefinition.STAGE_TWO_MOB));
-            else ACTIONS.stop(entry);
+            ACTIONS.grind(entry, Set.of(AgentEpqDefinition.STAGE_TWO_MOB));
+        } else if (carrier) {
+            ACTIONS.stop(entry);
+            agent.getMap().instanceMapForceRespawn();
+            member.deferUntil(nowMs + ACTION_RETRY_MS);
         } else {
             ACTIONS.stop(entry);
         }
@@ -152,7 +157,7 @@ public final class AgentEpqCoordinator {
 
     private static void stageThree(AgentRuntimeEntry entry, Character agent,
                                    AgentEpqMemberState member, long nowMs) {
-        Point coordinator = ACTIONS.npcPosition(agent, AgentEpqDefinition.STAGE_NPC);
+        Point coordinator = npcApproachPoint(agent, AgentEpqDefinition.STAGE_NPC);
         if (near(agent.getPosition(), coordinator, 260)) {
             if (runNearbyNpc(entry, agent, AgentEpqDefinition.STAGE_NPC)) member.deferUntil(nowMs + ACTION_RETRY_MS);
             return;
@@ -258,7 +263,7 @@ public final class AgentEpqCoordinator {
             if (agent.getId() == session.eventLeaderId()
                     && ACTIONS.itemCount(agent, AgentEpqDefinition.MAGIC_STONE) > 0) {
                 Reactor altar = agent.getMap().getReactorById(AgentEpqDefinition.ALTAR_REACTOR);
-                if (altar != null) dropAt(entry, agent, InventoryType.ETC,
+                if (altar != null) dropAt(session, entry, agent, InventoryType.ETC,
                         AgentEpqDefinition.MAGIC_STONE, altar.getPosition(), member, nowMs);
             } else {
                 ACTIONS.stop(entry);
@@ -317,6 +322,8 @@ public final class AgentEpqCoordinator {
     }
 
     private static int captureAgentId(AgentEpqSession session, Monster flower) {
+        int nearestSafeId = 0;
+        double nearestSafeDistance = Double.POSITIVE_INFINITY;
         int selectedId = 0;
         long selectedDamage = Long.MAX_VALUE;
         for (AgentEpqMemberState member : session.members()) {
@@ -330,13 +337,21 @@ public final class AgentEpqCoordinator {
                 selectedDamage = damage;
                 selectedId = member.characterId();
             }
+            if (damage < flower.getHp()) {
+                double distance = candidate.getPosition().distanceSq(flower.getPosition());
+                if (distance < nearestSafeDistance) {
+                    nearestSafeDistance = distance;
+                    nearestSafeId = member.characterId();
+                }
+            }
         }
+        if (nearestSafeId != 0) return nearestSafeId;
         return selectedId == 0 ? workAgentId(session) : selectedId;
     }
 
     private static long conservativeMaximumDamage(Character agent, AgentAttackPlan plan) {
         var profile = AgentAttackDamageProfileService.resolve(agent, plan);
-        return Math.max(1L, (long) profile.maxDamage() * Math.max(1, plan.numDamage) * 3L);
+        return Math.max(1L, (long) profile.maxDamage() * Math.max(1, plan.numDamage));
     }
 
     private static int workAgentId(AgentEpqSession session) {
@@ -419,7 +434,7 @@ public final class AgentEpqCoordinator {
     }
 
     private static boolean runNearbyNpc(AgentRuntimeEntry entry, Character agent, int npcId, int... selections) {
-        Point npc = ACTIONS.npcPosition(agent, npcId);
+        Point npc = npcApproachPoint(agent, npcId);
         if (!near(agent.getPosition(), npc, NPC_RADIUS)) {
             if (npc != null) ACTIONS.navigate(entry, npc, true);
             return false;
@@ -428,23 +443,28 @@ public final class AgentEpqCoordinator {
         return EPQ.runNpc(agent, npcId, selections);
     }
 
-    private static void dropAt(AgentRuntimeEntry entry, Character agent, InventoryType type, int itemId,
+    private static void dropAt(AgentEpqSession session, AgentRuntimeEntry entry, Character agent,
+                               InventoryType type, int itemId,
                                Point target, AgentEpqMemberState member, long nowMs) {
-        if (!near(agent.getPosition(), target, 90)) {
-            Point ground = ACTIONS.groundPoint(agent.getMap(), target);
-            if (ground != null) ACTIONS.navigate(entry, ground, true);
+        Point position = agent.getPosition();
+        Point levelTarget = new Point(target.x, position == null ? target.y : position.y);
+        Point ground = ACTIONS.groundPoint(agent.getMap(), levelTarget);
+        Point approach = ground == null ? levelTarget : ground;
+        if (!near(position, approach, ITEM_REACTOR_DROP_RADIUS)) {
+            ACTIONS.navigate(entry, approach, true);
             return;
         }
         ACTIONS.stop(entry);
         if (dropItem(entry, agent, type, itemId, (short) 1)) {
-            member.deferUntil(nowMs + ACTION_RETRY_MS);
+            long settleUntil = nowMs + ITEM_REACTOR_SETTLE_MS;
+            session.members().forEach(state -> state.deferUntil(settleUntil));
         }
     }
 
     private static void dropStackNearNpc(
             AgentRuntimeEntry entry, Character agent, int itemId, int npcId,
             AgentEpqMemberState member, long nowMs) {
-        Point npc = ACTIONS.npcPosition(agent, npcId);
+        Point npc = npcApproachPoint(agent, npcId);
         if (!near(agent.getPosition(), npc, NPC_RADIUS)) {
             if (npc != null) ACTIONS.navigate(entry, npc, true);
             return;
@@ -457,6 +477,15 @@ public final class AgentEpqCoordinator {
         }
     }
 
+    private static Point npcApproachPoint(Character agent, int npcId) {
+        Point npc = ACTIONS.npcPosition(agent, npcId);
+        if (npc == null || agent == null || agent.getMap() == null) return npc;
+        Point position = agent.getPosition();
+        Point besideNpc = new Point(npc.x - 48, position == null ? npc.y : position.y);
+        Point grounded = ACTIONS.groundPoint(agent.getMap(), besideNpc);
+        return grounded == null ? besideNpc : grounded;
+    }
+
     private static boolean dropItem(
             AgentRuntimeEntry entry, Character agent, InventoryType type, int itemId, short quantity) {
         var inventory = agent == null ? null : agent.getInventory(type);
@@ -464,9 +493,19 @@ public final class AgentEpqCoordinator {
         if (item == null || item.getQuantity() <= 0
                 || !AgentInventoryReservationRuntime.mayConsume(
                 entry, item, System.currentTimeMillis())) return false;
+        short dropQuantity = (short) Math.min(item.getQuantity(), Math.max(1, quantity));
+        if (itemId == AgentEpqDefinition.POISON
+                && agent.getMapId() == AgentEpqDefinition.STAGE_TWO_MAP) {
+            Item dropped = item.copy();
+            dropped.setQuantity(dropQuantity);
+            AgentInventoryGatewayRuntime.inventory().removeFromSlot(
+                    agent, type, item.getPosition(), dropQuantity, true);
+            agent.getMap().spawnItemDrop(
+                    agent, agent, dropped, new Point(agent.getPosition()), true, true);
+            return true;
+        }
         AgentInventoryGatewayRuntime.inventory().dropItem(
-                agent, type, item.getPosition(),
-                (short) Math.min(item.getQuantity(), Math.max(1, quantity)));
+                agent, type, item.getPosition(), dropQuantity);
         return true;
     }
 

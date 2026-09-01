@@ -14,6 +14,7 @@ import server.life.LifeFactory;
 import server.life.Monster;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -30,12 +31,16 @@ public final class AgentEpqTestFixtureService {
     static final int OVERALL_INT_60 = 2_040_513;
     static final int BOTTOM_DEX_10 = 2_040_612;
     static final int BOTTOM_DEX_60 = 2_040_613;
+    private static final int SHOES_SPEED_10 = 2_040_708;
+    private static final int EARRING = 1_032_075;
+    private static final int CAPE = 1_102_055;
     static final double MINIMUM_BOSS_HIT_CHANCE = 0.60d;
     private static final Set<Integer> EPQ_COMBAT_MOBS = Set.of(
             9_300_172, 9_300_173, 9_300_175,
             9_300_177, 9_300_178, 9_300_179,
             9_300_180, 9_300_181, 9_300_182);
     private static final Map<Job, String> BUILD_BY_BRANCH = builds();
+    private static final Map<Job, Loadout> LOADOUT_BY_BRANCH = loadouts();
 
     private AgentEpqTestFixtureService() { }
 
@@ -46,13 +51,19 @@ public final class AgentEpqTestFixtureService {
         if (agent == null || buildId == null) {
             throw new IllegalArgumentException("a spawned EPQ Agent and Explorer branch are required");
         }
-        AgentBalrogTestFixtureService.Build build = AgentBalrogTestFixtureService.ALL_BUILDS.stream()
+        AgentBalrogTestFixtureService.Build baseBuild = AgentBalrogTestFixtureService.ALL_BUILDS.stream()
                 .filter(candidate -> candidate.buildId().equals(buildId)).findFirst()
                 .orElseThrow(() -> new IllegalStateException("missing EPQ build " + buildId));
         AgentLpqTestFixtureService.applyAppearance(agent, seed);
+        Loadout loadout = LOADOUT_BY_BRANCH.get(branch);
+        AgentBalrogTestFixtureService.Build build = new AgentBalrogTestFixtureService.Build(
+                baseBuild.buildId(), baseBuild.career(), baseBuild.job(), baseBuild.weaponClass(),
+                loadout.weaponItemId(), loadout.shieldItemId(), baseBuild.apBuild(), baseBuild.spBuild());
         AgentFieldObservationFixtureService.Prepared prepared =
-                AgentFieldObservationFixtureService.prepareForBalrog(
-                        entry, build, EPQ_LEVEL, EPQ_COMBAT_MOBS, nowMs);
+                AgentFieldObservationFixtureService.prepareForPartyQuest(
+                        entry, build, EPQ_LEVEL, EPQ_COMBAT_MOBS,
+                        loadout.equipment(agent.getGender(), build), loadout.weaponScrollItemId(),
+                        SHOES_SPEED_10, loadout.capeScrollItemId(), nowMs);
         applyEpqScrolls(agent, branch);
         agent.equipChanged();
         double minimumHitChance = minimumHitChance(agent, branch == Job.MAGICIAN);
@@ -131,6 +142,40 @@ public final class AgentEpqTestFixtureService {
         result.put(Job.THIEF, "assassin-claw");
         result.put(Job.PIRATE, "gunslinger-gun");
         return Map.copyOf(result);
+    }
+
+    private static Map<Job, Loadout> loadouts() {
+        EnumMap<Job, Loadout> result = new EnumMap<>(Job.class);
+        result.put(Job.WARRIOR, new Loadout(1_432_017, 0, 2_044_301, 2_041_014,
+                List.of(1_002_098, 1_040_086, 1_060_074, 1_082_025, 1_072_127),
+                List.of(1_002_098, 1_041_085, 1_061_084, 1_082_025, 1_072_127)));
+        result.put(Job.MAGICIAN, new Loadout(1_372_011, 1_092_029, 2_043_701, 2_041_017,
+                List.of(1_002_155, 1_050_036, 1_082_064, 1_072_117),
+                List.of(1_002_155, 1_051_024, 1_082_064, 1_072_117)));
+        result.put(Job.BOWMAN, new Loadout(1_452_023, 0, 2_044_501, 2_041_020,
+                List.of(1_002_992, 1_040_079, 1_060_069, 1_082_070, 1_072_401),
+                List.of(1_002_992, 1_041_081, 1_061_080, 1_082_070, 1_072_401)));
+        result.put(Job.THIEF, new Loadout(1_472_018, 0, 2_044_701, 2_041_023,
+                List.of(1_002_181, 1_040_082, 1_060_071, 1_082_074, 1_072_107),
+                List.of(1_002_181, 1_041_075, 1_061_070, 1_082_074, 1_072_107)));
+        result.put(Job.PIRATE, new Loadout(1_492_007, 0, 2_044_901, 2_041_020,
+                List.of(1_002_631, 1_052_116, 1_082_198, 1_072_294),
+                List.of(1_002_631, 1_052_116, 1_082_198, 1_072_294)));
+        return Map.copyOf(result);
+    }
+
+    private record Loadout(int weaponItemId, int shieldItemId,
+                           int weaponScrollItemId, int capeScrollItemId,
+                           List<Integer> maleArmor, List<Integer> femaleArmor) {
+        private List<Integer> equipment(
+                int gender, AgentBalrogTestFixtureService.Build build) {
+            ArrayList<Integer> items = new ArrayList<>(gender == 0 ? maleArmor : femaleArmor);
+            items.add(EARRING);
+            items.add(CAPE);
+            if (build.shieldItemId() > 0) items.add(build.shieldItemId());
+            items.add(build.weaponItemId());
+            return List.copyOf(items);
+        }
     }
 
     public record PreparationResult(int level, Job branch, String buildId,
