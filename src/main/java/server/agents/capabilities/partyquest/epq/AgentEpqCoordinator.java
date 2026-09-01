@@ -140,7 +140,8 @@ public final class AgentEpqCoordinator {
             return;
         }
         if (ACTIONS.liveMonsterCount(agent, Set.of(AgentEpqDefinition.STAGE_TWO_MOB)) > 0) {
-            ACTIONS.grind(entry, Set.of(AgentEpqDefinition.STAGE_TWO_MOB));
+            if (carrier) ACTIONS.grind(entry, Set.of(AgentEpqDefinition.STAGE_TWO_MOB));
+            else ACTIONS.stop(entry);
         } else {
             ACTIONS.stop(entry);
         }
