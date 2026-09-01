@@ -3,6 +3,7 @@ package server.agents.capabilities.combat;
 import server.agents.capabilities.supplies.AgentAmmoStateRuntime;
 
 import client.Character;
+import client.Disease;
 import net.server.channel.handlers.AbstractDealDamageHandler;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.operations.events.AgentAttackResolvedEvent;
@@ -44,6 +45,7 @@ public final class AgentCombatAttackRuntime {
                         () -> AgentCombatWeaponPolicy.canUseAttackSkillWithWeapon(
                                         attackPlan.skillId,
                                         AgentAttackExecutionProvider.getEquippedWeaponType(bot))
+                                && (attackPlan.skillId <= 0 || !bot.hasDisease(Disease.SEAL))
                                 && AgentCombatSkillUsePolicy.canPaySkillCost(
                                         bot, attackPlan.skillId, attackPlan.skillLevel),
                         () -> entry != null && attackPlan != null && AgentCombatRangePolicy.canUseAttackPlanNow(

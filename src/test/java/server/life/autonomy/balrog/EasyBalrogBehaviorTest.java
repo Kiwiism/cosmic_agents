@@ -38,7 +38,23 @@ class EasyBalrogBehaviorTest {
 
         BossAction.Skill skill = assertInstanceOf(BossAction.Skill.class, selected.action());
         assertEquals(MobSkillType.UNDEAD, skill.mobSkill().getType());
-        verify(random).nextInt(6);
+        verify(random).nextInt(2);
+    }
+
+    @Test
+    void bodyFallsBackToOrdinaryAttacksWhileSpellsAreUnavailable() {
+        Monster body = bodyAtHp(25_000);
+        when(body.canUseSkill(any(), eq(false))).thenReturn(false);
+        RandomGenerator random = mock(RandomGenerator.class);
+        when(random.nextInt(anyInt())).thenReturn(0);
+
+        BossActorBehavior.SelectedAction selected = new EasyBalrogBodyBehavior().select(
+                body, List.of(targetAt(0, 0)),
+                ServerMobActionCatalog.forMob(EasyBalrogBodyBehavior.MOB_ID), random)
+                .orElseThrow();
+
+        assertInstanceOf(BossAction.OrdinaryAttack.class, selected.action());
+        verify(random).nextInt(4);
     }
 
     @Test

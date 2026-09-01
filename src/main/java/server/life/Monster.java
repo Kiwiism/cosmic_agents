@@ -63,6 +63,7 @@ import server.agents.capabilities.quest.AgentQuestKillCreditPolicy;
 import server.integration.AgentPresence;
 import server.life.simulation.MobControlAuthority;
 import server.life.simulation.MobMovementSnapshot;
+import server.life.autonomy.balrog.EasyBalrogEncounterService;
 import server.loot.LootManager;
 import server.maps.AbstractAnimatedMapObject;
 import server.maps.MapObjectType;
@@ -402,8 +403,10 @@ public class Monster extends AbstractLoadedLife {
 
     public void broadcastMobHpBar(Character from) {
         if (hasBossHPBar()) {
-            from.setPlayerAggro(this.hashCode());
-            from.getMap().broadcastBossHpMessage(this, this.hashCode(), makeBossHPBarPacket(), getPosition());
+            int hpBarHash = bossHpBarHash();
+            from.setPlayerAggro(hpBarHash);
+            from.getMap().broadcastBossHpMessage(
+                    this, hpBarHash, makeBossHPBarPacket(), getPosition());
         } else if (!isBoss()) {
             int remainingHP = (int) Math.max(1, hp.get() * 100f / getMaxHp());
             Packet packet = PacketCreator.showMonsterHP(getObjectId(), remainingHP);
@@ -1196,11 +1199,25 @@ public class Monster extends AbstractLoadedLife {
     }
 
     public Packet makeBossHPBarPacket() {
+        var aggregate = EasyBalrogEncounterService.hpBarSnapshot(this);
+        if (aggregate.isPresent()) {
+            EasyBalrogEncounterService.HpBarSnapshot hpBar = aggregate.get();
+            return PacketCreator.showBossHP(
+                    hpBar.mobId(), hpBar.currentHp(), hpBar.maxHp(),
+                    hpBar.tagColor(), hpBar.tagBackgroundColor());
+        }
         return PacketCreator.showBossHP(getId(), getHp(), getMaxHp(), getTagColor(), getTagBgColor());
     }
 
     public boolean hasBossHPBar() {
-        return isBoss() && getTagColor() > 0;
+        return EasyBalrogEncounterService.hpBarSnapshot(this).isPresent()
+                || !isFake() && isBoss() && getTagColor() > 0;
+    }
+
+    public int bossHpBarHash() {
+        return EasyBalrogEncounterService.hpBarSnapshot(this)
+                .map(EasyBalrogEncounterService.HpBarSnapshot::identityHash)
+                .orElseGet(this::hashCode);
     }
 
     @Override
@@ -1215,7 +1232,7 @@ public class Monster extends AbstractLoadedLife {
         }
 
         if (hasBossHPBar()) {
-            client.announceBossHpBar(this, this.hashCode(), makeBossHPBarPacket());
+            client.announceBossHpBar(this, bossHpBarHash(), makeBossHPBarPacket());
         }
     }
 

@@ -1857,6 +1857,10 @@ public class StatEffect {
      }
      }
      */
+    public boolean curesDisease(Disease disease) {
+        return disease != null && cureDebuffs != null && cureDebuffs.contains(disease);
+    }
+
     public short getHp() {
         return hp;
     }

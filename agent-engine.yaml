@@ -879,10 +879,10 @@ tuning:
     # Purpose: Makes an Agent-led LPQ invitation arrive naturally after the human asks to join in lobby chat.
     # Technical: The shared lobby runtime applies this override only to LPQ sessions and leaves every KPQ, HPQ, and ordinary party invitation delay unchanged.
     server.agents.capabilities.partyquest.lpq.AgentLpqLobbyProfile.INVITE_RESPONSE_MINIMUM_MS: '2000'
-    # Values: 1000-10000 milliseconds. Recommended: 5000.
+    # Values: 1000-10000 milliseconds. Recommended: 2400.
     # Purpose: Caps the natural LPQ invitation delay after a recognized human join request.
     # Technical: Must remain at or above LPQ's minimum invitation delay and is consumed exclusively by the LPQ lobby profile without changing KPQ or HPQ.
-    server.agents.capabilities.partyquest.lpq.AgentLpqLobbyProfile.INVITE_RESPONSE_MAXIMUM_MS: '5000'
+    server.agents.capabilities.partyquest.lpq.AgentLpqLobbyProfile.INVITE_RESPONSE_MAXIMUM_MS: '2400'
     # Values: 500-3000 milliseconds. Recommended: 1200 to let ordinary reactors, NPC scripts, and item drops settle between repeated actions.
     # Purpose: Prevents LPQ Agents from flooding the same authored interaction while still allowing responsive box, submission, and combination attempts.
     # Technical: AgentLpqMemberState owns each deadline and AgentLpqCoordinator consumes it only inside the isolated LPQ aggregate and test session.
@@ -989,6 +989,62 @@ tuning:
     # Purpose: Spaces the six dedicated LPQ observation fixtures while leaving production population admission and ordinary player entry unaffected.
     # Technical: AgentLpqTestService reads this only when scheduling GM harness characters named LPQer01 through LPQer06 on the operator's channel.
     server.agents.capabilities.partyquest.lpq.AgentLpqTestService.SPAWN_STAGGER_MS: '500'
+    # Values: 250-3000 milliseconds. Recommended: 900 so an authored EPQ portal, NPC, reactor, drop, or capture action settles before the same member acts again.
+    # Purpose: Spaces one EPQ member's ordinary field interactions while other members continue their own independent work.
+    # Technical: Stored on the EPQ member's private next-action deadline; it never pauses another PQ or the shared lobby renderer.
+    server.agents.capabilities.partyquest.epq.AgentEpqCoordinator.ACTION_RETRY_MS: '900'
+    # Values: 500-5000 milliseconds. Recommended: 2000 to allow Altaire's Fragment and other final boss drops to become collectible before Agents enter the clear portal.
+    # Purpose: Keeps the EPQ party in the boss field briefly after Ellin Forest marks the event cleared.
+    # Technical: Starts only from the first authoritative isEventCleared observation and affects no combat or reward calculation.
+    server.agents.capabilities.partyquest.epq.AgentEpqCoordinator.BOSS_LOOT_SETTLE_MS: '2000'
+    # Values: 600000-1800000 milliseconds. Recommended: 1800000 to match the authored 30-minute Ellin Forest event timer.
+    # Purpose: Bounds ownership if the EPQ event script or roster becomes stuck without completing.
+    # Technical: Measured from EPQ session admission and released only through EPQ's idempotent termination path.
+    server.agents.capabilities.partyquest.epq.AgentEpqCoordinator.EVENT_TIMEOUT_MS: '1800000'
+    # Values: 80-220 map pixels. Recommended: 160 for the Ellin Forest coordinator and entry NPC platforms.
+    # Purpose: Requires an EPQ Agent to approach an NPC visibly before running the authored dialogue.
+    # Technical: Compared as squared map-space distance; it does not alter NPC scripts, portal range, or another activity.
+    server.agents.capabilities.partyquest.epq.AgentEpqCoordinator.NPC_RADIUS: '160'
+    # Values: 50-140 map pixels. Recommended: 90 for the authored EPQ maze and stage transition portals.
+    # Purpose: Requires an EPQ Agent to stand at the portal before executing its existing portal script.
+    # Technical: Applies only inside AgentEpqCoordinator and leaves Cosmic portal validation authoritative.
+    server.agents.capabilities.partyquest.epq.AgentEpqCoordinator.PORTAL_RADIUS: '90'
+    # Values: 70-200 map pixels. Recommended: 140 for Ellin Forest boxes and the reward reactor.
+    # Purpose: Requires an EPQ Agent to approach a reactor before broadcasting and applying a normal weapon hit.
+    # Technical: Does not change reactor state directly; the authored reactor receives the ordinary hit path.
+    server.agents.capabilities.partyquest.epq.AgentEpqCoordinator.REACTOR_RADIUS: '140'
+    # Values: 100-3000 milliseconds. Recommended: 250 for prompt party-wide phase observation while retaining one coordinator at a time.
+    # Purpose: Lets another live EPQ Agent take over shared phase observation if the current coordinator stops ticking.
+    # Technical: AgentEpqSession owns this EPQ-only lease; all movement, combat, looting, and capture work remains per member.
+    server.agents.capabilities.partyquest.epq.AgentEpqRuntime.COORDINATOR_LEASE_MS: '250'
+    # Values: 250-3000 milliseconds. Recommended: 650 to prevent repeated portal, NPC, item-drop, or reactor inputs before the prior server action settles.
+    # Purpose: Spaces ordinary OPQ interactions without slowing independent workers assigned to other rooms.
+    # Technical: Each Agent stores its own next-action deadline; this value never pauses the session coordinator or another member's room tick.
+    server.agents.capabilities.partyquest.opq.AgentOpqCoordinator.ACTION_RETRY_MS: '650'
+    # Values: 300000-1800000 milliseconds. Recommended: 720000 to allow natural puzzle discovery while still terminating a genuinely abandoned run before the event timer.
+    # Purpose: Bounds how long an OPQ session may show no authoritative progress before safe cleanup.
+    # Technical: The coordinator compares session-owned progress only and releases all OPQ leases and loot custody through the idempotent termination path.
+    server.agents.capabilities.partyquest.opq.AgentOpqCoordinator.PHASE_TIMEOUT_MS: '720000'
+    # Values: 30000-180000 milliseconds. Recommended: 90000 so a live split-room worker retains ownership through navigation while a vanished worker can be replaced.
+    # Purpose: Prevents two Agents from owning the same OPQ room objective concurrently.
+    # Technical: Only the room ledger owner renews the lease; expiration releases incomplete OPQ-local work and never mutates another room.
+    server.agents.capabilities.partyquest.opq.AgentOpqCoordinator.ROOM_LEASE_MS: '90000'
+    # Values: 10000-60000 milliseconds. Recommended: 25000 to tolerate long ropes and platforms before refreshing the same-map legal route.
+    # Purpose: Detects a worker whose ordinary navigation has stopped making positional progress.
+    # Technical: Recovery refreshes navigation state only; it never changes maps, positions the character, damages a mob, or changes a reactor.
+    server.agents.capabilities.partyquest.opq.AgentOpqCoordinator.NAVIGATION_STALL_MS: '25000'
+    # Values: 40-120 map pixels. Recommended: 75 for the authored OPQ NPC platform geometry.
+    # Purpose: Requires an OPQ Agent to approach an NPC physically before invoking its dialogue script.
+    # Technical: The radius affects NPC interaction only; reactors, portals, and trigger drops retain their stricter independent legality gates.
+    server.agents.capabilities.partyquest.opq.AgentOpqCoordinator.NPC_RADIUS: '75'
+    # Values: 500-5000 milliseconds. Recommended: 1500 for prompt failover without allowing multiple Agents to coordinate shared OPQ phase transitions.
+    # Purpose: Gives one member temporary authority over party-wide assignment and phase synchronization while every member retains its own worker tick.
+    # Technical: AgentOpqSession owns this lease; it does not serialize room movement, combat, looting, or another PQ system.
+    server.agents.capabilities.partyquest.opq.AgentOpqRuntime.COORDINATOR_LEASE_MS: '1500'
+    # Values: 100-2000 milliseconds. Recommended: 500 to avoid simultaneous login, build, inventory, and party initialization pressure.
+    # Purpose: Spaces creation of the six dedicated OPQ observation fixtures.
+    # Technical: The GM-only harness consumes this value before PQ entry; active OPQ travel and room ticks do not use it.
+    server.agents.capabilities.partyquest.opq.AgentOpqTestService.SPAWN_STAGGER_MS: '500'
     # Values: 35-50. Recommended: 45 to provide learned second-job utility skills and legal equipment without approaching the entry ceiling.
     # Purpose: Selects the legal test-fixture level for role-covered LPQ observation parties while production Agents retain their real progression state.
     # Technical: AgentLpqTestFixtureService applies this level through the existing second-job build pipeline and admission revalidates the authored LPQ range.

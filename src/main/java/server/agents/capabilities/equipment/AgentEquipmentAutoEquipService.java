@@ -432,6 +432,7 @@ public final class AgentEquipmentAutoEquipService {
             List<Equip> pool = bySlot.computeIfAbsent(key, k -> new ArrayList<>());
             if (!pool.contains(e)) pool.add(e);
         }
+        AgentEquipmentAppearanceDiversityPolicy.preferUnusedSameClassItems(bot, bySlot);
         Job botJob = bot.getJob();
         boolean[] reqRel = AgentEquipmentOptimizer.scanReqRelevantDims(bySlot, ii);
         for (Map.Entry<Short, List<Equip>> e : bySlot.entrySet()) {

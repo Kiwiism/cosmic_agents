@@ -59,7 +59,7 @@ public final class AgentLpqLobbyProfile {
     }
 
     private static List<String> activityNames() {
-        return List.of("lpq", "ludi pq", "ludi party quest",
+        return List.of("lpq", "pq", "ludi pq", "ludi party quest",
                 "ludibrium pq", "ludibrium party quest", "tower pq");
     }
 

@@ -24,8 +24,12 @@ public final class AgentMobReactionRouter {
         if (acquireServerCombat(attacker, monster)) {
             return;
         }
-        strategy(AgentMobPhysicsConfig.config().AGENT_MOB_REACTION_MODE)
+        boolean physicsAcquired = strategy(AgentMobPhysicsConfig.config().AGENT_MOB_REACTION_MODE)
                 .acceptedHit(attacker, monster, appliedDamage, reactionContext);
+        if (!physicsAcquired) {
+            ServerMobAutonomyService.releaseOrdinaryAggroInstances(
+                    monster, "physics-acquisition-rejected");
+        }
     }
 
     private static boolean acquireServerCombat(Character attacker, Monster monster) {
@@ -39,7 +43,8 @@ public final class AgentMobReactionRouter {
         if (map.getChannelServer().getServiceAccess(ChannelServices.MOB_AUTONOMY)
                 instanceof ServerMobAutonomyService service) {
             service.acquire(monster, attacker);
-            return service.retainsNativeAuthority(monster);
+            return service.retainsNativeAuthority(monster)
+                    || service.blocksAgentPhysics(monster);
         }
         return false;
     }

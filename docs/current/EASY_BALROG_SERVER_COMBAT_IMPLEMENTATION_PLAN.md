@@ -87,8 +87,8 @@ Easy Balrog is complete only when:
 | 8830012 | Helper from 8830009 | None |
 | 8830010 | Post-body WZ revive form | Suppressed after normal Easy clear |
 | 6400007 | Baby Balrog add | Encounter-owned generic mob routine |
-| 6400008 | Jr. Balrog add | Encounter-owned generic mob routine |
-| 6400009 | Crimson Balrog add | Encounter-owned generic mob routine |
+| 6400008 | Jr. Balrog add | Ground chase; three linked WZ magical attack casts |
+| 6400009 | Crimson Balrog add | Flying chase at WZ fly speed 10; two linked WZ magical attack casts |
 
 Canonical origin is (412, 258) in map 105100400. Arbitrary-map creation treats its supplied point as the encounter origin and resolves valid ground.
 
@@ -108,6 +108,8 @@ stateDiagram-v2
 ~~~
 
 Creation produces fake body 8830007, active claw 8830009, and seal 8830013. At 60 seconds the coordinator releases the seal and creates claw 8830008. Only the two registered claw deaths activate the original body. Active body death clears the encounter. Standalone clear must not leave a delayed 8830010 spawn.
+
+Easy Balrog uses one encounter HP gauge keyed to body UI ID `8830007`. `currentHp` and `maxHp` aggregate body `8830007` plus claws `8830008` and `8830009`; the sealed body and not-yet-released claw begin at full HP. Every component resolves to the body's stable gauge hash, while standalone component summons retain individual bars.
 
 ### Body actions
 
@@ -256,6 +258,12 @@ Regular supported v83 clients declare `NATIVE_MOB_SIMULATION`; WASM declares `RE
 The eligible participant roster is ordered deterministically by expedition registration order, with character ID as the stable tie-breaker. The selected controller is pinned across all current encounter actors. Valid MOVE_LIFE activity renews a conservative controller lease, but DPS, proximity, and ordinary aggro changes do not replace it.
 
 Death, disconnect, logout, event departure, map-instance departure, capability loss, or lease expiry triggers one serialized reevaluation. If another eligible human exists, every current combat actor is reassigned to that human without starting server runtimes. If none exists, the coordinator atomically enters `SERVER_STICKY`, revokes client control for all current actors, invalidates old leases and in-flight client claims, attaches server runtimes, and ensures every future component/add is server-owned. A later join, revive, or reconnect cannot reverse takeover.
+
+Only registered, capable expedition participants can control the Easy Balrog boss actors. A GM or other observer who warps into the arena is a spectator and cannot acquire or reclaim boss authority or become a server-runtime victim. Registered Agents remain boss targets. The body and claws are fixed WZ `noFlip` components: neither Agent hits nor server actions may attach gravity/movement physics to them.
+
+The Agent party follows the encounter's legal phase order. All twelve members spread across the safe center formation while either claw remains active, prioritizing summoned Jr. and Crimson Balrogs when present and returning to the claws afterward. The fake head is never targeted. Once both claws are dead, the body is active, and current adds are cleared, all twelve climb naturally to their ordinal positions on the upper-left platform and attack the head from legal weapon range.
+
+Jr. and Crimson Balrog are ordinary summoned mobs and deliberately use a different policy. Any capable real observer may simulate them before Agent contact. Once an Agent hits one, the server owns that add's chase/flying physics and attack routine until seven seconds pass without another Agent hit; then both authorities return together to any available capable real client. This lease continues without an observer so Agent-only runs do not leave the adds idle.
 
 ## Actor runtime
 

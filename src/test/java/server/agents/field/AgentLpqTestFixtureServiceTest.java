@@ -5,6 +5,11 @@ import client.Job;
 import client.SkinColor;
 import constants.skills.ILWizard;
 import org.junit.jupiter.api.Test;
+import provider.Data;
+import provider.DataProviderFactory;
+import provider.DataTool;
+import provider.wz.WZFiles;
+import server.agents.capabilities.partyquest.lpq.AgentLpqSession;
 
 import java.util.HashSet;
 import java.util.List;
@@ -72,6 +77,45 @@ class AgentLpqTestFixtureServiceTest {
     }
 
     @Test
+    void mixedPartyRosterLeavesTheHumansExplicitSpecialRoomRoleToTheHuman() {
+        assertEquals(List.of(
+                        Job.CLERIC, Job.BANDIT, Job.ASSASSIN,
+                        Job.CROSSBOWMAN, Job.SPEARMAN),
+                jobs(AgentLpqTestFixtureService.mixedPartyBuildIds(
+                        AgentLpqSession.HumanRolePreference.TELEPORT)));
+        assertEquals(List.of(
+                        Job.CLERIC, Job.IL_WIZARD, Job.ASSASSIN,
+                        Job.CROSSBOWMAN, Job.SPEARMAN),
+                jobs(AgentLpqTestFixtureService.mixedPartyBuildIds(
+                        AgentLpqSession.HumanRolePreference.DARK_SIGHT)));
+    }
+
+    @Test
+    void sameFamilyFixtureBuildsUseDifferentVisibleArmor() {
+        assertVisibleArmorDiffers("cleric-wand", "il-wizard-wand");
+        assertVisibleArmorDiffers("bandit-dagger", "assassin-claw");
+    }
+
+    @Test
+    void fixtureVisibleArmorDoesNotRequireFame() {
+        var characterData = DataProviderFactory.getDataProvider(WZFiles.CHARACTER);
+        for (AgentLpqTestFixtureService.Loadout loadout
+                : AgentLpqTestFixtureService.LPQ_LOADOUTS.values()) {
+            for (int gender = 0; gender <= 1; gender++) {
+                for (int itemId : loadout.equipment(gender)) {
+                    String category = visibleArmorCategory(itemId);
+                    if (category == null) continue;
+                    Data item = characterData.getData(
+                            category + "/" + "%08d.img".formatted(itemId));
+                    assertNotNull(item, () -> "missing fixture WZ item " + itemId);
+                    assertEquals(0, DataTool.getInt("info/reqPOP", item, 0),
+                            () -> "fixture armor requires fame: " + itemId);
+                }
+            }
+        }
+    }
+
+    @Test
     void appearanceCatalogUsesAllStylesGendersAndRequestedSkinTonesDeterministically() {
         assertTrue(AgentLpqAppearanceCatalog.faces(0).size() > 200);
         assertTrue(AgentLpqAppearanceCatalog.faces(1).size() > 200);
@@ -116,6 +160,39 @@ class AgentLpqTestFixtureServiceTest {
         assertNotNull(loadout);
         assertEquals(weaponScroll, loadout.weaponScrollItemId());
         assertEquals(capeScroll, loadout.capeScrollItemId());
+    }
+
+    private static List<Job> jobs(List<String> buildIds) {
+        return buildIds.stream()
+                .map(AgentLpqTestFixtureService::build)
+                .map(AgentBalrogTestFixtureService.Build::job)
+                .toList();
+    }
+
+    private static void assertVisibleArmorDiffers(String firstBuild, String secondBuild) {
+        for (int gender = 0; gender <= 1; gender++) {
+            List<Integer> first = AgentLpqTestFixtureService.LPQ_LOADOUTS
+                    .get(firstBuild).equipment(gender);
+            List<Integer> second = AgentLpqTestFixtureService.LPQ_LOADOUTS
+                    .get(secondBuild).equipment(gender);
+            Set<Integer> firstVisible = first.stream()
+                    .filter(itemId -> Set.of(100, 104, 105, 106).contains(itemId / 10_000))
+                    .collect(java.util.stream.Collectors.toSet());
+            Set<Integer> secondVisible = second.stream()
+                    .filter(itemId -> Set.of(100, 104, 105, 106).contains(itemId / 10_000))
+                    .collect(java.util.stream.Collectors.toSet());
+            assertTrue(java.util.Collections.disjoint(firstVisible, secondVisible));
+        }
+    }
+
+    private static String visibleArmorCategory(int itemId) {
+        return switch (itemId / 10_000) {
+            case 100 -> "Cap";
+            case 104 -> "Coat";
+            case 105 -> "Longcoat";
+            case 106 -> "Pants";
+            default -> null;
+        };
     }
 
     private static int slotFamily(int itemId) {

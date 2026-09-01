@@ -60,6 +60,23 @@ public final class AgentPotionStateRuntime {
         entry.potionSupplyState().setMpRecoveryTimerMs(0);
     }
 
+    public static long diseaseSignature(AgentRuntimeEntry entry) {
+        return entry.potionSupplyState().diseaseSignature();
+    }
+
+    public static long diseaseCureDueAtMs(AgentRuntimeEntry entry) {
+        return entry.potionSupplyState().diseaseCureDueAtMs();
+    }
+
+    public static void scheduleDiseaseCure(
+            AgentRuntimeEntry entry, long signature, long dueAtMs) {
+        entry.potionSupplyState().scheduleDiseaseCure(signature, dueAtMs);
+    }
+
+    public static void clearDiseaseCure(AgentRuntimeEntry entry) {
+        entry.potionSupplyState().clearDiseaseCure();
+    }
+
     public static void setPotShareRequested(AgentRuntimeEntry entry, boolean forHp, boolean requested) {
         entry.potionSupplyState().setShareRequested(forHp, requested);
     }

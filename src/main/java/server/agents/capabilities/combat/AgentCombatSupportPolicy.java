@@ -1,6 +1,7 @@
 package server.agents.capabilities.combat;
 
 import client.Character;
+import client.Disease;
 import constants.skills.Cleric;
 import constants.skills.SuperGM;
 import java.awt.Point;
@@ -233,6 +234,20 @@ public final class AgentCombatSupportPolicy {
             }
         }
         return false;
+    }
+
+    /** Heal damages zombified characters, so one affected party member pauses party healing. */
+    public static boolean hasZombifiedPartyMember(Character bot) {
+        if (bot == null) {
+            return false;
+        }
+        if (bot.hasDisease(Disease.ZOMBIFY)) {
+            return true;
+        }
+        return bot.getPartyMembersOnSameMap().stream()
+                .filter(java.util.Objects::nonNull)
+                .filter(Character::isAlive)
+                .anyMatch(member -> member.hasDisease(Disease.ZOMBIFY));
     }
 
     public static List<Character> nearbyPartyMembers(Character bot, int supportRange, int supportVerticalRange) {

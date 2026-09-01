@@ -88,6 +88,35 @@ class AgentBalrogTestFixtureServiceTest {
                 AgentBalrogTestFixtureService.Build::job).distinct().count());
     }
 
+    @Test
+    void rosterUsesDistinctHeadAndBodyClothingWithinEachClassFamily() throws Exception {
+        List<AgentBalrogTestFixtureService.Build> roster =
+                AgentBalrogTestFixtureService.selectRoster(99L);
+
+        for (int gender = 0; gender <= 1; gender++) {
+            Map<Integer, HashSet<Integer>> wornByFamily = new HashMap<>();
+            for (int ordinal = 0; ordinal < roster.size(); ordinal++) {
+                AgentBalrogTestFixtureService.Build build = roster.get(ordinal);
+                int rank = AgentBalrogTestFixtureService.clothingRank(roster, ordinal);
+                HashSet<Integer> worn = wornByFamily.computeIfAbsent(
+                        build.job().getId() / 100, ignored -> new HashSet<>());
+                List<Integer> clothing = build.equipment(gender, rank).stream()
+                        .filter(itemId -> {
+                            int category = itemId / 10_000;
+                            return category >= 100 && category <= 106;
+                        }).toList();
+                assertTrue(clothing.stream().allMatch(worn::add),
+                        build.job() + " repeats family clothing at rank " + rank);
+                for (int itemId : clothing) {
+                    WzEquip equip = wzEquip(itemId);
+                    assertTrue(equip.requiredLevel() <= 60, build.job() + ":" + itemId);
+                    assertEquals(expectedJobMask(build.job()), equip.requiredJob(),
+                            build.job() + ":" + itemId);
+                }
+            }
+        }
+    }
+
     private static WzEquip wzEquip(int itemId) throws Exception {
         String folder = switch (itemId / 10_000) {
             case 100 -> "Cap";

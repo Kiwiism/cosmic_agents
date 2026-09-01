@@ -62,12 +62,38 @@ public final class AgentLocalOpportunityAttackService {
                                                    boolean allowCombatMovement,
                                                    boolean allowJumpTowardTarget,
                                                    Hooks hooks) {
+        return tryOpportunityAttack(entry, agent, agentPos, movementTargetPos,
+                moveWindowReferencePos, allowCombatMovement, allowJumpTowardTarget,
+                false, hooks);
+    }
+
+    public static Result tryAnchoredOpportunityAttack(AgentRuntimeEntry entry,
+                                                      Character agent,
+                                                      Point agentPos,
+                                                      Point anchor,
+                                                      Hooks hooks) {
+        return tryOpportunityAttack(entry, agent, agentPos, anchor, anchor,
+                false, false, true, hooks);
+    }
+
+    private static Result tryOpportunityAttack(AgentRuntimeEntry entry,
+                                               Character agent,
+                                               Point agentPos,
+                                               Point movementTargetPos,
+                                               Point moveWindowReferencePos,
+                                               boolean allowCombatMovement,
+                                               boolean allowJumpTowardTarget,
+                                               boolean anchored,
+                                               Hooks hooks) {
         Point targetPos = movementTargetPos;
         if (AgentAmmoStateRuntime.noAmmo(entry) || agent == null || agentPos == null) {
             return new Result(false, targetPos);
         }
 
-        Monster localTarget = movementTargetPos == null
+        Monster localTarget = anchored
+                ? AgentCombatTargetRuntime.findAnchoredAttackTarget(
+                        entry, agent, AgentCombatConfig.cfg)
+                : movementTargetPos == null
                 ? AgentCombatTargetRuntime.findFollowAttackTarget(entry, agent, AgentCombatConfig.cfg)
                 : AgentCombatTargetRuntime.findRouteBlockerTarget(
                         entry, agent, movementTargetPos, AgentCombatConfig.cfg);

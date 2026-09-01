@@ -162,6 +162,7 @@ public class ItemId {
     public static final int BELT_STR_100_SCROLL = 2041300;
 
     // Cure debuff
+    public static final int ANTIDOTE = 2050000;
     public static final int ALL_CURE_POTION = 2050004;
     public static final int EYEDROP = 2050001;
     public static final int TONIC = 2050002;
@@ -172,6 +173,11 @@ public class ItemId {
 
     public static boolean isPartyAllCure(int itemId) {
         return itemId == DOJO_PARTY_ALL_CURE || itemId == CARNIVAL_PARTY_ALL_CURE;
+    }
+
+    public static boolean isDiseaseCure(int itemId) {
+        return itemId >= ANTIDOTE && itemId <= ALL_CURE_POTION
+                || isPartyAllCure(itemId);
     }
 
     // Special effect

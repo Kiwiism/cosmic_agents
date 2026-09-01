@@ -1,6 +1,7 @@
 package server.agents.capabilities.combat;
 
 import client.Character;
+import client.Disease;
 import client.Skill;
 import client.inventory.WeaponType;
 import server.StatEffect;
@@ -22,6 +23,7 @@ public final class AgentCombatPlanRuntime {
         long startedAt = System.nanoTime();
         try {
             List<AgentAttackPlan> candidates = new ArrayList<>(3);
+            boolean sealed = bot.hasDisease(Disease.SEAL);
 
             List<Integer> attackSkillIds = AgentCombatSkillClassifier.cachedAttackSkillIds(
                     AgentCombatSkillCacheStateRuntime.attackSkillIds(entry),
@@ -34,18 +36,21 @@ public final class AgentCombatPlanRuntime {
                         .filter(skillId -> skillId == requiredSkillId)
                         .toList();
             }
-            for (int skillId : attackSkillIds) {
-                AgentAttackPlan skillAttack = AgentSkillAttackPlanRuntime.planSkillAttack(bot, target, skillId, config);
-                skillAttack = AgentCombatObjectiveTargetStateRuntime.restrictAttackPlan(entry, skillAttack);
-                if (skillAttack != null) {
-                    candidates.add(skillAttack);
+            if (!sealed) {
+                for (int skillId : attackSkillIds) {
+                    AgentAttackPlan skillAttack = AgentSkillAttackPlanRuntime.planSkillAttack(bot, target, skillId, config);
+                    skillAttack = AgentCombatObjectiveTargetStateRuntime.restrictAttackPlan(entry, skillAttack);
+                    if (skillAttack != null) {
+                        candidates.add(skillAttack);
+                    }
                 }
             }
 
             // A wand swing is the emergency fallback for a magician, not a competing damage plan. Allowing
             // it into the score alongside a usable spell can select an invisible-looking basic hit at melee
             // range instead of broadcasting the magic-skill packet.
-            if (!hasUsableMagicSkill(candidates) && !hasLearnedMagicSkill(bot, attackSkillIds)) {
+            if (sealed || (!hasUsableMagicSkill(candidates)
+                    && !hasLearnedMagicSkill(bot, attackSkillIds))) {
                 AgentAttackPlan basicAttack = AgentBasicAttackPlanRuntime.planBasicAttack(bot, target);
                 basicAttack = AgentCombatObjectiveTargetStateRuntime.restrictAttackPlan(entry, basicAttack);
                 if (basicAttack != null) {

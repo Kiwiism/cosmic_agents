@@ -44,6 +44,7 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 /**
  * @author Danny (Leifde)
@@ -194,6 +195,13 @@ public class MobSkill {
 
     // TODO: avoid output argument banishPlayersOutput
     public void applyEffect(Character player, Monster monster, boolean skill, List<Character> banishPlayersOutput) {
+        applyEffect(player, monster, skill, banishPlayersOutput, ignored -> true);
+    }
+
+    /** Applies a server-owned cast while limiting player effects to its combat roster. */
+    public void applyEffect(Character player, Monster monster, boolean skill,
+                            List<Character> banishPlayersOutput,
+                            Predicate<Character> eligibleTarget) {
         // See if the MobSkill is successful before doing anything
         if (!makeChanceResult()) {
             return;
@@ -215,9 +223,10 @@ public class MobSkill {
             case CURSE -> disease = Disease.CURSE;
             case POISON -> disease = Disease.POISON;
             case SLOW -> disease = Disease.SLOW;
-            case DISPEL -> applyDispelEffect(skill, monster, player);
+            case DISPEL -> applyDispelEffect(skill, monster, player, eligibleTarget);
             case SEDUCE -> disease = Disease.SEDUCE;
-            case BANISH -> applyBanishEffect(skill, monster, player, banishPlayersOutput);
+            case BANISH -> applyBanishEffect(
+                    skill, monster, player, banishPlayersOutput, eligibleTarget);
             case AREA_POISON -> spawnMonsterMist(monster);
             case REVERSE_INPUT -> disease = Disease.CONFUSE;
             case UNDEAD -> disease = Disease.ZOMBIFY;
@@ -258,7 +267,7 @@ public class MobSkill {
             applyMonsterBuffs(stats, skill, monster, reflection);
         }
         if (disease != null) {
-            applyDisease(disease, skill, monster, player);
+            applyDisease(disease, skill, monster, player, eligibleTarget);
         }
     }
 
@@ -274,19 +283,21 @@ public class MobSkill {
         }
     }
 
-    private void applyDispelEffect(boolean skill, Monster monster, Character player) {
+    private void applyDispelEffect(boolean skill, Monster monster, Character player,
+                                   Predicate<Character> eligibleTarget) {
         if (lt != null && rb != null && skill) {
-            getPlayersInRange(monster).forEach(Character::dispel);
-        } else {
+            getPlayersInRange(monster, eligibleTarget).forEach(Character::dispel);
+        } else if (player != null && eligibleTarget.test(player)) {
             player.dispel();
         }
     }
 
     private void applyBanishEffect(boolean skill, Monster monster, Character player,
-                                   List<Character> banishPlayersOutput) {
+                                   List<Character> banishPlayersOutput,
+                                   Predicate<Character> eligibleTarget) {
         if (lt != null && rb != null && skill) {
-            banishPlayersOutput.addAll(getPlayersInRange(monster));
-        } else {
+            banishPlayersOutput.addAll(getPlayersInRange(monster, eligibleTarget));
+        } else if (player != null && eligibleTarget.test(player)) {
             banishPlayersOutput.add(player);
         }
     }
@@ -383,10 +394,11 @@ public class MobSkill {
         }
     }
 
-    private void applyDisease(Disease disease, boolean skill, Monster monster, Character player) {
+    private void applyDisease(Disease disease, boolean skill, Monster monster, Character player,
+                              Predicate<Character> eligibleTarget) {
         if (lt != null && rb != null && skill) {
             int i = 0;
-            for (Character character : getPlayersInRange(monster)) {
+            for (Character character : getPlayersInRange(monster, eligibleTarget)) {
                 if (!character.hasActiveBuff(Bishop.HOLY_SHIELD)) {
                     if (disease.equals(Disease.SEDUCE)) {
                         if (i < count) {
@@ -398,13 +410,18 @@ public class MobSkill {
                     }
                 }
             }
-        } else {
+        } else if (player != null && eligibleTarget.test(player)) {
             player.giveDebuff(disease, this);
         }
     }
 
     private List<Character> getPlayersInRange(Monster monster) {
         return monster.getMap().getPlayersInRange(calculateBoundingBox(monster.getPosition()));
+    }
+
+    private List<Character> getPlayersInRange(
+            Monster monster, Predicate<Character> eligibleTarget) {
+        return getPlayersInRange(monster).stream().filter(eligibleTarget).toList();
     }
 
     public MobSkillId getId() {

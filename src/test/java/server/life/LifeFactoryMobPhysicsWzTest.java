@@ -26,4 +26,22 @@ class LifeFactoryMobPhysicsWzTest {
         assertFalse(stats.isPhysicsFlying());
         assertFalse(stats.canJump());
     }
+
+    @Test
+    void summonedCrimsonBalrogInheritsFlyingPhysicsFromItsLinkedTemplate() {
+        DataProvider provider = DataProviderFactory.getDataProvider(WZFiles.MOB);
+        Data linkedMob = provider.getData("8150000.img");
+        MonsterStats linked = new MonsterStats();
+        LifeFactory.loadMonsterPhysicsStats(
+                linked, linkedMob, linkedMob.getChildByPath("info"), null);
+
+        Data summonedMob = provider.getData("6400009.img");
+        MonsterStats summoned = new MonsterStats();
+        LifeFactory.loadMonsterPhysicsStats(
+                summoned, summonedMob, summonedMob.getChildByPath("info"), linked);
+
+        assertTrue(summoned.isPhysicsMobile());
+        assertTrue(summoned.isPhysicsFlying());
+        assertEquals(10, summoned.getRawFlySpeed());
+    }
 }

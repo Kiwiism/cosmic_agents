@@ -153,6 +153,49 @@ class MobPhysicsServiceTest {
     }
 
     @Test
+    void ordinaryServerAggroRunsWithoutObserverAndReleasesCombatWithPhysics() {
+        MapleMap map = mock(MapleMap.class);
+        when(map.isObservedByPlayer()).thenReturn(false);
+        when(map.hasTransitioningPlayerObserver()).thenReturn(true);
+        when(map.isMobPhysicsObserverWarmupComplete()).thenReturn(false);
+        when(map.isSwim()).thenReturn(false);
+        when(map.getCharacters()).thenReturn(List.of());
+        when(map.getPhysicsTerrain()).thenReturn(new FootholdPhysicsIndex(List.of(
+                new FootholdSegment(1, 0, 0, 1, 0, false,
+                        -500, 100, 500, 100))));
+        MonsterStats stats = new MonsterStats();
+        stats.setHp(100);
+        stats.setRawFlySpeed(10);
+        stats.setPushed(1);
+        stats.setPhysicsMobile(true);
+        stats.setPhysicsFlying(true);
+        Monster crimson = new Monster(6_400_009, stats);
+        crimson.setMap(map);
+        crimson.setPosition(new Point(0, 0));
+        when(map.getMonsterByOid(crimson.getObjectId())).thenReturn(crimson);
+        Character agent = agent(map, new Point(-100, 0));
+        ServerMobAutonomyService autonomy = new ServerMobAutonomyService(
+                java.util.random.RandomGenerator.getDefault(), false);
+        try {
+            assertTrue(autonomy.acquire(crimson, agent));
+            assertTrue(service.acceptedHit(agent, crimson, 10, 0));
+            MobSimulationSession session = service.sessionForTest(crimson);
+            long base = System.nanoTime() + 1_000_000_000L;
+            session.acceptHit(agent, 10, 0, 1, base);
+
+            service.tickForTest(base + 6_999_000_000L);
+            assertTrue(autonomy.isActive(crimson));
+
+            service.tickForTest(base + 7_000_000_000L);
+            assertFalse(autonomy.isActive(crimson));
+            assertFalse(ServerMobAutonomyService.requiresServerPhysicsInstance(crimson));
+            assertEquals(0, service.activeSessionCountForTest());
+        } finally {
+            autonomy.dispose();
+        }
+    }
+
+    @Test
     void staleInvalidationCannotReleaseARefreshedSession() {
         Fixture fixture = fixture(true, 1);
         assertTrue(service.acceptedHit(fixture.agent, fixture.monster, 10, 0));
@@ -279,6 +322,27 @@ class MobPhysicsServiceTest {
         service.tickForTest(System.nanoTime() + 100_000_000L);
 
         verify(fixture.map, never()).moveMonsterFromServerPhysics(any(), any(Point.class));
+        verify(fixture.map).broadcastMobPhysicsMessage(any(), any(Point.class));
+    }
+
+    @Test
+    void serverCombatActionIsNotCancelledByAnImmediatePhysicsPublication() {
+        Fixture fixture = fixture(true, 1);
+        assertTrue(service.acceptedHit(fixture.agent, fixture.monster, 10, 0));
+        clearInvocations(fixture.map);
+        long actionStarted = System.nanoTime() + 100_000_000L;
+        service.sessionForTest(fixture.monster).setMotion(
+                server.life.simulation.MobMotionState.IDLE);
+
+        service.beginServerCombatAction(
+                fixture.monster, actionStarted + 800_000_000L);
+        assertTrue(service.acceptedHit(fixture.agent, fixture.monster, 10, 0),
+                "damage during the cast must not revoke server ownership");
+        service.tickForTest(actionStarted + 100_000_000L);
+
+        verify(fixture.map, never()).broadcastMobPhysicsMessage(any(), any(Point.class));
+
+        service.tickForTest(actionStarted + 900_000_000L);
         verify(fixture.map).broadcastMobPhysicsMessage(any(), any(Point.class));
     }
 

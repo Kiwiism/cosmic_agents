@@ -51,7 +51,8 @@ public final class MobPhysicsService extends BaseService {
     public enum ReleaseReason {
         MODE_CHANGE, OBSERVER_LOSS, AGENT_DEPARTURE, AGENT_DEATH,
         MONSTER_GONE, MAP_CHANGE, INVALID_STATE, MISSING_TERRAIN,
-        BROADCAST_FAILURE, CLIENT_MAP_TRANSITION, AGGRO_TIMEOUT, SERVICE_SHUTDOWN
+        BROADCAST_FAILURE, CLIENT_MAP_TRANSITION, AGGRO_TIMEOUT,
+        SERVER_COMBAT_OWNERSHIP, SERVICE_SHUTDOWN
     }
 
     private final MobSimulationRegistry registry = new MobSimulationRegistry();
@@ -191,13 +192,17 @@ public final class MobPhysicsService extends BaseService {
         if (AgentMobPhysicsConfig.config().AGENT_MOB_REACTION_MODE != AgentMobReactionMode.PHYSICS
                 || attacker == null || monster == null || damage <= 0
                 || !(attacker.getClient() instanceof BotClient) || !attacker.isAlive()
-                || !monster.isAlive()) {
+                || !monster.isAlive()
+                || ServerMobAutonomyService.blocksAgentPhysicsInstance(monster)) {
             return false;
         }
         MapleMap map = monster.getMap();
-        return map != null && attacker.getMap() == map && hasPhysicsAudience(map)
+        boolean forcedByServerAggro = ServerMobAutonomyService
+                .requiresServerPhysicsInstance(monster);
+        return map != null && attacker.getMap() == map
+                && (forcedByServerAggro || hasPhysicsAudience(map)
                 && !map.hasTransitioningPlayerObserver()
-                && map.isMobPhysicsObserverWarmupComplete();
+                && map.isMobPhysicsObserverWarmupComplete());
     }
 
     private void tickSafely() {
@@ -311,7 +316,8 @@ public final class MobPhysicsService extends BaseService {
             Point previous = monster.getPosition();
             boolean positionChanged = previous == null
                     || previous.x != currentX || previous.y != currentY;
-            boolean publicationDue = session.publicationDue(
+            boolean serverCombatActionActive = session.serverCombatActionActive(now);
+            boolean publicationDue = !serverCombatActionActive && session.publicationDue(
                     now, tuning.publicationIntervalNanos());
             Point current = positionChanged || publicationDue
                     ? new Point(currentX, currentY) : null;
@@ -409,7 +415,8 @@ public final class MobPhysicsService extends BaseService {
         Monster monster = session.monster();
         Character agent = session.agent();
         MapleMap map = session.map();
-        if (mapInvalidReason != null) return mapInvalidReason;
+        if (mapInvalidReason != null && !ServerMobAutonomyService
+                .requiresServerPhysicsInstance(monster)) return mapInvalidReason;
         if (!monster.isAlive() || map.getMonsterByOid(monster.getObjectId()) != monster)
             return ReleaseReason.MONSTER_GONE;
         if (monster.getMap() != map) return ReleaseReason.MAP_CHANGE;
@@ -531,8 +538,11 @@ public final class MobPhysicsService extends BaseService {
                 && reason != ReleaseReason.MAP_CHANGE
                 && reason != ReleaseReason.OBSERVER_LOSS
                 && reason != ReleaseReason.CLIENT_MAP_TRANSITION
+                && reason != ReleaseReason.SERVER_COMBAT_OWNERSHIP
                 && reason != ReleaseReason.SERVICE_SHUTDOWN;
         try {
+            ServerMobAutonomyService.releaseOrdinaryAggroInstances(
+                    session.monster(), "physics-" + reason.name().toLowerCase());
             if (session.monster().aggroReleaseAgentPhysics(
                     session.agent(), selectRealController,
                     reason != ReleaseReason.AGGRO_TIMEOUT)

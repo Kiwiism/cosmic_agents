@@ -51,4 +51,23 @@ class AgentMobReactionRouterTest {
         verify(autonomy).acquire(monster, attacker);
         verify(channel, never()).getServiceAccess(ChannelServices.MOB_PHYSICS);
     }
+
+    @Test
+    void stickyStationaryBossAuthorityAlsoBlocksAgentPhysics() {
+        Character attacker = mock(Character.class);
+        Monster monster = mock(Monster.class);
+        MapleMap map = mock(MapleMap.class);
+        Channel channel = mock(Channel.class);
+        ServerMobAutonomyService autonomy = mock(ServerMobAutonomyService.class);
+        when(monster.getMap()).thenReturn(map);
+        when(map.getChannelServer()).thenReturn(channel);
+        when(channel.getServiceAccess(ChannelServices.MOB_AUTONOMY)).thenReturn(autonomy);
+        when(autonomy.blocksAgentPhysics(monster)).thenReturn(true);
+
+        AgentMobReactionRouter.acceptedHit(attacker, monster, 100,
+                MobHitReactionContext.legacy(0L, attacker, monster));
+
+        verify(autonomy).acquire(monster, attacker);
+        verify(channel, never()).getServiceAccess(ChannelServices.MOB_PHYSICS);
+    }
 }

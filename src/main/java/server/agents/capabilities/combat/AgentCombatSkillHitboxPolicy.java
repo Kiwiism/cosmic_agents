@@ -33,10 +33,11 @@ public final class AgentCombatSkillHitboxPolicy {
 
     public static Rectangle calculateSkillHitBox(StatEffect effect, Character agent, Monster primaryTarget,
                                                  AgentAttackRoute route, int skillId, String action) {
-        boolean facingLeft = primaryTarget.getPosition().x < agent.getPosition().x;
+        Point aimPoint = AgentCombatAimPointPolicy.aimPoint(agent, primaryTarget);
+        boolean facingLeft = aimPoint.x < agent.getPosition().x;
         if (effect.hasBoundingBox()) {
             Point anchor = isStrikePointAnchoredAoeSkill(skillId)
-                    ? primaryTarget.getPosition()
+                    ? aimPoint
                     : agent.getPosition();
             return effect.calculateBoundingBox(anchor, facingLeft);
         }

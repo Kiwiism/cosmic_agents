@@ -12,13 +12,13 @@ class AgentLpqLobbyProfileTest {
     void recognizesCommonLpqJoinRequestsWithTheStandardLobbyDelay() {
         var profile = AgentLpqLobbyProfile.profile();
         for (String request : new String[]{
-                "looking for lpq", "lf ludi pq", "join Ludibrium PQ",
+                "looking for lpq", "looking for pq", "joining pq", "lf ludi pq", "join Ludibrium PQ",
                 "invite me LPQ", "looking to join tower pq"}) {
             assertEquals(AgentPartyQuestLobbyIntent.REQUEST_TO_JOIN,
                     AgentPartyQuestLobbyIntentMatcher.match(profile, request), request);
         }
         assertEquals(2_000L, profile.inviteResponseMinimumMs());
-        assertEquals(5_000L, profile.inviteResponseMaximumMs());
+        assertEquals(2_400L, profile.inviteResponseMaximumMs());
         assertNull(AgentPartyQuestLobbyIntentMatcher.match(profile, "looking for kpq"));
         assertNull(AgentPartyQuestLobbyIntentMatcher.match(profile, "join hpq"));
     }

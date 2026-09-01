@@ -20,11 +20,31 @@ public final class AgentSkillAttackPlanRuntime {
 
     public static AgentAttackPlan planSkillAttack(Character bot, Monster primaryTarget, int skillId,
                                                   AgentCombatConfig.Config config) {
-        return planSkillAttack(bot, primaryTarget, skillId, config, AgentSkillGatewayRuntime.skills());
+        return planSkillAttack(bot, primaryTarget, skillId, config,
+                AgentSkillGatewayRuntime.skills(), null);
     }
 
     public static AgentAttackPlan planSkillAttack(Character bot, Monster primaryTarget, int skillId,
                                                   AgentCombatConfig.Config config, SkillGateway skills) {
+        return planSkillAttack(bot, primaryTarget, skillId, config, skills, null);
+    }
+
+    /**
+     * Plans a normal skill packet while admitting one authored objective point into
+     * the hitbox. This is reserved for PQ trigger mobs whose map placement sits
+     * outside the conservative general-combat vertical band.
+     */
+    public static AgentAttackPlan planSkillAttackForAuthoredObjective(
+            Character bot, Monster primaryTarget, int skillId,
+            AgentCombatConfig.Config config, Rectangle objectivePoint) {
+        return planSkillAttack(bot, primaryTarget, skillId, config,
+                AgentSkillGatewayRuntime.skills(), objectivePoint);
+    }
+
+    private static AgentAttackPlan planSkillAttack(
+            Character bot, Monster primaryTarget, int skillId,
+            AgentCombatConfig.Config config, SkillGateway skills,
+            Rectangle objectivePoint) {
         Skill skill = skills.getSkill(skillId);
         int skillLevel = skill == null ? 0 : bot.getSkillLevel(skill);
         StatEffect effect = skill == null || skillLevel <= 0 ? null : skill.getEffect(skillLevel);
@@ -72,6 +92,9 @@ public final class AgentSkillAttackPlanRuntime {
         if (hitBox == null) {
             return null;
         }
+        if (objectivePoint != null) {
+            hitBox = hitBox.union(objectivePoint);
+        }
 
         boolean strikePointAnchored = AgentCombatSkillHitboxPolicy.isStrikePointAnchoredAoeSkill(skillId);
         Monster preSelectionPrimaryTarget = primaryTarget;
@@ -92,19 +115,20 @@ public final class AgentSkillAttackPlanRuntime {
 
         int attackCount = AgentCombatHitCounter.packetSafeHitCount(
                 bot, route, AgentCombatHitCounter.effectiveHitCount(effect));
+        java.awt.Point aimPoint = AgentCombatAimPointPolicy.aimPoint(bot, primaryTarget);
         if (!AgentAttackExecutionProvider.canUseRangedAttackRoute(
-                route, weaponType, bot.getPosition(), primaryTarget.getPosition())) {
+                route, weaponType, bot.getPosition(), aimPoint)) {
             return null;
         }
 
         AgentAttackExecutionProvider.BasicAttackData fallbackAttackData =
-                AgentAttackExecutionProvider.buildBasicAttackData(bot, primaryTarget.getPosition());
+                AgentAttackExecutionProvider.buildBasicAttackData(bot, aimPoint);
         AgentAttackDataProvider.AttackAnimationSpec attackSpec =
                 AgentAttackDataProvider.getInstance().getBasicAttackSpec(weaponType);
         String fallbackAction = attackSpec.primaryAction();
         AgentSkillAttackPlanner.SkillAttackPacketFields packetFields =
                 AgentSkillAttackPlanner.resolveSkillAttackPacketFields(
-                        route, weaponType, bot.getPosition(), primaryTarget.getPosition(), action, fallbackAction);
+                        route, weaponType, bot.getPosition(), aimPoint, action, fallbackAction);
         AgentAttackExecutionProvider.SkillAttackTiming skillTiming =
                 AgentAttackExecutionProvider.resolveSkillAttackTiming(skill, action, bot, fallbackAttackData);
         List<Monster> targets = AgentCombatTargetSelector.collectTargetsInHitBox(

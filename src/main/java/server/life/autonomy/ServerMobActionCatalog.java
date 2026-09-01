@@ -33,10 +33,11 @@ public final class ServerMobActionCatalog {
         if (mob == null) {
             return new MonsterActions(List.of(), List.of());
         }
+        Data actionSource = linkedActionSource(mob);
 
         List<BossAction.OrdinaryAttack> attacks = new ArrayList<>();
         for (int index = 0; ; index++) {
-            Data attack = mob.getChildByPath("attack" + (index + 1));
+            Data attack = actionSource.getChildByPath("attack" + (index + 1));
             if (attack == null) {
                 break;
             }
@@ -47,6 +48,14 @@ public final class ServerMobActionCatalog {
             boolean magic = DataTool.getIntConvert("magic", info, 0) != 0;
             Point lt = DataTool.getPoint("range/lt", info, null);
             Point rb = DataTool.getPoint("range/rb", info, null);
+            if (lt == null || rb == null) {
+                Point center = DataTool.getPoint("range/sp", info, null);
+                int radius = DataTool.getIntConvert("range/r", info, 0);
+                if (center != null && radius > 0) {
+                    lt = new Point(center.x - radius, center.y - radius);
+                    rb = new Point(center.x + radius, center.y + radius);
+                }
+            }
             attacks.add(new BossAction.OrdinaryAttack(
                     index, actionNumber, mpCost, impactDelay,
                     animationTime(attack), magic, copy(lt), copy(rb),
@@ -88,6 +97,16 @@ public final class ServerMobActionCatalog {
             }
         }
         return new MonsterActions(List.copyOf(attacks), List.copyOf(skills));
+    }
+
+    private static Data linkedActionSource(Data mob) {
+        String link = DataTool.getString("info/link", mob, null);
+        if (link == null || link.isBlank()) {
+            return mob;
+        }
+        Data linked = MOB_DATA.getData(
+                StringUtil.getLeftPaddedStr(link + ".img", '0', 11));
+        return linked == null ? mob : linked;
     }
 
     private static int animationTime(Data animation) {

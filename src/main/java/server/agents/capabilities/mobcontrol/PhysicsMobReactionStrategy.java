@@ -11,13 +11,13 @@ public enum PhysicsMobReactionStrategy implements AgentMobReactionStrategy {
     INSTANCE;
 
     @Override
-    public void acceptedHit(Character attacker, Monster monster, int appliedDamage,
-                            MobHitReactionContext reactionContext) {
-        if (monster == null) return;
+    public boolean acceptedHit(Character attacker, Monster monster, int appliedDamage,
+                               MobHitReactionContext reactionContext) {
+        if (monster == null) return false;
         MapleMap map = monster.getMap();
-        if (map == null || map.getChannelServer() == null) return;
+        if (map == null || map.getChannelServer() == null) return false;
         MobPhysicsService service = (MobPhysicsService) map.getChannelServer()
                 .getServiceAccess(ChannelServices.MOB_PHYSICS);
-        service.acceptedHit(attacker, monster, appliedDamage, reactionContext);
+        return service.acceptedHit(attacker, monster, appliedDamage, reactionContext);
     }
 }

@@ -176,6 +176,32 @@ class AgentLpqAuthoredFlowPreflightTest {
     }
 
     @Test
+    void bossPreRallyIsNaturallyReachableFromEntryAndBalloonPlatform() {
+        MapleMap map = AgentNavigationMapLoader.loadMapGeometry(922_010_900);
+        AgentNavigationGraph graph = AgentNavigationGraphService.rebuildGraph(map);
+        Point balloon = AgentLpqCoordinator.stageNineRatzFiringAnchor(1);
+        int balloonRegion = graph.findRegionId(map, balloon);
+        Portal entry = map.getPortal(0);
+        int entryRegion = graph.findRegionId(map, entry.getPosition());
+
+        assertNotEquals(-1, balloonRegion);
+        assertNotEquals(-1, entryRegion);
+        for (int characterId = 1; characterId <= 6; characterId++) {
+            Point rally = AgentLpqCoordinator.stageNinePreBossRallyAnchor(characterId);
+            int rallyRegion = graph.findRegionId(map, rally);
+            assertNotEquals(-1, rallyRegion, () -> "missing rally region for " + rally);
+            if (entryRegion != rallyRegion) {
+                assertFalse(AgentNavigationPathService.findPath(
+                        graph, map, entry.getPosition(), entryRegion, rallyRegion, rally).isEmpty());
+            }
+            if (balloonRegion != rallyRegion) {
+                assertFalse(AgentNavigationPathService.findPath(
+                        graph, map, balloon, balloonRegion, rallyRegion, rally).isEmpty());
+            }
+        }
+    }
+
+    @Test
     void bossTriggerObjectiveExtendsOnlyTheAuthoredShotToTheRatz() {
         Rectangle ordinaryProjectile = new Rectangle(588, 134, 400, 100);
         Point ratz = new Point(588, -3);
@@ -200,6 +226,7 @@ class AgentLpqAuthoredFlowPreflightTest {
 
         assertFalse(bossFlow.contains("hitReactor("));
         assertFalse(bossFlow.contains("assignStageNineRoles(session)"));
+        assertFalse(bossFlow.contains("prepareStageNineBossFormation("));
         assertTrue(bossFlow.contains("ACTIONS.grind(entry, Set.of(AgentLpqDefinition.ALISHAR))"));
     }
 

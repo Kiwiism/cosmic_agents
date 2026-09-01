@@ -112,17 +112,19 @@ public final class AgentExpeditionLobbyService {
         int channel = clients.channel(operator);
         int stagingMapId = operator.getMapId();
         Point stagingPosition = new Point(operator.getPosition());
+        int stagingPortalId = 0;
         if (quick) {
             MapleMap entrance = AgentMapGatewayRuntime.map().resolveMap(
                     world, channel, spec.entranceMapId());
-            if (entrance == null || entrance.getPortal(0) == null) {
+            stagingPortalId = scenario.quickEntryPortalId();
+            if (entrance == null || entrance.getPortal(stagingPortalId) == null) {
                 throw new IllegalStateException("the expedition entrance staging point is unavailable");
             }
             stagingMapId = spec.entranceMapId();
-            stagingPosition = new Point(entrance.getPortal(0).getPosition());
+            stagingPosition = new Point(entrance.getPortal(stagingPortalId).getPosition());
         }
         Run run = new Run(operator, scenario, seed, nowMs, world, channel,
-                stagingMapId, stagingPosition);
+                stagingMapId, stagingPosition, quick, stagingPortalId);
         runs.put(operator.getId(), run);
         for (int ordinal = 0; ordinal < spec.participantCount(); ordinal++) {
             int memberOrdinal = ordinal;
@@ -150,13 +152,14 @@ public final class AgentExpeditionLobbyService {
             try {
                 MapleMap stagingMap = AgentMapGatewayRuntime.map().resolveMap(
                         run.world, run.channel, run.stagingMapId);
+                int spawnSpacing = run.quick ? run.scenario.quickEntrySpacingPx() : 34;
                 Point candidate = new Point(run.stagingPosition.x
-                        + formationOffset(ordinal, run.spec().participantCount(), 34),
+                        + formationOffset(ordinal, run.spec().participantCount(), spawnSpacing),
                         run.stagingPosition.y);
                 Point spawn = AgentPrimitiveCapabilityGatewayRuntime.gateway()
                         .groundPoint(stagingMap, candidate);
                 if (spawn == null) {
-                    var portal = stagingMap == null ? null : stagingMap.getPortal(0);
+                    var portal = stagingMap == null ? null : stagingMap.getPortal(run.stagingPortalId);
                     spawn = portal == null ? new Point(run.stagingPosition)
                             : new Point(portal.getPosition());
                 }
@@ -221,6 +224,7 @@ public final class AgentExpeditionLobbyService {
                 case READY_COUNTDOWN -> readyCountdown(run, members, nowMs);
                 case STARTING -> startEvent(run, members, nowMs);
                 case FIGHTING -> fight(run, members, nowMs);
+                case POST_CLEAR -> postClear(run, members, nowMs);
                 case CLEARED, FAILED, STOPPED -> { }
             }
             if (active(run) && run.phase != Phase.CLEARED) {
@@ -282,7 +286,8 @@ public final class AgentExpeditionLobbyService {
             if (npc == null) throw new IllegalStateException("expedition entrance NPC is unavailable");
             Member fixture = run.members.get(member.getId());
             Point candidate = new Point(npc.x + formationOffset(
-                    fixture.ordinal(), run.spec().participantCount(), 34), npc.y);
+                    fixture.ordinal(), run.spec().participantCount(),
+                    run.scenario.lobbyRallySpacingPx()), npc.y);
             Point rally = AgentPrimitiveCapabilityGatewayRuntime.gateway()
                     .groundPoint(member.getMap(), candidate);
             if (rally == null) rally = npc;
@@ -398,27 +403,51 @@ public final class AgentExpeditionLobbyService {
             members.stream().map(member -> AgentRuntimeRegistry.findByAgentCharacterId(member.getId()))
                     .filter(java.util.Objects::nonNull)
                     .forEach(AgentPrimitiveCapabilityGatewayRuntime.gateway()::stop);
-            transition(run, Phase.CLEARED, nowMs);
-            boolean returned = returnToLobby(run);
-            log.info("Agent expedition cleared scenario={} members={} returnedToLobby={} total={} {}",
-                    run.spec().scenarioId(), run.spec().participantCount(), returned,
-                    formattedDuration(nowMs - run.startedAtMs), timingSummary(run, nowMs));
-            run.operator.dropMessage(6, run.spec().displayName() + " cleared by "
-                    + run.spec().participantCount() + " Agents in " + seconds(nowMs - run.startedAtMs)
-                    + "; returned-to-lobby=" + returned + ". " + timingSummary(run, nowMs));
-            run.operator.dropMessage(6,
-                    "Use !balrogtest status to inspect the returned Agents, then stop when done.");
-            AgentSchedulerRuntime.schedule(() -> {
-                if (runs.remove(run.operator.getId(), run)) {
-                    release(run, Phase.STOPPED);
-                }
-            }, CLEARED_RETENTION_MS);
+            run.scenario.beginPostClear(members, event, nowMs);
+            transition(run, Phase.POST_CLEAR, nowMs);
         }
+    }
+
+    private void postClear(Run run, List<Character> members, long nowMs) {
+        EventInstanceManager event = run.event;
+        if (event == null) {
+            throw new IllegalStateException("event instance disappeared during post-clear rewards");
+        }
+        boolean complete = event.isEventDisposed()
+                ? members.stream().allMatch(member -> member.getMapId() == run.spec().returnMapId())
+                : run.scenario.tickPostClear(members, event, nowMs);
+        if (!complete) {
+            if (event.isEventDisposed()) {
+                throw new IllegalStateException("event instance ended before post-clear rewards completed");
+            }
+            return;
+        }
+        transition(run, Phase.CLEARED, nowMs);
+        boolean returned = returnToLobby(run);
+        log.info("Agent expedition cleared scenario={} members={} returnedToLobby={} total={} {}",
+                run.spec().scenarioId(), run.spec().participantCount(), returned,
+                formattedDuration(nowMs - run.startedAtMs), timingSummary(run, nowMs));
+        run.operator.dropMessage(6, run.spec().displayName() + " cleared by "
+                + run.spec().participantCount() + " Agents in " + seconds(nowMs - run.startedAtMs)
+                + "; returned-to-lobby=" + returned + ". " + timingSummary(run, nowMs));
+        run.operator.dropMessage(6,
+                "Use !balrogtest status to inspect the returned Agents, then stop when done.");
+        AgentSchedulerRuntime.schedule(() -> {
+            if (runs.remove(run.operator.getId(), run)) {
+                release(run, Phase.STOPPED);
+            }
+        }, CLEARED_RETENTION_MS);
     }
 
     private boolean returnToLobby(Run run) {
         EventInstanceManager event = run.event;
         if (event == null) return false;
+        if (event.isEventDisposed()) {
+            run.event = null;
+            run.expedition = null;
+            return members(run).stream().allMatch(
+                    member -> member.getMapId() == run.spec().returnMapId());
+        }
         for (Character participant : new ArrayList<>(event.getPlayers())) {
             try {
                 event.exitPlayer(participant);
@@ -436,7 +465,8 @@ public final class AgentExpeditionLobbyService {
 
     private List<String> watch(Character operator) {
         Run run = runs.get(operator.getId());
-        if (run == null || run.event == null || run.phase != Phase.FIGHTING) {
+        if (run == null || run.event == null
+                || (run.phase != Phase.FIGHTING && run.phase != Phase.POST_CLEAR)) {
             return List.of("The expedition fight is not ready to observe yet.");
         }
         if (AgentPartyQuestGatewayRuntime.partyQuest().event(operator) == run.event) {
@@ -585,6 +615,7 @@ public final class AgentExpeditionLobbyService {
                 + " ready=" + duration(run, Phase.READY_COUNTDOWN)
                 + " start=" + duration(run, Phase.STARTING)
                 + " fight=" + duration(run, Phase.FIGHTING)
+                + " rewards=" + duration(run, Phase.POST_CLEAR)
                 + " total=" + formattedDuration(nowMs - run.startedAtMs) + '.';
     }
 
@@ -611,6 +642,7 @@ public final class AgentExpeditionLobbyService {
         READY_COUNTDOWN,
         STARTING,
         FIGHTING,
+        POST_CLEAR,
         CLEARED,
         FAILED,
         STOPPED
@@ -628,6 +660,8 @@ public final class AgentExpeditionLobbyService {
         private final int channel;
         private final int stagingMapId;
         private final Point stagingPosition;
+        private final boolean quick;
+        private final int stagingPortalId;
         private final Object lock = new Object();
         private final Map<Integer, Member> members = new ConcurrentHashMap<>();
         private final Map<Integer, AgentRouteOutcome> routes = new ConcurrentHashMap<>();
@@ -642,7 +676,8 @@ public final class AgentExpeditionLobbyService {
         private volatile EventInstanceManager event;
 
         private Run(Character operator, AgentExpeditionScenario scenario, long seed, long nowMs,
-                    int world, int channel, int stagingMapId, Point stagingPosition) {
+                    int world, int channel, int stagingMapId, Point stagingPosition,
+                    boolean quick, int stagingPortalId) {
             this.operator = operator;
             this.scenario = scenario;
             this.seed = seed;
@@ -652,6 +687,8 @@ public final class AgentExpeditionLobbyService {
             this.channel = channel;
             this.stagingMapId = stagingMapId;
             this.stagingPosition = stagingPosition;
+            this.quick = quick;
+            this.stagingPortalId = stagingPortalId;
         }
 
         private AgentExpeditionSpec spec() {

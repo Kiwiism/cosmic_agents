@@ -18,6 +18,7 @@ public final class AgentLpqSession {
     public enum Mode { PRODUCTION, BACKGROUND_POPULATION, TEST_OBSERVATION }
     public enum PartyOwnership { EXTERNAL, LPQ_OWNED }
     public enum BonusMode { SKIP, ENTER, HUMAN_CHOICE }
+    public enum HumanRolePreference { DEFAULT, TELEPORT, DARK_SIGHT, RANGED }
     public enum Phase {
         PREPARING, ENTERING,
         STAGE_1, STAGE_2, STAGE_3, STAGE_4, STAGE_5,
@@ -83,6 +84,9 @@ public final class AgentLpqSession {
     private int stage7LootSweepIndex;
     private boolean stage7ForceLootAttempted;
     private boolean rewardEligibilityFrozen;
+    private int preferredHumanId;
+    private HumanRolePreference humanRolePreference = HumanRolePreference.DEFAULT;
+    private final Set<String> claimedFlavorChatKeys = new java.util.LinkedHashSet<>();
 
     public AgentLpqSession(Mode mode, long seed, int operatorId, int requestedPartySize, long nowMs) {
         if (mode == null || operatorId <= 0
@@ -504,6 +508,26 @@ public final class AgentLpqSession {
     public synchronized void setStage8AssignmentChatEnabled(boolean enabled) {
         if (enabled && !stage8AssignmentChatEnabled) stage8AnnouncedAttempt = -1;
         stage8AssignmentChatEnabled = enabled;
+    }
+
+    public synchronized void setHumanRolePreference(
+            int characterId, HumanRolePreference preference) {
+        AgentLpqMemberState member = members.get(characterId);
+        if (member == null || member.memberType() != AgentLpqMemberState.MemberType.HUMAN) {
+            throw new IllegalArgumentException("preferred LPQ role requires a human session member");
+        }
+        preferredHumanId = characterId;
+        humanRolePreference = preference == null ? HumanRolePreference.DEFAULT : preference;
+    }
+
+    public synchronized int preferredHumanId() { return preferredHumanId; }
+    public synchronized HumanRolePreference humanRolePreference() { return humanRolePreference; }
+    public synchronized boolean hasHumanMember() {
+        return members.values().stream().anyMatch(
+                member -> member.memberType() == AgentLpqMemberState.MemberType.HUMAN);
+    }
+    public synchronized boolean claimFlavorChat(String key) {
+        return key != null && !key.isBlank() && claimedFlavorChatKeys.add(key);
     }
 
     public synchronized void markStage8AssignmentAnnounced(long nowMs) {

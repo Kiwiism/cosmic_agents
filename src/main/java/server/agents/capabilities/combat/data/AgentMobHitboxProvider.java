@@ -48,7 +48,10 @@ public final class AgentMobHitboxProvider {
             return null;
         }
 
-        return getMobBounds(mob.getId(), mob.getPosition(), mob.isFacingLeft());
+        boolean mirror = mob.getStats() == null
+                ? mob.isFacingLeft()
+                : mob.getStats().getFixedStance() == 0 && mob.isFacingLeft();
+        return getMobBounds(mob.getId(), mob.getPosition(), mirror);
     }
 
     public Rectangle getMobBounds(int mobId, Point position, boolean facingLeft) {

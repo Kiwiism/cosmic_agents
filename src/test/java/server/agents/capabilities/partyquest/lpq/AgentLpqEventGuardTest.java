@@ -25,6 +25,20 @@ class AgentLpqEventGuardTest {
     }
 
     @Test
+    void humanLeaderEntryUsesRegistrationHandoverBeforeStageOneGuard() {
+        assertEquals(AgentLpqSession.Phase.ENTERING,
+                AgentLpqCoordinator.synchronizedStagePhase(
+                        AgentLpqSession.Phase.PREPARING, 1));
+        assertEquals(AgentLpqSession.Phase.ENTERING,
+                AgentLpqCoordinator.synchronizedStagePhase(
+                        AgentLpqSession.Phase.ENTERING, 1));
+        assertFalse(AgentLpqCoordinator.requiresRegisteredRoster(
+                AgentLpqSession.Phase.ENTERING));
+        assertTrue(AgentLpqCoordinator.requiresRegisteredRoster(
+                AgentLpqSession.Phase.STAGE_1));
+    }
+
+    @Test
     void acceptsMatchingLeaderTimerMapAndFiveRegisteredMembers() {
         Fixture fixture = fixture(5);
 
@@ -63,6 +77,15 @@ class AgentLpqEventGuardTest {
         when(fixture.event.getLeaderId()).thenReturn(101);
         assertEquals("LPQ no longer has five registered session members",
                 AgentLpqCoordinator.liveEventFailure(fixture.session, fixture.leader));
+    }
+
+    @Test
+    void enteringAllowsTheFiveAgentsToRegisterBeforeEnforcingRosterSize() {
+        Fixture fixture = fixture(1);
+        fixture.session.transition(AgentLpqSession.Phase.ENTERING, 1_200L);
+
+        assertEquals("", AgentLpqCoordinator.liveEventFailure(
+                fixture.session, fixture.leader));
     }
 
     private static Fixture fixture(int registeredCount) {

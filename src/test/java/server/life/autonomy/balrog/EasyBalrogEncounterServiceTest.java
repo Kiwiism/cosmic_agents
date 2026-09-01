@@ -100,20 +100,40 @@ class EasyBalrogEncounterServiceTest {
         Monster body = mob(spawned, EasyBalrogEncounterService.BODY_ID);
         Monster initial = mob(spawned, EasyBalrogEncounterService.INITIAL_CLAW_ID);
         assertTrue(body.isFake());
+        EasyBalrogEncounterService.HpBarSnapshot initialGauge =
+                EasyBalrogEncounterService.hpBarSnapshot(initial).orElseThrow();
+        assertEquals(EasyBalrogEncounterService.BODY_ID, initialGauge.mobId());
+        assertEquals(300, initialGauge.currentHp());
+        assertEquals(300, initialGauge.maxHp());
+        assertEquals(body.hashCode(), initialGauge.identityHash());
+        assertTrue(body.hasBossHPBar());
+        assertEquals(body.bossHpBarHash(), initial.bossHpBarHash());
+
+        initial.applyAndGetHpDamage(25, false);
+        assertEquals(275, EasyBalrogEncounterService.hpBarSnapshot(initial)
+                .orElseThrow().currentHp());
 
         release.get().run();
         assertEquals(EasyBalrogEncounterService.Phase.TWO_CLAWS, encounter.phase());
         Monster released = mob(spawned, EasyBalrogEncounterService.RELEASED_CLAW_ID);
+        assertEquals(body.bossHpBarHash(), released.bossHpBarHash());
 
+        initial.applyAndGetHpDamage(75, false);
         initial.dispatchMonsterKilled(true);
         assertEquals(EasyBalrogEncounterService.Phase.ONE_CLAW, encounter.phase());
+        assertEquals(200, EasyBalrogEncounterService.hpBarSnapshot(released)
+                .orElseThrow().currentHp());
+        released.applyAndGetHpDamage(100, false);
         released.dispatchMonsterKilled(true);
         assertEquals(EasyBalrogEncounterService.Phase.BODY, encounter.phase());
         assertFalse(body.isFake());
+        assertEquals(100, EasyBalrogEncounterService.hpBarSnapshot(body)
+                .orElseThrow().currentHp());
 
         body.dispatchMonsterKilled(true);
         assertEquals(EasyBalrogEncounterService.Phase.CLEARED, encounter.phase());
         assertFalse(EasyBalrogEncounterService.isActive(map));
+        assertTrue(EasyBalrogEncounterService.hpBarSnapshot(body).isEmpty());
         verify(autonomy, times(3)).registerEncounterActor(any(Monster.class), eq(encounter));
     }
 
@@ -137,6 +157,8 @@ class EasyBalrogEncounterServiceTest {
         stats.hp = 100;
         stats.mp = 100;
         stats.name = Integer.toString(id);
+        stats.boss = true;
+        EasyBalrogHpBarPolicy.applyMissingStyle(id, stats);
         return new Monster(id, stats);
     }
 }

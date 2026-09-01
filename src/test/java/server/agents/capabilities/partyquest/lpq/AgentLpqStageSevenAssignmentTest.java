@@ -61,6 +61,20 @@ class AgentLpqStageSevenAssignmentTest {
     }
 
     @Test
+    void explicitlyRequestedCapableHumanOwnsOneTopLane() {
+        List<AgentLpqMemberState> members = List.of(
+                member(221, AgentLpqMemberState.MemberType.AGENT),
+                member(222, AgentLpqMemberState.MemberType.AGENT),
+                member(223, AgentLpqMemberState.MemberType.AGENT),
+                member(224, AgentLpqMemberState.MemberType.AGENT),
+                member(225, AgentLpqMemberState.MemberType.AGENT),
+                member(226, AgentLpqMemberState.MemberType.HUMAN));
+
+        assertEquals(List.of(226, 222), AgentLpqCoordinator.stageSevenTopMemberIds(
+                members, Set.of(222, 223, 226)::contains, 221, 226));
+    }
+
+    @Test
     void sendsTheTwoQualifiedBoxWackersTop() {
         List<AgentLpqMemberState> members = List.of(
                 member(301, AgentLpqMemberState.MemberType.AGENT),

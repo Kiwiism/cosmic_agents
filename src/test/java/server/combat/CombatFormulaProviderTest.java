@@ -2,6 +2,7 @@ package server.combat;
 
 import client.BuffStat;
 import client.Character;
+import client.Disease;
 import client.Job;
 import client.Skill;
 import client.SkillFactory;
@@ -60,6 +61,21 @@ class CombatFormulaProviderTest {
         when(equipped.iterator()).thenReturn(List.<client.inventory.Item>of(weapon).iterator());
 
         assertEquals(80, provider.getTotalMagicAccuracy(bot));
+    }
+
+    @Test
+    void darknessReducesBothPhysicalAndMagicAccuracy() {
+        Character bot = mock(Character.class);
+        Inventory equipped = mock(Inventory.class);
+        when(bot.getTotalDex()).thenReturn(100);
+        when(bot.getTotalLuk()).thenReturn(40);
+        when(bot.getTotalInt()).thenReturn(120);
+        when(bot.getInventory(InventoryType.EQUIPPED)).thenReturn(equipped);
+        when(equipped.iterator()).thenReturn(List.<Item>of().iterator());
+        when(bot.hasDisease(Disease.DARKNESS)).thenReturn(true);
+
+        assertEquals(80, provider.getTotalAccuracy(bot));
+        assertEquals(64, provider.getTotalMagicAccuracy(bot));
     }
 
     @Test

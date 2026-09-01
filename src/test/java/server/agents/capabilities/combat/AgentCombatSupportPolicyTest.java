@@ -8,6 +8,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import client.Character;
+import client.Disease;
 import constants.skills.Cleric;
 import constants.skills.SuperGM;
 import java.awt.Point;
@@ -242,6 +243,20 @@ class AgentCombatSupportPolicyTest {
                 bot, new Rectangle(100, 90, 50, 30), 60, 30, 0.5));
         assertFalse(AgentCombatSupportPolicy.hasPartyMemberInBoundsNeedingHeal(
                 bot, new Rectangle(160, 90, 50, 30), 60, 30, 0.5));
+    }
+
+    @Test
+    void shouldPausePartyHealingWhileAnyLivingMemberIsZombified() {
+        Character cleric = characterAt(1, new Point(100, 100), true);
+        Character member = characterAt(2, new Point(120, 100), true);
+        when(cleric.getPartyMembersOnSameMap()).thenReturn(List.of(cleric, member));
+
+        assertFalse(AgentCombatSupportPolicy.hasZombifiedPartyMember(cleric));
+        when(member.hasDisease(Disease.ZOMBIFY)).thenReturn(true);
+        assertTrue(AgentCombatSupportPolicy.hasZombifiedPartyMember(cleric));
+        when(member.hasDisease(Disease.ZOMBIFY)).thenReturn(false);
+        when(cleric.hasDisease(Disease.ZOMBIFY)).thenReturn(true);
+        assertTrue(AgentCombatSupportPolicy.hasZombifiedPartyMember(cleric));
     }
 
     private static Character characterWithHp(int hp, int maxHp) {

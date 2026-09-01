@@ -5,6 +5,8 @@ import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import constants.inventory.ItemConstants;
 import server.agents.capabilities.partyquest.AgentPqRuntime;
+import server.agents.capabilities.partyquest.epq.AgentEpqDefinition;
+import server.agents.capabilities.partyquest.epq.AgentEpqSessionRegistry;
 import server.agents.capabilities.partyquest.hpq.AgentHpqSessionRegistry;
 import server.agents.capabilities.partyquest.kpq.AgentKpqDefinition;
 import server.agents.capabilities.partyquest.kpq.AgentKpqMemberState;
@@ -12,6 +14,8 @@ import server.agents.capabilities.partyquest.kpq.AgentKpqSession;
 import server.agents.capabilities.partyquest.kpq.AgentKpqSessionRegistry;
 import server.agents.capabilities.partyquest.lpq.AgentLpqDefinition;
 import server.agents.capabilities.partyquest.lpq.AgentLpqSessionRegistry;
+import server.agents.capabilities.partyquest.opq.AgentOpqDefinition;
+import server.agents.capabilities.partyquest.opq.AgentOpqSessionRegistry;
 import server.agents.runtime.AgentSessionLifecycleRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.partyquest.AgentPartyQuestHooks;
@@ -45,6 +49,7 @@ public final class AgentLootEligibility {
         if (AgentLpqSessionRegistry.preservesRoomDoorMarker(bot, drop)) {
             return false;
         }
+        if (AgentOpqSessionRegistry.preservesMarker(bot, drop)) return false;
         AgentKpqSession kpqSession = AgentKpqSessionRegistry.forMember(bot.getId());
         if (kpqSession != null) {
             AgentKpqMemberState member = kpqSession.member(bot.getId());
@@ -73,6 +78,10 @@ public final class AgentLootEligibility {
                 && !AgentLpqSessionRegistry.canLootExclusive(bot, itemId)) {
             return false;
         }
+        if (AgentOpqDefinition.EXCLUSIVE_ITEMS.contains(itemId)
+                && !AgentOpqSessionRegistry.canLootExclusive(bot, itemId)) return false;
+        if (AgentEpqDefinition.EXCLUSIVE_ITEMS.contains(itemId)
+                && !AgentEpqSessionRegistry.canLootExclusive(bot, itemId)) return false;
         int kpqCouponTarget = AgentPqRuntime.kpqCouponTarget(entry);
         if (itemId == KPQ_COUPON && (AgentPartyQuestHooks.shouldSkipCouponLoot(entry)
                 || (kpqCouponTarget > 0 && bot.getItemQuantity(KPQ_COUPON, false) >= kpqCouponTarget))) {

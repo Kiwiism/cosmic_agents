@@ -43,14 +43,8 @@ public final class AgentAnchoredFarmCoordinator {
                 (entry, agent, agentPosition, movementTargetPosition, moveWindowReferencePosition,
                  allowCombatMovement, allowJumpTowardTarget) -> {
                     AgentLocalOpportunityAttackService.Result result =
-                            AgentLocalOpportunityAttackCoordinator.tryLocalOpportunityAttack(
-                                    entry,
-                                    agent,
-                                    agentPosition,
-                                    movementTargetPosition,
-                                    moveWindowReferencePosition,
-                                    allowCombatMovement,
-                                    allowJumpTowardTarget);
+                            AgentLocalOpportunityAttackCoordinator.tryAnchoredOpportunityAttack(
+                                    entry, agent, agentPosition, moveWindowReferencePosition);
                     return new AgentAnchoredFarmTickService.LocalOpportunityResult(
                             result.consumedTick(), result.targetPos());
                 },

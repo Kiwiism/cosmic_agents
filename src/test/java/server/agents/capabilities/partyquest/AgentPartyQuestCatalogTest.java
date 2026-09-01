@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class AgentPartyQuestCatalogTest {
     @Test
     void catalogsLocalEntryContractsWithoutSharingStageBehavior() {
-        assertEquals(List.of("hpq", "kpq", "lpq", "opq"),
+        assertEquals(List.of("hpq", "kpq", "lpq", "opq", "epq"),
                 AgentPartyQuestCatalog.definitions().stream()
                         .map(AgentPartyQuestDefinition::questKey).toList());
 
@@ -38,8 +38,8 @@ class AgentPartyQuestCatalogTest {
         assertEquals("hpq", AgentPartyQuestRuntime.requireSystem("hpq").definition().questKey());
         assertEquals("kpq", AgentPartyQuestRuntime.requireSystem("kpq").definition().questKey());
         assertEquals("lpq", AgentPartyQuestRuntime.requireSystem("lpq").definition().questKey());
-        assertThrows(IllegalArgumentException.class,
-                () -> AgentPartyQuestRuntime.requireSystem("opq"));
+        assertEquals("opq", AgentPartyQuestRuntime.requireSystem("opq").definition().questKey());
+        assertEquals("epq", AgentPartyQuestRuntime.requireSystem("epq").definition().questKey());
     }
 
     @Test

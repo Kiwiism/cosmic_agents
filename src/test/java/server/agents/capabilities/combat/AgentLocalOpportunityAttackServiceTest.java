@@ -3,6 +3,7 @@ package server.agents.capabilities.combat;
 import client.Character;
 import client.inventory.WeaponType;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.supplies.AgentAmmoStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -14,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 
 class AgentLocalOpportunityAttackServiceTest {
     @Test
@@ -99,6 +101,31 @@ class AgentLocalOpportunityAttackServiceTest {
         assertTrue(AgentLocalOpportunityAttackService.committed(
                 AgentAttackTransactionResult.committed(
                         100, 0, java.util.List.of(1), 1, 0, 10L)));
+    }
+
+    @Test
+    void anchoredOpportunityUsesStationTargetSelectionInsteadOfRouteBlockers() {
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(
+                mock(Character.class), mock(Character.class), null);
+        Character agent = mock(Character.class);
+        Point position = new Point(360, 258);
+        AtomicInteger hookCalls = new AtomicInteger();
+
+        try (MockedStatic<AgentCombatTargetRuntime> targets =
+                     mockStatic(AgentCombatTargetRuntime.class)) {
+            targets.when(() -> AgentCombatTargetRuntime.findAnchoredAttackTarget(
+                    entry, agent, AgentCombatConfig.cfg)).thenReturn(null);
+
+            AgentLocalOpportunityAttackService.Result result =
+                    AgentLocalOpportunityAttackService.tryAnchoredOpportunityAttack(
+                            entry, agent, position, position, hooksCounting(hookCalls));
+
+            assertFalse(result.consumedTick());
+            targets.verify(() -> AgentCombatTargetRuntime.findAnchoredAttackTarget(
+                    entry, agent, AgentCombatConfig.cfg));
+            targets.verifyNoMoreInteractions();
+            assertEquals(0, hookCalls.get());
+        }
     }
 
     private static AgentLocalOpportunityAttackService.Hooks hooksCounting(AtomicInteger hookCalls) {

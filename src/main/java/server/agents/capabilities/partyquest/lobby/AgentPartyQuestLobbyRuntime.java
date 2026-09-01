@@ -2,6 +2,10 @@ package server.agents.capabilities.partyquest.lobby;
 
 import client.Character;
 import constants.id.ItemId;
+import net.server.coordinator.world.InviteCoordinator;
+import net.server.coordinator.world.InviteCoordinator.InviteResultType;
+import net.server.coordinator.world.InviteCoordinator.InviteType;
+import net.server.world.Party;
 import server.agents.capabilities.movement.AgentChairService;
 import server.agents.capabilities.movement.AgentMovementPoseService;
 import server.agents.integration.AgentCharacterGatewayRuntime;
@@ -24,7 +28,7 @@ import java.util.concurrent.ScheduledFuture;
 
 /** Shared presentation and invitation behavior for durable party-quest lobby sessions. */
 public final class AgentPartyQuestLobbyRuntime {
-    public enum InviteDecision { NOT_LOBBY_WAITER, ACCEPT, REJECT }
+    public enum InviteDecision { NOT_LOBBY_WAITER, DELAY_ACCEPT, REJECT }
 
     private static final long CHAT_MINIMUM_MS = config.AgentTuning.longValue(
             "server.agents.capabilities.partyquest.lobby.AgentPartyQuestLobbyRuntime.CHAT_MINIMUM_MS");
@@ -106,7 +110,49 @@ public final class AgentPartyQuestLobbyRuntime {
         }
         boolean inviterIsLeader = party.members().stream().anyMatch(candidate -> candidate != null
                 && candidate.id() == inviter.getId() && candidate.leader());
-        return inviterIsLeader ? InviteDecision.ACCEPT : InviteDecision.REJECT;
+        return inviterIsLeader ? InviteDecision.DELAY_ACCEPT : InviteDecision.REJECT;
+    }
+
+    /** Lets a lobby waiter visibly accept a human leader's invitation after the same
+     * natural response delay used when an Agent leader invites the human. */
+    public static boolean schedulePartyInviteResponse(
+            Character agent, Character inviter, int partyId) {
+        AgentPartyQuestLobbySession lobby = agent == null
+                ? null : AgentPartyQuestLobbyRegistry.forMember(agent.getId());
+        if (lobby == null || decidePartyInvite(agent, inviter) != InviteDecision.DELAY_ACCEPT) {
+            return false;
+        }
+        long minimumMs = lobby.profile().inviteResponseMinimumMs() > 0L
+                ? lobby.profile().inviteResponseMinimumMs() : INVITE_RESPONSE_MINIMUM_MS;
+        long maximumMs = lobby.profile().inviteResponseMaximumMs() > 0L
+                ? lobby.profile().inviteResponseMaximumMs() : INVITE_RESPONSE_MAXIMUM_MS;
+        long delayMs = inviteResponseDelayMs(
+                lobby.seed(), inviter.getId(), agent.getId(), minimumMs, maximumMs);
+        AgentSchedulerRuntime.schedule(() -> acceptPartyInvite(
+                lobby.lobbyId(), agent.getId(), inviter.getId(), partyId), delayMs);
+        return true;
+    }
+
+    private static void acceptPartyInvite(
+            String lobbyId, int agentId, int inviterId, int partyId) {
+        AgentPartyQuestLobbySession lobby = AgentPartyQuestLobbyRegistry.byId(lobbyId);
+        Character agent = character(agentId);
+        Character inviter = character(inviterId);
+        AgentPartySnapshot party = inviter == null
+                ? null : AgentPartyGatewayRuntime.party().snapshot(inviter);
+        boolean inviterStillLeads = party != null && party.id() == partyId
+                && party.members().stream().anyMatch(member -> member != null
+                && member.id() == inviterId && member.leader());
+        if (lobby == null || !lobby.active() || lobby.paused()
+                || agent == null || inviter == null || agent.getParty() != null
+                || !inviterStillLeads
+                || decidePartyInvite(agent, inviter) != InviteDecision.DELAY_ACCEPT) {
+            return;
+        }
+        if (InviteCoordinator.answerInvite(
+                InviteType.PARTY, agentId, partyId, true).result == InviteResultType.ACCEPTED) {
+            Party.joinParty(agent, partyId, false);
+        }
     }
 
     public static String inviteRejectionMessage(Character agent) {

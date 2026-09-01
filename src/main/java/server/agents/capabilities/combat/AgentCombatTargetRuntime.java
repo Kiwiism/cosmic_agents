@@ -458,6 +458,47 @@ public final class AgentCombatTargetRuntime {
         return reliableRouteCost(context, entry, bot, target.getPosition(), targetRegionId);
     }
 
+    /** Selects an immediately legal target while an Agent holds an authored combat station. */
+    public static Monster findAnchoredAttackTarget(
+            AgentRuntimeEntry entry, Character bot, AgentCombatConfig.Config config) {
+        if (entry == null || bot == null || bot.getPosition() == null) {
+            return null;
+        }
+        Point botPos = bot.getPosition();
+        WeaponType weaponType = AgentAttackExecutionProvider.getEquippedWeaponType(bot);
+        double range = routeBlockerSeekRange(
+                weaponType,
+                AgentProjectileHitbox.CLIENT_PROJECTILE_BASE_RANGE
+                        + AgentProjectileHitbox.passiveProjectileRangeBonus(bot),
+                config);
+        List<Monster> candidates = AgentCombatCandidateProvider.local(
+                bot, botPos, range * range);
+        candidates.removeIf(monster -> !AgentCombatObjectiveTargetStateRuntime
+                .allows(entry, monster.getId()));
+        candidates.removeIf(monster -> !routeBlockerActionableNow(
+                entry, bot, monster, config));
+        List<Monster> preferred = candidates.stream()
+                .filter(monster -> AgentCombatObjectiveTargetStateRuntime
+                        .prefers(entry, monster.getId()))
+                .toList();
+        List<Monster> eligible = preferred.isEmpty() ? candidates : preferred;
+        Monster selected = eligible.stream()
+                .min(java.util.Comparator
+                        .comparingDouble((Monster monster) -> {
+                            Point aim = AgentCombatAimPointPolicy.aimPoint(bot, monster);
+                            return aim == null ? Double.MAX_VALUE : aim.distanceSq(botPos);
+                        })
+                        .thenComparingInt(Monster::getObjectId))
+                .orElse(null);
+        recordDecision(entry, AgentCombatDecisionTraceState.Mode.FOLLOW,
+                selected == null
+                        ? AgentCombatDecisionTraceState.Outcome.NO_CANDIDATES
+                        : AgentCombatDecisionTraceState.Outcome.SELECTED,
+                candidates.size(), candidates.size(), candidates.size(), candidates.size(),
+                eligible.size(), false, false, selected);
+        return selected;
+    }
+
     private static long reliableRouteCost(GrindGraphContext context,
                                           AgentRuntimeEntry entry,
                                           Character bot,

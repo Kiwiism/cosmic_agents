@@ -24,8 +24,10 @@ public final class AgentLpqAdmissionService {
     public static AdmissionResult admitFromLobby(
             AgentPartyQuestEngagement engagement, AgentPartyQuestLobbySession lobby,
             Character operator, Character eventLeader, List<Character> partyMembers,
-            long seed, long nowMs, AgentLpqSession.Mode mode) {
-        Validation validation = validate(operator, eventLeader, partyMembers);
+            long seed, long nowMs, AgentLpqSession.Mode mode, int preferredHumanId,
+            AgentLpqSession.HumanRolePreference humanRolePreference) {
+        Validation validation = validate(operator, eventLeader, partyMembers,
+                preferredHumanId, humanRolePreference);
         if (!validation.success()) return restoreFailure(engagement, lobby, validation.message(), nowMs);
         if (engagement == null || lobby == null
                 || !engagement.engagementId().equals(lobby.engagementId())
@@ -48,6 +50,12 @@ public final class AgentLpqAdmissionService {
                 ? AgentLpqSession.BonusMode.ENTER : AgentLpqSession.BonusMode.HUMAN_CHOICE);
         validation.members().forEach(member -> session.addMember(member.getId(), isAgent(member)
                 ? AgentLpqMemberState.MemberType.AGENT : AgentLpqMemberState.MemberType.HUMAN));
+        if (preferredHumanId > 0 && validation.members().stream().anyMatch(member ->
+                member.getId() == preferredHumanId && !isAgent(member))) {
+            session.setHumanRolePreference(preferredHumanId,
+                    humanRolePreference == null
+                            ? AgentLpqSession.HumanRolePreference.DEFAULT : humanRolePreference);
+        }
         session.setLeadership(eventLeader.getId(), validation.agentMembers().getFirst().getId());
         boolean published = false;
         try {
@@ -71,6 +79,13 @@ public final class AgentLpqAdmissionService {
     }
 
     public static Validation validate(Character operator, Character eventLeader, List<Character> partyMembers) {
+        return validate(operator, eventLeader, partyMembers, 0,
+                AgentLpqSession.HumanRolePreference.DEFAULT);
+    }
+
+    static Validation validate(Character operator, Character eventLeader, List<Character> partyMembers,
+                               int preferredHumanId,
+                               AgentLpqSession.HumanRolePreference humanRolePreference) {
         if (operator == null || eventLeader == null || partyMembers == null) {
             return Validation.failure("Operator, leader, and party members are required");
         }
@@ -85,8 +100,8 @@ public final class AgentLpqAdmissionService {
         List<Character> agents = unique.stream().filter(AgentLpqAdmissionService::isAgent).toList();
         if (agents.isEmpty()) return Validation.failure("Agent-assisted LPQ requires an Agent participant");
         AgentLpqRosterRequirementPolicy.Coverage coverage =
-                AgentLpqRosterRequirementPolicy.evaluate(agents);
-        if (!coverage.complete()) return Validation.failure("Missing Agent LPQ capability: "
+                capabilityCoverage(unique, agents, preferredHumanId, humanRolePreference);
+        if (!coverage.complete()) return Validation.failure("Missing LPQ party capability: "
                 + String.join(", ", coverage.missingRequirements()));
         AgentPartySnapshot party = AgentPartyGatewayRuntime.party().snapshot(eventLeader);
         if (party == null) return Validation.failure("The LPQ leader has no party");
@@ -116,6 +131,31 @@ public final class AgentLpqAdmissionService {
             }
         }
         return new Validation(true, "", List.copyOf(unique), agents);
+    }
+
+    static AgentLpqRosterRequirementPolicy.Coverage capabilityCoverage(
+            List<Character> partyMembers, List<Character> agentMembers, int preferredHumanId,
+            AgentLpqSession.HumanRolePreference humanRolePreference) {
+        List<Character> roster = new ArrayList<>(agentMembers);
+        AgentLpqSession.HumanRolePreference preference = humanRolePreference == null
+                ? AgentLpqSession.HumanRolePreference.DEFAULT : humanRolePreference;
+        if (preference != AgentLpqSession.HumanRolePreference.DEFAULT) {
+            partyMembers.stream().filter(member -> member != null
+                            && member.getId() == preferredHumanId && !isAgent(member)
+                            && supports(member, preference))
+                    .findFirst().ifPresent(roster::add);
+        }
+        return AgentLpqRosterRequirementPolicy.evaluate(roster);
+    }
+
+    private static boolean supports(Character character,
+                                    AgentLpqSession.HumanRolePreference preference) {
+        return switch (preference) {
+            case TELEPORT -> AgentLpqRosterRequirementPolicy.teleportMagic(character);
+            case DARK_SIGHT -> AgentLpqRosterRequirementPolicy.darkSight(character);
+            case RANGED -> AgentLpqRosterRequirementPolicy.rangedAttack(character);
+            case DEFAULT -> false;
+        };
     }
 
     private static AdmissionResult restoreFailure(AgentPartyQuestEngagement engagement,

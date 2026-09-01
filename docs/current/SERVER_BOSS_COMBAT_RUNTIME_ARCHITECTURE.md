@@ -92,6 +92,14 @@ For a standalone boss without a host roster, the default candidate pool is capab
 
 Selection must be deterministic, using the encounter participant order with a stable character-ID tie-breaker. Ordinary aggro/DPS changes must not replace the pinned controller.
 
+Warped-in observers are not expedition controller candidates or server-runtime combat victims. If no registered, capable participant is present, the boss starts in or transitions to `SERVER_STICKY`; an observer arriving later cannot claim it. Registered BotClient Agents remain valid combat victims even though they are headless and controller-ineligible.
+
+### Ordinary summoned-mob authority
+
+Ordinary summoned mobs use a separate, reversible policy. Before Agent interaction, any capable real observer in the map may run their native movement and attacks. An accepted Agent hit atomically promotes that mob to server-owned movement and combat for a seven-second aggro lease. The lease does not require a real observer, so an Agent-only expedition can still fight active adds. Each subsequent accepted Agent hit renews the lease.
+
+After seven seconds without an Agent hit, the server stabilizes the mob pose, ends both combat and physics ownership, and hands it to any available capable real client without immediate aggro. Unlike boss takeover, this handoff is intentionally reversible. Grounded and flying mobs keep their WZ-authored movement model throughout server ownership.
+
 ### Client capability
 
 Do not infer capability solely from `!(client instanceof BotClient)`: WASM may use a real network `Client` but still be unable to simulate mob attacks. Add a session-scoped capability such as:
@@ -330,6 +338,8 @@ In `SERVER_STICKY`, the server owns action selection, skills, summons, target hi
 
 At sticky takeover, remove native controller ownership for every current encounter actor, invalidate outstanding controller leases, attach server runtimes, and mark all future encounter actors/adds server-owned before they become actionable. Easy Balrog components remain stationary under server authority.
 
+The final clause applies to composite boss actors. They never enter Agent mob physics: fixed body/claw actors retain their authored position and cannot receive gravity or knockback simulation. Ordinary summons may instead use the reversible Agent-aggro lease described above; their movement and combat authority must start and end together.
+
 WASM is `RENDER_ONLY`; an encounter containing only WASM humans and Agents enters `SERVER_STICKY` immediately. WASM rendering completeness is optional troubleshooting support and never makes it controller-eligible.
 
 ## Targeting and arbitrary maps
@@ -416,6 +426,8 @@ stateDiagram-v2
 
 Encounter creation spawns fake body `8830007`, active claw `8830009`, and seal `8830013`. At 60 seconds the encounter releases the seal; the seal's configured death/revive behavior produces claw `8830008`. The body receives no actions while fake. After both claws have died, the body becomes real and vulnerable. Death of the active body clears the encounter.
 
+The encounter publishes one stable boss HP gauge using body UI ID `8830007`. Its maximum and current HP are the sums of body `8830007` and both claws `8830008`/`8830009`, including the sealed body's and not-yet-released claw's full HP from encounter start. Damage to any component updates that same gauge identity, avoiding client throttling between multipart actors. A standalone body or claw keeps its individual gauge.
+
 Do not infer this transition merely by counting all monsters in a map. Track actor roles in the encounter handle so unrelated summons or a direct component spawn cannot corrupt the phase.
 
 ### Verified action inventory
@@ -445,6 +457,8 @@ Claw `8830009`:
 - Attack 3: directional magic sweep, approximately 1260 ms delay.
 
 Helper forms `8830011` and `8830012` have no independent attack inventory. Mob `8830010` can summon three Baby Balrogs `6400007` with an approximately 150-second interval, although the normal Easy encounter clears before that post-body form is relevant.
+
+Jr. Balrog `6400008` resolves through linked template `8130100` and has three WZ-authored magical ordinary attacks. Crimson Balrog `6400009` resolves through linked template `8150000`, has two WZ-authored magical ordinary attacks, and is a flying mob with WZ fly speed 10. Neither add defines a separate `info/skill` inventory: its spell-like casts are ordinary attack actions. Under an Agent aggro lease, each add chases its primary Agent target, selects among its authored attacks only when the target enters an attack region, broadcasts the standard cast animation, and applies the delayed server-authoritative impact.
 
 The original arena also applies environmental HP drain independently of boss autonomy. Preserve that as map behavior; do not encode it as a Balrog actor action.
 

@@ -8,8 +8,9 @@ public enum OffMobReactionStrategy implements AgentMobReactionStrategy {
     INSTANCE;
 
     @Override
-    public void acceptedHit(Character attacker, Monster monster, int appliedDamage,
-                            MobHitReactionContext reactionContext) {
+    public boolean acceptedHit(Character attacker, Monster monster, int appliedDamage,
+                               MobHitReactionContext reactionContext) {
         // Original Cosmic behavior: no Agent-generated monster reaction.
+        return false;
     }
 }

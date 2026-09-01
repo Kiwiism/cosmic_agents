@@ -6,6 +6,8 @@ package server.agents.capabilities.supplies;
 public final class AgentPotionSupplyState {
     private int potCheckTimerMs = 0;
     private int mpRecoveryTimerMs = 0;
+    private long diseaseSignature = 0L;
+    private long diseaseCureDueAtMs = 0L;
     private boolean hpShareRequested = false;
     private boolean mpShareRequested = false;
 
@@ -23,6 +25,24 @@ public final class AgentPotionSupplyState {
 
     public void setMpRecoveryTimerMs(int mpRecoveryTimerMs) {
         this.mpRecoveryTimerMs = mpRecoveryTimerMs;
+    }
+
+    public long diseaseSignature() {
+        return diseaseSignature;
+    }
+
+    public long diseaseCureDueAtMs() {
+        return diseaseCureDueAtMs;
+    }
+
+    public void scheduleDiseaseCure(long signature, long dueAtMs) {
+        diseaseSignature = signature;
+        diseaseCureDueAtMs = dueAtMs;
+    }
+
+    public void clearDiseaseCure() {
+        diseaseSignature = 0L;
+        diseaseCureDueAtMs = 0L;
     }
 
     public boolean hpShareRequested() {

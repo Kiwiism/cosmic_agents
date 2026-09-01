@@ -23,6 +23,12 @@ abstract class EasyBalrogBehavior implements BossActorBehavior {
     }
 
     @Override
+    public final boolean allowServerTakeoverForOrdinarySummons() {
+        // Adds begin under ordinary client control and are promoted only by Agent aggro.
+        return true;
+    }
+
+    @Override
     public final Optional<SelectedAction> select(
             Monster monster, List<Character> targets,
             ServerMobActionCatalog.MonsterActions actions, RandomGenerator random) {
@@ -35,11 +41,12 @@ abstract class EasyBalrogBehavior implements BossActorBehavior {
                 .sorted(Comparator.comparingDouble(target ->
                         target.getPosition().distanceSq(origin)))
                 .toList();
-        List<SelectedAction> eligible = new ArrayList<>();
+        List<SelectedAction> eligibleAttacks = new ArrayList<>();
         for (BossAction.OrdinaryAttack attack : actions.attacks()) {
-            addAttack(monster, ordered, origin, attack, eligible);
+            addAttack(monster, ordered, origin, attack, eligibleAttacks);
         }
 
+        List<SelectedAction> eligibleSkills = new ArrayList<>();
         int hpPercent = (int) Math.ceil(monster.getHp() * 100.0 / monster.getMaxHp());
         for (BossAction.Skill action : actions.skills()) {
             var skill = action.mobSkill();
@@ -49,10 +56,12 @@ abstract class EasyBalrogBehavior implements BossActorBehavior {
             if (skill.getType() == MobSkillType.PHYSICAL_AND_MAGIC_COUNTER
                     || skill.getType() == MobSkillType.UNDEAD
                     || skill.getType() == MobSkillType.SUMMON) {
-                eligible.add(new SelectedAction(action,
+                eligibleSkills.add(new SelectedAction(action,
                         ordered.isEmpty() ? null : ordered.getFirst()));
             }
         }
+        List<SelectedAction> eligible = eligibleSkills.isEmpty()
+                ? eligibleAttacks : eligibleSkills;
         return eligible.isEmpty()
                 ? Optional.empty()
                 : Optional.of(eligible.get(random.nextInt(eligible.size())));

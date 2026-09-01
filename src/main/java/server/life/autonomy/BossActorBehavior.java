@@ -21,6 +21,21 @@ public interface BossActorBehavior {
         return false;
     }
 
+    /** Whether an ordinary unsupported summon may be promoted to generic server combat. */
+    default boolean allowServerTakeoverForOrdinarySummons() {
+        return true;
+    }
+
+    /** Whether this actor may attack only the Agent that currently owns its aggro. */
+    default boolean usesPrimaryAggroTargetOnly() {
+        return false;
+    }
+
+    /** Whether sticky-server combat should share the Agent-owned roaming physics loop. */
+    default boolean usesServerMobPhysics() {
+        return false;
+    }
+
     record SelectedAction(BossAction action, Character primaryTarget,
                           Boolean facingLeftOverride) {
         public SelectedAction(BossAction action, Character primaryTarget) {

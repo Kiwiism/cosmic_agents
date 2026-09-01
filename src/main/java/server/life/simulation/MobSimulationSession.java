@@ -153,7 +153,7 @@ public final class MobSimulationSession {
         // renews the Agent aggro lease and may update which Agent is being chased afterwards.
         lastAcceptedHitNanos = Math.max(lastAcceptedHitNanos, nowNanos);
         generation++;
-        if (reactionAlreadyInProgress) {
+        if (serverCombatActionActive(nowNanos) || reactionAlreadyInProgress) {
             return generation;
         }
         pendingDamage = Math.max(0, damage);
@@ -195,7 +195,7 @@ public final class MobSimulationSession {
     }
 
     public synchronized boolean serverCombatActionActive(long nowNanos) {
-        return nowNanos < serverCombatActionUntilNanos && !reactionInProgress();
+        return nowNanos < serverCombatActionUntilNanos;
     }
 
     public synchronized long generation() {

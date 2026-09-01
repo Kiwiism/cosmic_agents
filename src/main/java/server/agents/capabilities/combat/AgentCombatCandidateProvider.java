@@ -19,8 +19,16 @@ final class AgentCombatCandidateProvider {
 
     static List<Monster> local(
             Character agent, Point origin, double maximumDistanceSquared) {
-        return AgentCombatTargetSelector.aliveMonstersInRange(
-                agent, origin, maximumDistanceSquared);
+        if (agent == null || agent.getMap() == null || origin == null) {
+            return List.of();
+        }
+        return AgentMapPerception.monsters(agent.getMap()).stream()
+                .filter(AgentCombatTargetEligibilityPolicy::isHostileLivingMonster)
+                .filter(monster -> {
+                    Point aim = AgentCombatAimPointPolicy.aimPoint(agent, monster);
+                    return aim != null && aim.distanceSq(origin) <= maximumDistanceSquared;
+                })
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
     static List<Monster> mapWidePreferred(AgentRuntimeEntry entry, Character agent) {

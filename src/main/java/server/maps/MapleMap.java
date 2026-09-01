@@ -1465,7 +1465,8 @@ public class MapleMap {
             removeMapObject(monster);
             monster.disposeMapObject();
             if (monster.hasBossHPBar()) {   // thanks resinate for noticing boss HPbar not clearing after mob defeat in certain scenarios
-                broadcastBossHpMessage(monster, monster.hashCode(), monster.makeBossHPBarPacket(), monster.getPosition());
+                broadcastBossHpMessage(monster, monster.bossHpBarHash(),
+                        monster.makeBossHPBarPacket(), monster.getPosition());
             }
 
             return true;
@@ -1576,7 +1577,7 @@ public class MapleMap {
 
             if (monster.hasBossHPBar()) {
                 for (Character mc : this.getAllPlayers()) {
-                    if (mc.getTargetHpBarHash() == monster.hashCode()) {
+                    if (mc.getTargetHpBarHash() == monster.bossHpBarHash()) {
                         mc.resetPlayerAggro();
                     }
                 }
@@ -3046,7 +3047,8 @@ public class MapleMap {
 
     private void updateBossSpawn(Monster monster) {
         if (monster.hasBossHPBar()) {
-            broadcastBossHpMessage(monster, monster.hashCode(), monster.makeBossHPBarPacket(), monster.getPosition());
+            broadcastBossHpMessage(monster, monster.bossHpBarHash(),
+                    monster.makeBossHPBarPacket(), monster.getPosition());
         }
         if (monster.isBoss()) {
             if (unclaimOwnership() != null) {

@@ -14,6 +14,7 @@ import server.agents.capabilities.movement.AgentMovementBroadcastStateRuntime;
 import server.agents.capabilities.movement.AgentMovementPoseService;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.capabilities.movement.AgentGroundingService;
+import server.agents.capabilities.movement.AgentFarmAnchorStateRuntime;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentRouteOutcome;
 import server.agents.capabilities.navigation.AgentRouteStatus;
@@ -25,6 +26,7 @@ import server.agents.capabilities.npc.AgentNpcInteractionType;
 import server.agents.integration.PrimitiveCapabilityGateway;
 import server.agents.integration.AgentCharacterStateSnapshot;
 import server.agents.integration.AgentPacketGatewayRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentModeService;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -330,6 +332,29 @@ public enum CosmicPrimitiveCapabilityGateway implements PrimitiveCapabilityGatew
                 entry, preferredMobIds, fallbackMobIds);
         if (!AgentModeStateRuntime.grinding(entry)) {
             AgentModeService.startGrind(entry, AgentMovementStateResetService::clearNavigationState);
+        }
+    }
+
+    @Override
+    public void grindFromAnchor(AgentRuntimeEntry entry,
+                                Point anchor,
+                                Set<Integer> preferredMobIds,
+                                Set<Integer> fallbackMobIds) {
+        if (entry == null || anchor == null) {
+            return;
+        }
+        Character agent = AgentRuntimeIdentityRuntime.bot(entry);
+        int mapId = agent == null ? 0 : agent.getMapId();
+        Point currentAnchor = AgentFarmAnchorStateRuntime.farmAnchorInMap(entry, mapId);
+        AgentCombatVariationRuntime.clearAutomaticAnchor(entry);
+        AgentCombatObjectiveTargetStateRuntime.setTargetPreferences(
+                entry, preferredMobIds, fallbackMobIds);
+        if (!AgentModeStateRuntime.grinding(entry) || currentAnchor == null
+                || !currentAnchor.equals(anchor)) {
+            AgentModeService.startFarmHere(entry, anchor,
+                    AgentMovementStateResetService::clearNavigationState);
+            AgentCombatObjectiveTargetStateRuntime.setTargetPreferences(
+                    entry, preferredMobIds, fallbackMobIds);
         }
     }
 

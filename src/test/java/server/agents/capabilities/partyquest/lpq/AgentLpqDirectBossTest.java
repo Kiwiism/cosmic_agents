@@ -40,6 +40,18 @@ class AgentLpqDirectBossTest {
         assertFalse(AgentLpqTestService.directBossEntryReady(6, event, members));
     }
 
+    @Test
+    void reservesAlisharKeyPickupForTheRegisteredEventLeader() {
+        int leaderId = 100;
+
+        assertTrue(AgentLpqCoordinator.stageNineAgentMayCollectItem(
+                leaderId, leaderId, AgentLpqDefinition.BOSS_KEY));
+        assertFalse(AgentLpqCoordinator.stageNineAgentMayCollectItem(
+                101, leaderId, AgentLpqDefinition.BOSS_KEY));
+        assertTrue(AgentLpqCoordinator.stageNineAgentMayCollectItem(
+                101, leaderId, 4_000_001));
+    }
+
     private static List<Character> members(EventInstanceManager event, int count) {
         List<Character> members = new ArrayList<>();
         for (int index = 0; index < count; index++) {

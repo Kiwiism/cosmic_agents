@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.IntFunction;
 
@@ -77,6 +78,20 @@ public final class EasyBalrogEncounterService {
                 && encounter.phase != Phase.ABORTED;
     }
 
+    /** Returns the one stable, combined gauge used by all three encounter actors. */
+    public static Optional<HpBarSnapshot> hpBarSnapshot(Monster monster) {
+        if (monster == null || monster.getMap() == null) {
+            return Optional.empty();
+        }
+        Encounter encounter = ENCOUNTERS.get(monster.getMap());
+        return encounter == null ? Optional.empty() : encounter.hpBarSnapshot(monster);
+    }
+
+    public record HpBarSnapshot(int mobId, int currentHp, int maxHp,
+                                byte tagColor, byte tagBackgroundColor,
+                                int identityHash) {
+    }
+
     public interface EncounterHandle {
         Phase phase();
 
@@ -123,6 +138,7 @@ public final class EasyBalrogEncounterService {
 
         private synchronized void start() {
             body = actor(BODY_ID, Role.BODY);
+            releasedClaw = actor(RELEASED_CLAW_ID, Role.RELEASED_CLAW);
             initialClaw = actor(INITIAL_CLAW_ID, Role.INITIAL_CLAW);
             seal = actor(RELEASE_SEAL_ID, Role.RELEASE_SEAL);
 
@@ -193,10 +209,9 @@ public final class EasyBalrogEncounterService {
 
         private void spawnReleasedClaw() {
             if (phase == Phase.CLEARED || phase == Phase.ABORTED
-                    || releasedClaw != null) {
+                    || releasedClaw == null || releasedClaw.getMap() != null) {
                 return;
             }
-            releasedClaw = actor(RELEASED_CLAW_ID, Role.RELEASED_CLAW);
             map.spawnMonsterOnGroundBelow(releasedClaw, origin);
             registerCombatActor(releasedClaw);
             phase = defeated.contains(Role.INITIAL_CLAW)
@@ -289,6 +304,31 @@ public final class EasyBalrogEncounterService {
                     && map.getMonsterByOid(monster.getObjectId()) == monster) {
                 map.killMonster(monster, null, false, (short) 0);
             }
+        }
+
+        private synchronized Optional<HpBarSnapshot> hpBarSnapshot(Monster monster) {
+            if (phase == Phase.CLEARED || phase == Phase.ABORTED
+                    || monster != body && monster != releasedClaw
+                    && monster != initialClaw) {
+                return Optional.empty();
+            }
+            int maxHp = sumHp(Monster::getMaxHp);
+            int currentHp = sumHp(actor -> Math.max(0, actor.getHp()));
+            byte tagColor = body.getStats().getTagColor() > 0
+                    ? body.getStats().getTagColor() : EasyBalrogHpBarPolicy.tagColor();
+            byte background = body.getStats().getTagBgColor() > 0
+                    ? body.getStats().getTagBgColor()
+                    : EasyBalrogHpBarPolicy.tagBackgroundColor();
+            return Optional.of(new HpBarSnapshot(
+                    BODY_ID, currentHp, maxHp, tagColor, background, body.hashCode()));
+        }
+
+        private int sumHp(java.util.function.ToIntFunction<Monster> value) {
+            long sum = 0L;
+            for (Monster actor : List.of(body, releasedClaw, initialClaw)) {
+                sum += value.applyAsInt(actor);
+            }
+            return (int) Math.min(Integer.MAX_VALUE, Math.max(0L, sum));
         }
     }
 

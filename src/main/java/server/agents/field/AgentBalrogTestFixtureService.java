@@ -33,26 +33,46 @@ public final class AgentBalrogTestFixtureService {
     public static final int LEVEL = 60;
     public static final int MINIMUM_WEAPON_LEVEL = 40;
     public static final int ROSTER_SIZE = 12;
-    public static final Set<Integer> BALROG_COMBAT_MOBS = Set.of(8830007, 8830008, 8830009);
+    public static final Set<Integer> BALROG_COMBAT_MOBS =
+            Set.of(8830007, 8830008, 8830009, 6400008, 6400009);
 
-    private static final List<Integer> WARRIOR_MALE = List.of(
-            1_002_029, 1_040_090, 1_060_079, 1_082_059, 1_072_147);
-    private static final List<Integer> WARRIOR_FEMALE = List.of(
-            1_002_029, 1_041_091, 1_061_090, 1_082_059, 1_072_147);
-    private static final List<Integer> MAGICIAN_MALE = List.of(
-            1_002_242, 1_050_053, 1_082_086, 1_072_136);
-    private static final List<Integer> MAGICIAN_FEMALE = List.of(
-            1_002_242, 1_051_044, 1_082_086, 1_072_136);
-    private static final List<Integer> BOWMAN_MALE = List.of(
-            1_002_267, 1_050_058, 1_082_089, 1_072_144);
-    private static final List<Integer> BOWMAN_FEMALE = List.of(
-            1_002_267, 1_051_041, 1_082_089, 1_072_144);
-    private static final List<Integer> THIEF_MALE = List.of(
-            1_002_247, 1_040_098, 1_060_087, 1_082_092, 1_072_150);
-    private static final List<Integer> THIEF_FEMALE = List.of(
-            1_002_247, 1_041_094, 1_061_093, 1_082_092, 1_072_150);
-    private static final List<Integer> PIRATE = List.of(
-            1_002_634, 1_052_119, 1_082_201, 1_072_306);
+    private static final List<List<Integer>> WARRIOR_MALE_CLOTHING = List.of(
+            List.of(1_002_029, 1_040_090, 1_060_079),
+            List.of(1_002_084, 1_040_091, 1_060_080),
+            List.of(1_002_022, 1_040_092, 1_060_081));
+    private static final List<List<Integer>> WARRIOR_FEMALE_CLOTHING = List.of(
+            List.of(1_002_029, 1_041_091, 1_061_090),
+            List.of(1_002_084, 1_041_092, 1_061_091),
+            List.of(1_002_022, 1_041_093, 1_061_092));
+    private static final List<List<Integer>> MAGICIAN_MALE_CLOTHING = List.of(
+            List.of(1_002_242, 1_050_053),
+            List.of(1_002_243, 1_050_054),
+            List.of(1_002_244, 1_050_055));
+    private static final List<List<Integer>> MAGICIAN_FEMALE_CLOTHING = List.of(
+            List.of(1_002_242, 1_051_044),
+            List.of(1_002_243, 1_051_045),
+            List.of(1_002_244, 1_051_046));
+    private static final List<List<Integer>> BOWMAN_MALE_CLOTHING = List.of(
+            List.of(1_002_267, 1_050_058),
+            List.of(1_002_268, 1_050_059));
+    private static final List<List<Integer>> BOWMAN_FEMALE_CLOTHING = List.of(
+            List.of(1_002_267, 1_051_041),
+            List.of(1_002_268, 1_051_042));
+    private static final List<List<Integer>> THIEF_MALE_CLOTHING = List.of(
+            List.of(1_002_247, 1_040_098, 1_060_087),
+            List.of(1_002_248, 1_040_099, 1_060_088));
+    private static final List<List<Integer>> THIEF_FEMALE_CLOTHING = List.of(
+            List.of(1_002_247, 1_041_094, 1_061_093),
+            List.of(1_002_248, 1_041_095, 1_061_094));
+    private static final List<List<Integer>> PIRATE_CLOTHING = List.of(
+            List.of(1_002_634, 1_052_119),
+            List.of(1_002_631, 1_052_116));
+
+    private static final List<Integer> WARRIOR_ACCESSORIES = List.of(1_082_059, 1_072_147);
+    private static final List<Integer> MAGICIAN_ACCESSORIES = List.of(1_082_086, 1_072_136);
+    private static final List<Integer> BOWMAN_ACCESSORIES = List.of(1_082_089, 1_072_144);
+    private static final List<Integer> THIEF_ACCESSORIES = List.of(1_082_092, 1_072_150);
+    private static final List<Integer> PIRATE_ACCESSORIES = List.of(1_082_201, 1_072_306);
 
     public static final List<Build> ALL_BUILDS = List.of(
             warrior("fighter-1h-sword", Job.FIGHTER, WeaponClass.ONE_HANDED_SWORD,
@@ -115,6 +135,12 @@ public final class AgentBalrogTestFixtureService {
 
     public static PreparationResult prepare(
             AgentRuntimeEntry entry, Build build, long seed, long nowMs) throws IOException {
+        return prepare(entry, build, 0, seed, nowMs);
+    }
+
+    public static PreparationResult prepare(
+            AgentRuntimeEntry entry, Build build, int clothingRank, long seed, long nowMs)
+            throws IOException {
         if (entry == null || build == null) {
             throw new IllegalArgumentException("an Agent runtime and Balrog build are required");
         }
@@ -125,7 +151,7 @@ public final class AgentBalrogTestFixtureService {
                 agent, MapleIslandCohortCharacterCatalog.template(appearance));
         AgentFieldObservationFixtureService.Prepared prepared =
                 AgentFieldObservationFixtureService.prepareForBalrog(
-                        entry, build, LEVEL, BALROG_COMBAT_MOBS, nowMs);
+                        entry, build, LEVEL, BALROG_COMBAT_MOBS, clothingRank, nowMs);
         if (!prepared.completeBuild()) {
             throw new IllegalStateException("Balrog fixture left unspent AP/SP for " + prepared.name()
                     + " ap=" + prepared.remainingAp() + " sp="
@@ -260,20 +286,44 @@ public final class AgentBalrogTestFixtureService {
         return new BuildStep(skillId, level);
     }
 
-    private static List<Integer> armor(Job job, int gender) {
+    public static int clothingRank(List<Build> roster, int ordinal) {
+        if (roster == null || ordinal < 0 || ordinal >= roster.size()) {
+            throw new IllegalArgumentException("a valid Balrog roster slot is required");
+        }
+        int family = roster.get(ordinal).job().getId() / 100;
+        int rank = 0;
+        for (int index = 0; index < ordinal; index++) {
+            if (roster.get(index).job().getId() / 100 == family) rank++;
+        }
+        return rank;
+    }
+
+    private static List<Integer> armor(Job job, int gender, int clothingRank) {
+        List<List<Integer>> clothing;
+        List<Integer> accessories;
         if (job == Job.FIGHTER || job == Job.PAGE || job == Job.SPEARMAN) {
-            return gender == 0 ? WARRIOR_MALE : WARRIOR_FEMALE;
+            clothing = gender == 0 ? WARRIOR_MALE_CLOTHING : WARRIOR_FEMALE_CLOTHING;
+            accessories = WARRIOR_ACCESSORIES;
+        } else if (job == Job.FP_WIZARD || job == Job.IL_WIZARD || job == Job.CLERIC) {
+            clothing = gender == 0 ? MAGICIAN_MALE_CLOTHING : MAGICIAN_FEMALE_CLOTHING;
+            accessories = MAGICIAN_ACCESSORIES;
+        } else if (job == Job.HUNTER || job == Job.CROSSBOWMAN) {
+            clothing = gender == 0 ? BOWMAN_MALE_CLOTHING : BOWMAN_FEMALE_CLOTHING;
+            accessories = BOWMAN_ACCESSORIES;
+        } else if (job == Job.ASSASSIN || job == Job.BANDIT) {
+            clothing = gender == 0 ? THIEF_MALE_CLOTHING : THIEF_FEMALE_CLOTHING;
+            accessories = THIEF_ACCESSORIES;
+        } else {
+            clothing = PIRATE_CLOTHING;
+            accessories = PIRATE_ACCESSORIES;
         }
-        if (job == Job.FP_WIZARD || job == Job.IL_WIZARD || job == Job.CLERIC) {
-            return gender == 0 ? MAGICIAN_MALE : MAGICIAN_FEMALE;
+        if (clothingRank < 0 || clothingRank >= clothing.size()) {
+            throw new IllegalArgumentException("no distinct Balrog clothing set for " + job
+                    + " at family rank " + clothingRank);
         }
-        if (job == Job.HUNTER || job == Job.CROSSBOWMAN) {
-            return gender == 0 ? BOWMAN_MALE : BOWMAN_FEMALE;
-        }
-        if (job == Job.ASSASSIN || job == Job.BANDIT) {
-            return gender == 0 ? THIEF_MALE : THIEF_FEMALE;
-        }
-        return PIRATE;
+        ArrayList<Integer> armor = new ArrayList<>(clothing.get(clothingRank));
+        armor.addAll(accessories);
+        return List.copyOf(armor);
     }
 
     public enum WeaponClass {
@@ -308,7 +358,11 @@ public final class AgentBalrogTestFixtureService {
         }
 
         public List<Integer> equipment(int gender) {
-            ArrayList<Integer> items = new ArrayList<>(armor(job, gender));
+            return equipment(gender, 0);
+        }
+
+        public List<Integer> equipment(int gender, int clothingRank) {
+            ArrayList<Integer> items = new ArrayList<>(armor(job, gender, clothingRank));
             if (shieldItemId > 0) items.add(shieldItemId);
             items.add(weaponItemId);
             return List.copyOf(items);

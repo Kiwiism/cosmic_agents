@@ -43,6 +43,9 @@ public final class AgentCombatHealRuntime {
                 bot.skillIsCooling(healSkillId))) {
             return false;
         }
+        if (AgentCombatSupportPolicy.hasZombifiedPartyMember(bot)) {
+            return false;
+        }
 
         Skill skill = skills.getSkill(healSkillId);
         int lvl = bot.getSkillLevel(skill);

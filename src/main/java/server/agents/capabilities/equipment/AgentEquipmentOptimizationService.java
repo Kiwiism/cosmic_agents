@@ -76,6 +76,10 @@ public final class AgentEquipmentOptimizationService {
             }
         }
 
+        if (scope == RecommendationScope.IMMEDIATE) {
+            AgentEquipmentAppearanceDiversityPolicy.preferUnusedSameClassItems(agent, bySlot);
+        }
+
         Job receiverJob = agent.getJob();
         boolean[] reqRel = AgentEquipmentOptimizer.scanReqRelevantDims(bySlot, itemInfo);
         for (Map.Entry<Short, List<Equip>> entry : bySlot.entrySet()) {
@@ -179,6 +183,7 @@ public final class AgentEquipmentOptimizationService {
                 pool.add(equip);
             }
         }
+        AgentEquipmentAppearanceDiversityPolicy.preferUnusedSameClassItems(agent, bySlot);
         Job agentJob = agent.getJob();
         boolean[] reqRel = AgentEquipmentOptimizer.scanReqRelevantDims(bySlot, itemInfo);
         for (Map.Entry<Short, List<Equip>> entry : bySlot.entrySet()) {

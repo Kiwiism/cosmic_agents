@@ -1,6 +1,10 @@
 package server.agents.capabilities.partyquest;
 
 import client.Character;
+import server.agents.capabilities.partyquest.epq.AgentEpqRuntime;
+import server.agents.capabilities.partyquest.epq.AgentEpqLobbyAdmissionRuntime;
+import server.agents.capabilities.partyquest.epq.AgentEpqSession;
+import server.agents.capabilities.partyquest.epq.AgentEpqSessionRegistry;
 import server.agents.capabilities.partyquest.hpq.AgentHpqLobbyAdmissionRuntime;
 import server.agents.capabilities.partyquest.hpq.AgentHpqRuntime;
 import server.agents.capabilities.partyquest.hpq.AgentHpqSession;
@@ -12,6 +16,9 @@ import server.agents.capabilities.partyquest.kpq.AgentKpqSessionRegistry;
 import server.agents.capabilities.partyquest.lpq.AgentLpqRuntime;
 import server.agents.capabilities.partyquest.lpq.AgentLpqSession;
 import server.agents.capabilities.partyquest.lpq.AgentLpqSessionRegistry;
+import server.agents.capabilities.partyquest.opq.AgentOpqRuntime;
+import server.agents.capabilities.partyquest.opq.AgentOpqSession;
+import server.agents.capabilities.partyquest.opq.AgentOpqSessionRegistry;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.activity.session.AgentActivityAdmissionResult;
 
@@ -20,7 +27,7 @@ import java.util.List;
 /** Shared router over isolated PQ systems. It owns no stage rules or tuning. */
 public final class AgentPartyQuestRuntime {
     private static final List<AgentPartyQuestSystem> SYSTEMS = List.of(
-            new HpqSystem(), new KpqSystem(), new LpqSystem());
+            new HpqSystem(), new KpqSystem(), new LpqSystem(), new OpqSystem(), new EpqSystem());
 
     private AgentPartyQuestRuntime() {
     }
@@ -288,6 +295,112 @@ public final class AgentPartyQuestRuntime {
         @Override public String entryBlocker(
                 Character agent, String scenarioId, int partySize, int maximumRuns) {
             return "LPQ background population remains disabled until live observation gates pass";
+        }
+    }
+
+    private static final class OpqSystem implements AgentPartyQuestSystem {
+        @Override public AgentPartyQuestDefinition definition() { return AgentPartyQuestCatalog.require("opq"); }
+        @Override public boolean sessionActive(int characterId) { return AgentOpqSessionRegistry.active(characterId); }
+        @Override public boolean tick(AgentRuntimeEntry entry, Character agent, long nowMs) {
+            return AgentOpqRuntime.tick(entry, agent, nowMs);
+        }
+        @Override public boolean requestStop(int characterId, String reason, long nowMs) {
+            return AgentOpqRuntime.requestStop(characterId, reason, nowMs);
+        }
+        @Override public void forceStop(int characterId, String reason, long nowMs) {
+            AgentOpqRuntime.forceStop(characterId, reason, nowMs);
+        }
+        @Override public void runtimeRemoved(int characterId, long nowMs) {
+            AgentOpqRuntime.runtimeRemoved(characterId, nowMs);
+        }
+        @Override public AgentPartyQuestSessionView sessionView(int characterId) {
+            AgentOpqSession session = AgentOpqSessionRegistry.forMember(characterId);
+            if (session == null) return null;
+            AgentPartyQuestSessionView.Phase phase = switch (session.phase()) {
+                case EXITING -> AgentPartyQuestSessionView.Phase.DRAINING;
+                case COMPLETED -> AgentPartyQuestSessionView.Phase.COMPLETED;
+                case FAILED -> AgentPartyQuestSessionView.Phase.FAILED;
+                default -> session.paused() ? AgentPartyQuestSessionView.Phase.SUSPENDED
+                        : AgentPartyQuestSessionView.Phase.ACTIVE;
+            };
+            return new AgentPartyQuestSessionView("opq", session.sessionId(), phase,
+                    session.executionAgentId(), session.memberCount(), session.mode().name(),
+                    session.failure(), session.startedAtMs(), session.lastProgressAtMs());
+        }
+        @Override public boolean pause(int characterId) {
+            AgentOpqSession session = AgentOpqSessionRegistry.forMember(characterId);
+            if (session == null || session.paused()) return false;
+            session.setPaused(true); return true;
+        }
+        @Override public boolean resumeExact(int characterId, String sessionId, long nowMs) {
+            AgentOpqSession session = AgentOpqSessionRegistry.forMember(characterId);
+            if (session == null || !session.sessionId().equals(sessionId) || !session.paused()) return false;
+            session.setPaused(false); session.markProgress(nowMs); return true;
+        }
+        @Override public AgentActivityAdmissionResult requestEntry(
+                AgentRuntimeEntry entry, Character agent, String scenarioId,
+                int partySize, int maximumRuns, long nowMs) {
+            return AgentActivityAdmissionResult.rejected(
+                    "OPQ background population remains disabled until full live observation gates pass");
+        }
+        @Override public String entryBlocker(
+                Character agent, String scenarioId, int partySize, int maximumRuns) {
+            return "OPQ background population remains disabled until full live observation gates pass";
+        }
+    }
+
+    private static final class EpqSystem implements AgentPartyQuestSystem {
+        @Override public AgentPartyQuestDefinition definition() { return AgentPartyQuestCatalog.require("epq"); }
+        @Override public boolean sessionActive(int characterId) { return AgentEpqSessionRegistry.active(characterId); }
+        @Override public boolean tick(AgentRuntimeEntry entry, Character agent, long nowMs) {
+            return AgentEpqRuntime.tick(entry, agent, nowMs);
+        }
+        @Override public boolean requestStop(int characterId, String reason, long nowMs) {
+            return AgentEpqRuntime.requestStop(characterId, reason, nowMs);
+        }
+        @Override public void forceStop(int characterId, String reason, long nowMs) {
+            AgentEpqRuntime.forceStop(characterId, reason, nowMs);
+        }
+        @Override public void runtimeRemoved(int characterId, long nowMs) {
+            AgentEpqRuntime.runtimeRemoved(characterId, nowMs);
+        }
+        @Override public AgentPartyQuestSessionView sessionView(int characterId) {
+            AgentEpqSession session = AgentEpqSessionRegistry.forMember(characterId);
+            if (session == null) return null;
+            AgentPartyQuestSessionView.Phase phase = switch (session.phase()) {
+                case EXITING -> AgentPartyQuestSessionView.Phase.DRAINING;
+                case COMPLETED -> AgentPartyQuestSessionView.Phase.COMPLETED;
+                case FAILED -> AgentPartyQuestSessionView.Phase.FAILED;
+                default -> session.paused() ? AgentPartyQuestSessionView.Phase.SUSPENDED
+                        : AgentPartyQuestSessionView.Phase.ACTIVE;
+            };
+            return new AgentPartyQuestSessionView("epq", session.sessionId(), phase,
+                    session.executionAgentId(), session.memberCount(), session.mode().name(),
+                    session.failure(), session.startedAtMs(), session.lastProgressAtMs());
+        }
+        @Override public boolean pause(int characterId) {
+            AgentEpqSession session = AgentEpqSessionRegistry.forMember(characterId);
+            if (session == null || session.paused()) return false;
+            session.setPaused(true);
+            return true;
+        }
+        @Override public boolean resumeExact(int characterId, String sessionId, long nowMs) {
+            AgentEpqSession session = AgentEpqSessionRegistry.forMember(characterId);
+            if (session == null || !session.sessionId().equals(sessionId) || !session.paused()) return false;
+            session.setPaused(false);
+            session.markProgress(nowMs);
+            return true;
+        }
+        @Override public AgentActivityAdmissionResult requestEntry(
+                AgentRuntimeEntry entry, Character agent, String scenarioId,
+                int partySize, int maximumRuns, long nowMs) {
+            return AgentEpqLobbyAdmissionRuntime.requestEntry(
+                    entry, agent, scenarioId, partySize, maximumRuns, nowMs);
+        }
+        @Override public String entryBlocker(
+                Character agent, String scenarioId, int partySize, int maximumRuns) {
+            return AgentEpqLobbyAdmissionRuntime.blocker(
+                    agent, scenarioId, partySize, maximumRuns);
         }
     }
 }

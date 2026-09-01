@@ -64,4 +64,19 @@ class EasyBalrogActionCatalogTest {
                 initial.attacks().get(1).diseaseSkill());
         assertEquals(3, initial.attacks().get(1).diseaseLevel());
     }
+
+    @Test
+    void loadsSummonedBalrogAttacksThroughTheirLinkedWzTemplates() {
+        var junior = ServerMobActionCatalog.forMob(
+                BalrogSummonedAddBehavior.JR_BALROG_ID);
+        assertEquals(3, junior.attacks().size());
+        assertTrue(junior.attacks().stream().allMatch(BossAction.OrdinaryAttack::magic));
+        assertTrue(junior.skills().isEmpty());
+
+        var crimson = ServerMobActionCatalog.forMob(
+                BalrogSummonedAddBehavior.CRIMSON_BALROG_ID);
+        assertEquals(2, crimson.attacks().size());
+        assertTrue(crimson.attacks().stream().allMatch(BossAction.OrdinaryAttack::magic));
+        assertTrue(crimson.skills().isEmpty());
+    }
 }

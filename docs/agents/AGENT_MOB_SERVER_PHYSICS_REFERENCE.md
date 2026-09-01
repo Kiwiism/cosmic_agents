@@ -51,11 +51,14 @@ booleans. `OFF` performs no Agent reaction, `SYNTHETIC` retains the one-shot
 implementation, and `PHYSICS` registers one generation-updated session in the
 channel's `MobPhysicsService`.
 
-An Agent hit is eligible only when damage is positive, both entities are alive
-in the same map, and at least one real client observes that map. Acquisition
-revokes the real controller, assigns the BotClient logically, and marks the
-monster `AGENT_PHYSICS`. BotClient packet handling remains unchanged and
-headless. While that authority is active, ordinary controller switches and
+An Agent hit is eligible only when damage is positive and both entities are
+alive in the same map. General Agent-physics acquisition also requires at least
+one real observer. An ordinary mob whose server combat-autonomy lease was
+started by the same hit is the explicit exception: it may acquire and retain
+physics without an observer so Agent-only encounters do not leave the mob idle.
+Acquisition revokes the real controller, assigns the BotClient logically, and
+marks the monster `AGENT_PHYSICS`. BotClient packet handling remains unchanged
+and headless. While that authority is active, ordinary controller switches and
 client `MOVE_LIFE` updates are rejected.
 
 The service validates observer, Agent, monster and map lifecycle on every outer
@@ -65,8 +68,10 @@ from that final position when one is available. Generation-checked invalidation
 prevents an older tick from releasing a session refreshed by a newer hit.
 Every accepted Agent hit renews a configurable aggro lease, even when a current
 knockback/recovery prevents another reaction. After seven seconds without an
-Agent hit, the service stabilizes the mob pose and hands it to a real client
-without immediate aggro, restoring ordinary client-controlled wandering.
+Agent hit, the service stabilizes the mob pose, releases any matching ordinary
+server-combat lease, and hands it to a real client without immediate aggro,
+restoring ordinary client-controlled wandering. Combat and physics therefore
+cannot diverge into separate server/client owners during handoff.
 Observer and transition state is evaluated once per map per outer tick rather
 than once per active mob. Unchanged rounded mob positions skip redundant map
 visibility work, and physics broadcasts omit BotClients because their packet

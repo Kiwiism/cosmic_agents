@@ -1,6 +1,7 @@
 package server.agents.capabilities.combat;
 
 import client.Character;
+import client.Disease;
 import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.WeaponType;
@@ -92,6 +93,31 @@ class AgentCombatAttackRuntimeTest {
 
             AgentAttackTransactionResult result = AgentCombatAttackRuntime.attackMonster(
                     entry, agent, staleFlashFistPlan);
+
+            assertEquals(AgentAttackTransactionResult.Status.DEFERRED, result.status());
+            assertEquals(AgentAttackTransactionResult.Reason.CANNOT_USE_SKILL, result.reason());
+            verify(agent, never()).getMap();
+        }
+    }
+
+    @Test
+    void sealRejectsAPreviouslyPlannedSkillBeforeExecution() {
+        Character agent = mock(Character.class);
+        Monster target = mock(Monster.class);
+        when(target.isAlive()).thenReturn(true);
+        when(agent.hasDisease(Disease.SEAL)).thenReturn(true);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+        AgentAttackPlan skillPlan = new AgentAttackPlan(
+                Pirate.FLASH_FIST, 1, 1, null, List.of(target), AgentAttackRoute.CLOSE,
+                0, 0, 0, 0, 4, 0, 600, null);
+
+        try (MockedStatic<AgentAttackExecutionProvider> execution = Mockito.mockStatic(
+                AgentAttackExecutionProvider.class, Mockito.CALLS_REAL_METHODS)) {
+            execution.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(agent))
+                    .thenReturn(WeaponType.KNUCKLE);
+
+            AgentAttackTransactionResult result = AgentCombatAttackRuntime.attackMonster(
+                    entry, agent, skillPlan);
 
             assertEquals(AgentAttackTransactionResult.Status.DEFERRED, result.status());
             assertEquals(AgentAttackTransactionResult.Reason.CANNOT_USE_SKILL, result.reason());

@@ -99,10 +99,14 @@ public final class PartyOperationHandler extends AbstractPacketHandler {
                                 if (invited.getClient() instanceof BotClient) {
                                     AgentPartyQuestLobbyRuntime.InviteDecision decision =
                                             AgentPartyQuestLobbyRuntime.decidePartyInvite(invited, player);
-                                    boolean accept = decision
-                                            != AgentPartyQuestLobbyRuntime.InviteDecision.REJECT;
-                                    InviteCoordinator.answerInvite(
-                                            InviteType.PARTY, invited.getId(), party.getId(), accept);
+                                    if (decision == AgentPartyQuestLobbyRuntime.InviteDecision.DELAY_ACCEPT
+                                            && AgentPartyQuestLobbyRuntime.schedulePartyInviteResponse(
+                                            invited, player, party.getId())) {
+                                        break;
+                                    }
+                                    boolean accept = decision != AgentPartyQuestLobbyRuntime.InviteDecision.REJECT;
+                                    InviteCoordinator.answerInvite(InviteType.PARTY,
+                                            invited.getId(), party.getId(), accept);
                                     if (accept) {
                                         Party.joinParty(invited, party.getId(), false);
                                     } else {

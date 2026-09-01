@@ -136,6 +136,17 @@ public interface PrimitiveCapabilityGateway {
         grind(entry, Set.copyOf(allowedMobIds));
     }
 
+    /**
+     * Grinds from an authored formation point. Combat remains subject to the normal
+     * target hitbox and skill-range checks, while movement returns to the anchor.
+     */
+    default void grindFromAnchor(AgentRuntimeEntry entry,
+                                 Point anchor,
+                                 Set<Integer> preferredMobIds,
+                                 Set<Integer> fallbackMobIds) {
+        grind(entry, preferredMobIds, fallbackMobIds);
+    }
+
     void stop(AgentRuntimeEntry entry);
 
     boolean enterPortal(Character agent, int portalId);

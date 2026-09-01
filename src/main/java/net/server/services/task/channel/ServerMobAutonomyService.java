@@ -1,5 +1,6 @@
 package net.server.services.task.channel;
 
+import client.BotClient;
 import client.Character;
 import net.packet.Packet;
 import net.server.services.BaseService;
@@ -18,6 +19,8 @@ import server.life.autonomy.BossClientSimulationCapability;
 import server.life.autonomy.GenericWzMobBehavior;
 import server.life.autonomy.ServerMobActionCatalog;
 import server.life.autonomy.ServerMobBehaviorRegistry;
+import server.life.autonomy.balrog.BalrogSummonedAddBehavior;
+import server.life.autonomy.chronos.ChronosFamilyActorBehavior;
 import server.expeditions.Expedition;
 import server.maps.MapleMap;
 import server.movement.AbsoluteLifeMovement;
@@ -49,6 +52,7 @@ public final class ServerMobAutonomyService extends BaseService {
     private final Map<Monster, ActorRuntime> actors = new ConcurrentHashMap<>();
     private final Map<Object, AuthorityRuntime> authorities = new ConcurrentHashMap<>();
     private final Map<Monster, AuthorityRuntime> authorityByMonster = new ConcurrentHashMap<>();
+    private final Set<Monster> agentInteractiveSummons = ConcurrentHashMap.newKeySet();
     private final RandomGenerator random;
     private final boolean schedulingEnabled;
     private final long clientCapabilityGraceNanos;
@@ -79,15 +83,34 @@ public final class ServerMobAutonomyService extends BaseService {
         if (map == null || activatingAgent.getMap() != map) {
             return false;
         }
+        boolean regularSummon = agentInteractiveSummons.contains(monster);
+        BossActorBehavior chronosBehavior = ChronosFamilyActorBehavior
+                .behaviorFor(monster.getId()).orElse(null);
+        BossActorBehavior balrogAddBehavior = BalrogSummonedAddBehavior
+                .behaviorFor(monster.getId()).orElse(null);
+        boolean ordinaryServerMob = regularSummon || chronosBehavior != null
+                || balrogAddBehavior != null;
         BossActorBehavior behavior = ServerMobBehaviorRegistry.behaviorFor(monster.getId())
-                .orElse(null);
+                .orElseGet(() -> chronosBehavior != null
+                        ? chronosBehavior
+                        : balrogAddBehavior != null
+                        ? balrogAddBehavior
+                        : regularSummon ? new GenericWzMobBehavior(monster.getId()) : null);
         if (behavior == null) {
             return false;
         }
         synchronized (tickLock) {
             AuthorityRuntime authority = authorityByMonster.get(monster);
             if (authority == null) {
-                authority = register(monster, behavior, monster, false, System.nanoTime());
+                authority = register(monster, behavior, monster, ordinaryServerMob,
+                        ordinaryServerMob, ordinaryServerMob ? -1 : eligiblePartyId(activatingAgent),
+                        System.nanoTime());
+            } else if (ordinaryServerMob && authority.mode != AuthorityMode.SERVER_STICKY) {
+                activateServer(authority);
+            }
+            ActorRuntime actor = actors.get(monster);
+            if (actor != null && behavior.usesPrimaryAggroTargetOnly()) {
+                actor.primaryAggroTargetId = activatingAgent.getId();
             }
             ensureScheduled();
             return authority.mode == AuthorityMode.SERVER_STICKY;
@@ -107,7 +130,7 @@ public final class ServerMobAutonomyService extends BaseService {
         }
         synchronized (tickLock) {
             if (!authorityByMonster.containsKey(monster)) {
-                register(monster, behavior, monster, false, System.nanoTime());
+                register(monster, behavior, monster, false, false, -1, System.nanoTime());
             }
         }
         ensureScheduled();
@@ -129,7 +152,7 @@ public final class ServerMobAutonomyService extends BaseService {
                 release(monster, "join-encounter");
             }
             if (!authorityByMonster.containsKey(monster)) {
-                register(monster, behavior, encounterKey, false, System.nanoTime());
+                register(monster, behavior, encounterKey, false, false, -1, System.nanoTime());
             }
         }
         ensureScheduled();
@@ -148,14 +171,28 @@ public final class ServerMobAutonomyService extends BaseService {
     private void inheritAuthority(Monster parent, Monster child) {
         synchronized (tickLock) {
             AuthorityRuntime authority = authorityByMonster.get(parent);
-            if (authority == null || authorityByMonster.containsKey(child)
-                    || child.getMap() != authority.map) {
+            if (authority == null || child.getMap() != authority.map) {
                 return;
             }
-            BossActorBehavior behavior = ServerMobBehaviorRegistry.behaviorFor(child.getId())
-                    .orElseGet(() -> new GenericWzMobBehavior(child.getId()));
-            register(child, behavior, authority.key,
-                    authority.mode == AuthorityMode.SERVER_STICKY, System.nanoTime());
+            // Ordinary summons retain normal client control until an Agent hit promotes
+            // movement and combat together for the bounded Agent-aggro lease.
+            if (!ServerMobBehaviorRegistry.supports(child.getId())) {
+                BossActorBehavior parentBehavior = authority.behaviors.get(parent);
+                if (parentBehavior != null
+                        && !parentBehavior.allowServerTakeoverForOrdinarySummons()) {
+                    return;
+                }
+                agentInteractiveSummons.add(child);
+                return;
+            }
+            if (!authorityByMonster.containsKey(child)) {
+                BossActorBehavior behavior = ServerMobBehaviorRegistry.behaviorFor(child.getId())
+                        .orElseThrow();
+                register(child, behavior, authority.key,
+                        authority.mode == AuthorityMode.SERVER_STICKY,
+                        false,
+                        authority.eligiblePartyId, System.nanoTime());
+            }
         }
         ensureScheduled();
     }
@@ -185,6 +222,51 @@ public final class ServerMobAutonomyService extends BaseService {
 
     public boolean isActive(Monster monster) {
         return monster != null && actors.containsKey(monster);
+    }
+
+    public static boolean requiresServerPhysicsInstance(Monster monster) {
+        if (monster == null) return false;
+        for (ServerMobAutonomyService service : Set.copyOf(INSTANCES)) {
+            AuthorityRuntime authority = service.authorityByMonster.get(monster);
+            BossActorBehavior behavior = authority == null
+                    ? null : authority.behaviors.get(monster);
+            if (authority != null && authority.mode == AuthorityMode.SERVER_STICKY
+                    && (authority.ordinaryMob
+                    || behavior != null && behavior.usesServerMobPhysics())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean blocksAgentPhysics(Monster monster) {
+        AuthorityRuntime authority = monster == null ? null : authorityByMonster.get(monster);
+        BossActorBehavior behavior = authority == null
+                ? null : authority.behaviors.get(monster);
+        return authority != null && !authority.ordinaryMob
+                && (behavior == null || !behavior.usesServerMobPhysics());
+    }
+
+    public static boolean blocksAgentPhysicsInstance(Monster monster) {
+        if (monster == null) return false;
+        for (ServerMobAutonomyService service : Set.copyOf(INSTANCES)) {
+            if (service.blocksAgentPhysics(monster)) return true;
+        }
+        return false;
+    }
+
+    public static void releaseOrdinaryAggroInstances(Monster monster, String reason) {
+        if (monster == null) return;
+        for (ServerMobAutonomyService service : Set.copyOf(INSTANCES)) {
+            service.releaseOrdinaryAggro(monster, reason);
+        }
+    }
+
+    private void releaseOrdinaryAggro(Monster monster, String reason) {
+        AuthorityRuntime authority = authorityByMonster.get(monster);
+        if (authority == null || !authority.ordinaryMob) return;
+        boolean mayReacquire = monster.isAlive() && monster.getMap() == authority.map;
+        release(monster, reason, mayReacquire);
     }
 
     public boolean retainsNativeAuthority(Monster monster) {
@@ -243,6 +325,11 @@ public final class ServerMobAutonomyService extends BaseService {
                 .count();
     }
 
+    List<Character> combatTargetsForTest(Monster monster) {
+        ActorRuntime actor = actors.get(monster);
+        return actor == null ? List.of() : targetsFor(actor);
+    }
+
     private void tickAt(long nowNanos) {
         synchronized (tickLock) {
             for (AuthorityRuntime authority : List.copyOf(authorities.values())) {
@@ -268,7 +355,7 @@ public final class ServerMobAutonomyService extends BaseService {
                     actor.nextDecisionNanos = nowNanos + DECISION_PAUSE_MS * 1_000_000L;
                     continue;
                 }
-                List<Character> targets = livingTargets(actor.map);
+                List<Character> targets = targetsFor(actor);
                 if (targets.isEmpty()) {
                     actor.nextDecisionNanos = nowNanos + 500_000_000L;
                     continue;
@@ -309,11 +396,21 @@ public final class ServerMobAutonomyService extends BaseService {
         actor.nextDecisionNanos = actor.actionUntilNanos + DECISION_PAUSE_MS * 1_000_000L;
         pausePhysics(actor, actor.actionUntilNanos);
         broadcastAction(actor, action, facingLeft, pOption, origin);
-        log.debug("Boss server action mob={} oid={} map={} action={} regions={} impactMs={}",
-                actor.monster.getId(), actor.monster.getObjectId(), actor.map.getId(),
-                action.actionNumber(), selectedRegions, impactDelayMs);
-        scheduleImpact(actor, new PreparedAction(action, facingLeft, selectedRegions),
-                impactDelayMs);
+        if (action instanceof BossAction.Skill skill) {
+            log.info("Boss server cast mob={} oid={} map={} skill={} level={} action={} "
+                            + "impactMs={} lockMs={}",
+                    actor.monster.getId(), actor.monster.getObjectId(), actor.map.getId(),
+                    skill.mobSkill().getType(), skill.mobSkill().getId().level(),
+                    action.actionNumber(), impactDelayMs, actionLockMs);
+        } else {
+            log.debug("Boss server action mob={} oid={} map={} action={} regions={} impactMs={}",
+                    actor.monster.getId(), actor.monster.getObjectId(), actor.map.getId(),
+                    action.actionNumber(), selectedRegions, impactDelayMs);
+        }
+        int primaryTargetId = selected.primaryTarget() == null
+                ? 0 : selected.primaryTarget().getId();
+        scheduleImpact(actor, new PreparedAction(
+                action, facingLeft, selectedRegions, primaryTargetId), impactDelayMs);
     }
 
     private static boolean reserve(Monster monster, BossAction action) {
@@ -428,7 +525,8 @@ public final class ServerMobAutonomyService extends BaseService {
         if (action instanceof BossAction.Skill skillAction) {
             List<Character> banished = new ArrayList<>();
             MobSkill skill = skillAction.mobSkill();
-            skill.applyEffect(null, actor.monster, true, banished);
+            skill.applyEffect(null, actor.monster, true, banished,
+                    target -> isCombatTarget(actor, target));
             for (Character target : banished) {
                 target.changeMapBanish(actor.monster.getBanish());
             }
@@ -437,7 +535,13 @@ public final class ServerMobAutonomyService extends BaseService {
 
         BossAction.OrdinaryAttack attack = (BossAction.OrdinaryAttack) action;
         Point origin = actor.monster.getPosition();
-        for (Character target : livingTargets(actor.map)) {
+        List<Character> impactTargets = livingTargets(actor);
+        if (actor.behavior.usesPrimaryAggroTargetOnly()) {
+            impactTargets = impactTargets.stream()
+                    .filter(target -> target.getId() == prepared.primaryTargetId)
+                    .toList();
+        }
+        for (Character target : impactTargets) {
             if (BossActionGeometry.contains(
                     attack, origin, target.getPosition(), prepared.facingLeft,
                     prepared.selectedRegions)) {
@@ -446,13 +550,36 @@ public final class ServerMobAutonomyService extends BaseService {
         }
     }
 
-    private static List<Character> livingTargets(MapleMap map) {
-        return map.getAllPlayers().stream()
+    private static List<Character> livingTargets(ActorRuntime actor) {
+        return actor.map.getAllPlayers().stream()
                 .filter(Character::isAlive)
-                .filter(Character::isLoggedinWorld)
+                .filter(target -> target.isLoggedinWorld()
+                        || target.getClient() instanceof BotClient)
                 .filter(target -> !target.isChangingMaps() && !target.isHidden())
-                .filter(target -> target.getMap() == map && target.getPosition() != null)
+                .filter(target -> target.getMap() == actor.map && target.getPosition() != null)
+                .filter(target -> isCombatTarget(actor, target))
                 .toList();
+    }
+
+    private static boolean isCombatTarget(ActorRuntime actor, Character target) {
+        EventInstanceManager event = actor.map.getEventInstance();
+        if (event != null && target.getEventInstance() != event) {
+            return false;
+        }
+        Expedition expedition = event == null ? null : event.getExpedition();
+        return actor.authority.ordinaryMob || expedition == null || expedition.contains(target);
+    }
+
+    private static List<Character> targetsFor(ActorRuntime actor) {
+        List<Character> targets = livingTargets(actor);
+        if (!actor.behavior.usesPrimaryAggroTargetOnly()) {
+            return targets;
+        }
+        return targets.stream()
+                .filter(target -> target.getId() == actor.primaryAggroTargetId)
+                .findFirst()
+                .map(List::of)
+                .orElseGet(List::of);
     }
 
     private static boolean valid(ActorRuntime actor) {
@@ -465,13 +592,16 @@ public final class ServerMobAutonomyService extends BaseService {
     }
 
     private AuthorityRuntime register(Monster monster, BossActorBehavior behavior,
-                                      Object key, boolean forceServer, long nowNanos) {
+                                      Object key, boolean forceServer,
+                                      boolean ordinaryMob, int eligiblePartyId, long nowNanos) {
         MapleMap map = monster.getMap();
         AuthorityRuntime authority = authorities.get(key);
         if (authority == null) {
-            AuthorityMode initialMode = forceServer || capableClientCandidates(map).isEmpty()
+            AuthorityMode initialMode = forceServer
+                    || capableClientCandidates(map, eligiblePartyId).isEmpty()
                     ? AuthorityMode.SERVER_STICKY : AuthorityMode.NATIVE_CLIENT;
-            authority = new AuthorityRuntime(key, map, initialMode);
+            authority = new AuthorityRuntime(
+                    key, map, initialMode, eligiblePartyId, ordinaryMob);
             authorities.put(key, authority);
         }
         if (authority.map != map) {
@@ -481,7 +611,7 @@ public final class ServerMobAutonomyService extends BaseService {
         authority.behaviors.put(monster, behavior);
         authorityByMonster.put(monster, authority);
         if (authority.mode == AuthorityMode.SERVER_STICKY) {
-            activateServerActor(monster, map, behavior);
+            activateServerActor(monster, map, behavior, authority);
         } else {
             retainNativeAuthority(authority, nowNanos);
         }
@@ -498,7 +628,7 @@ public final class ServerMobAutonomyService extends BaseService {
         for (Monster monster : List.copyOf(authority.monsters)) {
             BossActorBehavior behavior = authority.behaviors.get(monster);
             if (behavior != null && valid(monster, authority.map)) {
-                activateServerActor(monster, authority.map, behavior);
+                activateServerActor(monster, authority.map, behavior, authority);
             }
         }
         log.info("Boss authority entered sticky server mode map={} actors={}",
@@ -506,11 +636,16 @@ public final class ServerMobAutonomyService extends BaseService {
     }
 
     private void activateServerActor(Monster monster, MapleMap map,
-                                     BossActorBehavior behavior) {
+                                     BossActorBehavior behavior,
+                                     AuthorityRuntime authority) {
+        if (!authority.ordinaryMob && !behavior.usesServerMobPhysics()) {
+            MobPhysicsService.releaseMonsterInstances(
+                    monster, MobPhysicsService.ReleaseReason.SERVER_COMBAT_OWNERSHIP);
+        }
         monster.clearBossControllerPin();
         monster.aggroRemoveController();
         ActorRuntime created = new ActorRuntime(
-                monster, map, behavior, ServerMobActionCatalog.forMob(monster.getId()));
+                monster, map, behavior, ServerMobActionCatalog.forMob(monster.getId()), authority);
         ActorRuntime actor = actors.putIfAbsent(monster, created);
         if (actor == null) {
             log.info("Server mob autonomy acquired mob={} oid={} map={}",
@@ -519,7 +654,8 @@ public final class ServerMobAutonomyService extends BaseService {
     }
 
     private boolean retainNativeAuthority(AuthorityRuntime authority, long nowNanos) {
-        List<Character> candidates = capableClientCandidates(authority.map).stream()
+        List<Character> candidates = capableClientCandidates(
+                authority.map, authority.eligiblePartyId).stream()
                 .filter(candidate -> !authority.rejectedControllerIds.contains(candidate.getId()))
                 .toList();
         Character selected = candidates.stream()
@@ -539,7 +675,8 @@ public final class ServerMobAutonomyService extends BaseService {
         }
         if (authority.controllerId != 0) {
             authority.rejectedControllerIds.add(authority.controllerId);
-            candidates = capableClientCandidates(authority.map).stream()
+            candidates = capableClientCandidates(
+                    authority.map, authority.eligiblePartyId).stream()
                     .filter(candidate ->
                             !authority.rejectedControllerIds.contains(candidate.getId()))
                     .toList();
@@ -571,7 +708,8 @@ public final class ServerMobAutonomyService extends BaseService {
         }
     }
 
-    private static List<Character> capableClientCandidates(MapleMap map) {
+    private static List<Character> capableClientCandidates(
+            MapleMap map, int eligiblePartyId) {
         EventInstanceManager event = map.getEventInstance();
         List<Character> roster = event == null ? map.getAllPlayers() : event.getPlayers();
         if (roster == null) {
@@ -588,6 +726,8 @@ public final class ServerMobAutonomyService extends BaseService {
                 .filter(Character::isLoggedinWorld)
                 .filter(character -> character.getMap() == map && !character.isChangingMaps())
                 .filter(character -> !character.isHidden())
+                .filter(character -> eligiblePartyId <= 0
+                        || character.getPartyId() == eligiblePartyId)
                 .filter(character -> character.getClient() != null
                         && character.getClient().getBossSimulationCapability()
                         == BossClientSimulationCapability.NATIVE_MOB_SIMULATION);
@@ -595,6 +735,12 @@ public final class ServerMobAutonomyService extends BaseService {
             stream = stream.filter(character -> character.getEventInstance() == event);
         }
         return stream.sorted(Comparator.comparingInt(Character::getId)).toList();
+    }
+
+    private static int eligiblePartyId(Character activatingAgent) {
+        if (activatingAgent == null) return -1;
+        int partyId = activatingAgent.getPartyId();
+        return partyId > 0 ? partyId : -1;
     }
 
     private void pruneInvalidMembers(AuthorityRuntime authority) {
@@ -606,7 +752,12 @@ public final class ServerMobAutonomyService extends BaseService {
     }
 
     private void release(Monster monster, String reason) {
+        release(monster, reason, false);
+    }
+
+    private void release(Monster monster, String reason, boolean retainOrdinaryEligibility) {
         synchronized (tickLock) {
+            if (!retainOrdinaryEligibility) agentInteractiveSummons.remove(monster);
             ActorRuntime removed = actors.remove(monster);
             AuthorityRuntime authority = authorityByMonster.remove(monster);
             monster.clearBossControllerPin();
@@ -641,6 +792,7 @@ public final class ServerMobAutonomyService extends BaseService {
         actors.clear();
         authorityByMonster.clear();
         authorities.clear();
+        agentInteractiveSummons.clear();
         INSTANCES.remove(this);
     }
 
@@ -649,16 +801,20 @@ public final class ServerMobAutonomyService extends BaseService {
         private final MapleMap map;
         private final BossActorBehavior behavior;
         private final ServerMobActionCatalog.MonsterActions actions;
+        private final AuthorityRuntime authority;
         private long actionUntilNanos;
         private long nextDecisionNanos;
+        private int primaryAggroTargetId;
         private volatile boolean active = true;
 
         private ActorRuntime(Monster monster, MapleMap map, BossActorBehavior behavior,
-                             ServerMobActionCatalog.MonsterActions actions) {
+                             ServerMobActionCatalog.MonsterActions actions,
+                             AuthorityRuntime authority) {
             this.monster = monster;
             this.map = map;
             this.behavior = behavior;
             this.actions = actions;
+            this.authority = authority;
         }
     }
 
@@ -668,16 +824,21 @@ public final class ServerMobAutonomyService extends BaseService {
         private final Set<Monster> monsters = new LinkedHashSet<>();
         private final Map<Monster, BossActorBehavior> behaviors = new ConcurrentHashMap<>();
         private final Set<Integer> rejectedControllerIds = new HashSet<>();
+        private final int eligiblePartyId;
+        private final boolean ordinaryMob;
         private AuthorityMode mode;
         private int controllerId;
         private long graceUntilNanos;
         private long leaseUntilNanos;
         private boolean confirmed;
 
-        private AuthorityRuntime(Object key, MapleMap map, AuthorityMode mode) {
+        private AuthorityRuntime(Object key, MapleMap map, AuthorityMode mode,
+                                 int eligiblePartyId, boolean ordinaryMob) {
             this.key = key;
             this.map = map;
             this.mode = mode;
+            this.eligiblePartyId = eligiblePartyId;
+            this.ordinaryMob = ordinaryMob;
         }
     }
 
@@ -687,6 +848,6 @@ public final class ServerMobAutonomyService extends BaseService {
     }
 
     private record PreparedAction(BossAction action, boolean facingLeft,
-                                  List<Integer> selectedRegions) {
+                                  List<Integer> selectedRegions, int primaryTargetId) {
     }
 }

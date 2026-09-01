@@ -7,32 +7,16 @@ import constants.skills.FPWizard;
 import constants.skills.Magician;
 import constants.skills.Rogue;
 import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
-import server.agents.runtime.AgentRuntimeEntry;
-import server.agents.runtime.AgentRuntimeRegistry;
-
 import java.util.List;
-import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.mockito.ArgumentMatchers.anyInt;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
 class AgentLpqAdmissionServiceTest {
     @Test
-    void humanLeaderCannotSupplyAnAutomationOnlyRoomCapability() {
-        assertHumanCapabilityDoesNotCoverAgents(true);
-    }
-
-    @Test
-    void agentLeaderCannotBorrowAnAutomationOnlyCapabilityFromTheHumanMember() {
-        assertHumanCapabilityDoesNotCoverAgents(false);
-    }
-
-    private static void assertHumanCapabilityDoesNotCoverAgents(boolean humanLeads) {
+    void capableHumanSuppliesDarkSightOnlyWhenExplicitlyAssigned() {
         Character human = character(900, null, Rogue.DARK_SIGHT);
         Character mage = character(101, Job.FP_WIZARD,
                 FPWizard.TELEPORT, Magician.MAGIC_CLAW);
@@ -41,19 +25,12 @@ class AgentLpqAdmissionServiceTest {
         Character agent4 = character(104, Job.FIGHTER);
         Character agent5 = character(105, Job.FIGHTER);
         List<Character> party = List.of(human, mage, archer, agent3, agent4, agent5);
-        Set<Integer> agentIds = Set.of(101, 102, 103, 104, 105);
 
-        try (MockedStatic<AgentRuntimeRegistry> registry = mockStatic(AgentRuntimeRegistry.class)) {
-            registry.when(() -> AgentRuntimeRegistry.findByAgentCharacterId(anyInt()))
-                    .thenAnswer(invocation -> agentIds.contains(invocation.getArgument(0))
-                            ? mock(AgentRuntimeEntry.class) : null);
-
-            AgentLpqAdmissionService.Validation validation = AgentLpqAdmissionService.validate(
-                    human, humanLeads ? human : mage, party);
-
-            assertFalse(validation.success());
-            assertEquals("Missing Agent LPQ capability: Dark Sight", validation.message());
-        }
+        List<Character> agents = party.subList(1, party.size());
+        assertFalse(AgentLpqAdmissionService.capabilityCoverage(party, agents, human.getId(),
+                AgentLpqSession.HumanRolePreference.DEFAULT).complete());
+        assertTrue(AgentLpqAdmissionService.capabilityCoverage(party, agents, human.getId(),
+                AgentLpqSession.HumanRolePreference.DARK_SIGHT).complete());
     }
 
     private static Character character(int id, Job job, int... skills) {

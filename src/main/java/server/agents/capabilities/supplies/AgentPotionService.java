@@ -9,6 +9,7 @@ import server.agents.capabilities.dialogue.AgentEmote;
 import server.agents.monitoring.AgentPerformanceMonitor;
 
 import client.Character;
+import client.Disease;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.keybind.KeyBinding;
@@ -40,8 +41,12 @@ import server.agents.capabilities.contracts.AgentSupplyNeed;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
+import java.util.function.LongSupplier;
+import java.util.stream.Collectors;
 
 public final class AgentPotionService {
     // ownerCharId -> shared HP/MP 30 s request cooldown
@@ -186,6 +191,8 @@ public final class AgentPotionService {
     }
 
     public static void tickPotionCheck(AgentRuntimeEntry entry, Character bot, InventoryGateway inventory) {
+        tickDiseaseCure(entry, bot, inventory, System.currentTimeMillis(),
+                () -> ThreadLocalRandom.current().nextLong(500L, 2_501L));
         if (AgentPotionStateRuntime.hasPotCheckDelay(entry)) {
             AgentPotionStateRuntime.tickPotCheckDelay(entry, AgentMovementTimers::tickDown);
             return;
@@ -236,6 +243,49 @@ public final class AgentPotionService {
             bot.changeFaceExpression(AgentEmote.GLARE.getValue());
         }
         AgentPerformanceMonitor.recordSince("potion-grind-stop", startedAt);
+    }
+
+    static void tickDiseaseCure(AgentRuntimeEntry entry,
+                                Character bot,
+                                InventoryGateway inventory,
+                                long nowMs,
+                                LongSupplier delayMs) {
+        if (entry == null || bot == null || inventory == null || delayMs == null) return;
+        Set<Disease> activeDiseases = bot.getAllDiseases().keySet().stream()
+                .filter(AgentDiseaseCurePolicy.CURABLE_DISEASES::contains)
+                .collect(Collectors.toUnmodifiableSet());
+        long signature = AgentDiseaseCurePolicy.signature(activeDiseases);
+        if (signature == 0L) {
+            AgentPotionStateRuntime.clearDiseaseCure(entry);
+            return;
+        }
+
+        if (AgentPotionStateRuntime.diseaseSignature(entry) != signature
+                || AgentPotionStateRuntime.diseaseCureDueAtMs(entry) <= 0L) {
+            AgentPotionStateRuntime.scheduleDiseaseCure(
+                    entry, signature, nowMs + cureDelay(delayMs.getAsLong()));
+            return;
+        }
+        if (nowMs < AgentPotionStateRuntime.diseaseCureDueAtMs(entry)) return;
+
+        AgentDiseaseCurePolicy.CureChoice choice = AgentDiseaseCurePolicy.select(
+                bot.getInventory(InventoryType.USE).list(), inventory::getItemEffect,
+                activeDiseases);
+        if (choice == null) {
+            AgentPotionStateRuntime.scheduleDiseaseCure(
+                    entry, signature, nowMs + cureDelay(delayMs.getAsLong()));
+            return;
+        }
+        if (inventory.consumeUseItem(bot, choice.slot(), choice.itemId())) {
+            AgentPotionStateRuntime.clearDiseaseCure(entry);
+        } else {
+            AgentPotionStateRuntime.scheduleDiseaseCure(
+                    entry, signature, nowMs + cureDelay(delayMs.getAsLong()));
+        }
+    }
+
+    private static long cureDelay(long delayMs) {
+        return Math.max(500L, Math.min(2_500L, delayMs));
     }
 
     public static void checkPotShareOnModeStart(AgentRuntimeEntry entry, Character bot, InventoryGateway inventory) {

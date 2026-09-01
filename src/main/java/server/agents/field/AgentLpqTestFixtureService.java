@@ -5,6 +5,7 @@ import client.Job;
 import constants.skills.ILWizard;
 import server.agents.capabilities.build.AgentBuildService;
 import server.agents.capabilities.build.profiles.BuildStep;
+import server.agents.capabilities.partyquest.lpq.AgentLpqSession;
 import server.agents.integration.AgentCharacterGatewayRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -22,6 +23,12 @@ public final class AgentLpqTestFixtureService {
     static final List<String> BUILD_IDS = List.of(
             "cleric-wand", "il-wizard-wand", "bandit-dagger", "assassin-claw",
             "crossbowman-crossbow", "spearman-spear");
+    private static final List<String> TELEPORT_HUMAN_BUILD_IDS = List.of(
+            "cleric-wand", "bandit-dagger", "assassin-claw",
+            "crossbowman-crossbow", "spearman-spear");
+    private static final List<String> DARK_SIGHT_HUMAN_BUILD_IDS = List.of(
+            "cleric-wand", "il-wizard-wand", "assassin-claw",
+            "crossbowman-crossbow", "spearman-spear");
     private static final int EARRING_ITEM_ID = 1_032_075;
     private static final int CAPE_ITEM_ID = 1_102_055;
     private static final int SHOES_SPEED_SCROLL_10_ITEM_ID = 2_040_708;
@@ -35,6 +42,10 @@ public final class AgentLpqTestFixtureService {
             1_002_155, 1_050_036, 1_082_064, 1_072_117);
     private static final List<Integer> MAGICIAN_FEMALE = List.of(
             1_002_155, 1_051_024, 1_082_064, 1_072_117);
+    private static final List<Integer> IL_MAGICIAN_MALE = List.of(
+            1_002_151, 1_050_038, 1_082_064, 1_072_117);
+    private static final List<Integer> IL_MAGICIAN_FEMALE = List.of(
+            1_002_151, 1_051_025, 1_082_064, 1_072_117);
     private static final List<Integer> BOWMAN_MALE = List.of(
             1_002_992, 1_040_079, 1_060_069, 1_082_070, 1_072_401);
     private static final List<Integer> BOWMAN_FEMALE = List.of(
@@ -43,17 +54,21 @@ public final class AgentLpqTestFixtureService {
             1_002_185, 1_040_083, 1_060_072, 1_082_074, 1_072_107);
     private static final List<Integer> THIEF_FEMALE = List.of(
             1_002_185, 1_041_074, 1_061_069, 1_082_074, 1_072_107);
+    private static final List<Integer> ASSASSIN_MALE = List.of(
+            1_002_181, 1_040_082, 1_060_071, 1_082_074, 1_072_107);
+    private static final List<Integer> ASSASSIN_FEMALE = List.of(
+            1_002_181, 1_041_075, 1_061_070, 1_082_074, 1_072_107);
     private static final Set<Integer> LPQ_COMBAT_MOBS = Set.of(
             9_300_006, 9_300_007, 9_300_008, 9_300_010, 9_300_012, 9_300_014);
     static final Map<String, Loadout> LPQ_LOADOUTS = Map.of(
             "cleric-wand", new Loadout(1_372_046, 1_092_029, 2_043_701, 2_041_017,
                     MAGICIAN_MALE, MAGICIAN_FEMALE),
             "il-wizard-wand", new Loadout(1_372_046, 1_092_029, 2_043_701, 2_041_017,
-                    MAGICIAN_MALE, MAGICIAN_FEMALE),
+                    IL_MAGICIAN_MALE, IL_MAGICIAN_FEMALE),
             "bandit-dagger", new Loadout(1_332_034, 1_092_018, 2_043_301, 2_041_023,
                     THIEF_MALE, THIEF_FEMALE),
             "assassin-claw", new Loadout(1_472_035, 0, 2_044_701, 2_041_023,
-                    THIEF_MALE, THIEF_FEMALE),
+                    ASSASSIN_MALE, ASSASSIN_FEMALE),
             "crossbowman-crossbow", new Loadout(1_462_024, 0, 2_044_601, 2_041_020,
                     BOWMAN_MALE, BOWMAN_FEMALE),
             "spearman-spear", new Loadout(1_432_020, 0, 2_044_301, 2_041_014,
@@ -63,9 +78,13 @@ public final class AgentLpqTestFixtureService {
 
     public static PreparationResult prepare(AgentRuntimeEntry entry, int ordinal, long seed, long nowMs)
             throws IOException {
+        return prepare(entry, BUILD_IDS.get(Math.floorMod(ordinal, BUILD_IDS.size())), seed, nowMs);
+    }
+
+    public static PreparationResult prepare(
+            AgentRuntimeEntry entry, String buildId, long seed, long nowMs) throws IOException {
         Character agent = AgentRuntimeIdentityRuntime.bot(entry);
         if (agent == null) throw new IllegalArgumentException("a spawned LPQ Agent is required");
-        String buildId = BUILD_IDS.get(Math.floorMod(ordinal, BUILD_IDS.size()));
         AgentBalrogTestFixtureService.Build build = build(buildId);
         Loadout loadout = LPQ_LOADOUTS.get(buildId);
         build = new AgentBalrogTestFixtureService.Build(
@@ -84,6 +103,22 @@ public final class AgentLpqTestFixtureService {
         }
         return new PreparationResult(prepared.level(), prepared.career(),
                 prepared.weaponItemId(), prepared.weaponAttack());
+    }
+
+    static List<String> mixedPartyBuildIds(AgentLpqSession.HumanRolePreference humanRole) {
+        return switch (humanRole == null
+                ? AgentLpqSession.HumanRolePreference.DEFAULT : humanRole) {
+            case TELEPORT -> TELEPORT_HUMAN_BUILD_IDS;
+            case DARK_SIGHT -> DARK_SIGHT_HUMAN_BUILD_IDS;
+            default -> BUILD_IDS.subList(0, 5);
+        };
+    }
+
+    public static String buildIdForTestParty(
+            int ordinal, boolean includesHuman,
+            AgentLpqSession.HumanRolePreference humanRole) {
+        List<String> builds = includesHuman ? mixedPartyBuildIds(humanRole) : BUILD_IDS;
+        return builds.get(Math.floorMod(ordinal, builds.size()));
     }
 
     static AgentLpqAppearanceCatalog.Appearance applyAppearance(Character agent, long seed) {

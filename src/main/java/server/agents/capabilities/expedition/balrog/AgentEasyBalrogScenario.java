@@ -1,28 +1,50 @@
 package server.agents.capabilities.expedition.balrog;
 
-import client.Character;
 import client.BuffStat;
+import client.Character;
+import client.status.MonsterStatus;
+import net.server.services.task.channel.ServerMobAutonomyService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripting.event.EventInstanceManager;
 import server.agents.capabilities.combat.AgentCombatBuffRuntime;
+import server.agents.capabilities.combat.AgentCombatPolicyDiagnostics;
 import server.agents.capabilities.expedition.AgentExpeditionPreparedMember;
 import server.agents.capabilities.expedition.AgentExpeditionScenario;
 import server.agents.capabilities.expedition.AgentExpeditionSpec;
 import server.agents.field.AgentBalrogTestFixtureService;
 import server.agents.integration.AgentPrimitiveCapabilityGatewayRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.expeditions.ExpeditionType;
 import server.life.Monster;
+import server.maps.Reactor;
 
+import java.awt.Point;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /** Easy Balrog's build pool, claw/body phase policy, and battle status. */
 public final class AgentEasyBalrogScenario implements AgentExpeditionScenario {
     private static final Logger log = LoggerFactory.getLogger(AgentEasyBalrogScenario.class);
     private static final int POWER_ELIXIR_ITEM_ID = 2_000_005;
+    private static final int BATTLE_EXIT_NPC = 1_061_018;
+    private static final int REWARD_REACTOR = 1_052_002;
+    private static final int REWARD_EXIT_PORTAL = 2;
+    private static final long REWARD_WINDOW_MS = 5_000L;
+    private static final int INTERACTION_RANGE_PX = 120;
+    private static final Set<Integer> REWARD_DROP_ITEMS = Set.of(
+            1072375, 1072376,
+            2040728, 2040729, 2040730, 2040731, 2040732, 2040733,
+            2040734, 2040735, 2040736, 2040737, 2040738, 2040739,
+            1302112, 1302113, 1312042, 1312043, 1322068, 1322069,
+            1332084, 1332085, 1332086, 1332087,
+            1372050, 1372051, 1382066, 1382067,
+            1402056, 1402057, 1402058, 1402059,
+            1412038, 1412039, 1422042, 1422043);
     private static final int RECOVERY_THRESHOLD_PERCENT = config.AgentTuning.intValue(
             "server.agents.capabilities.expedition.balrog.AgentEasyBalrogScenario.RECOVERY_THRESHOLD_PERCENT");
     private static final long VITALS_LOG_INTERVAL_MS = config.AgentTuning.longValue(
@@ -33,8 +55,11 @@ public final class AgentEasyBalrogScenario implements AgentExpeditionScenario {
 
     private final List<AgentBalrogTestFixtureService.Build> roster;
     private final AgentExpeditionSpec spec;
+    private final Map<Integer, Integer> memberOrdinals = new ConcurrentHashMap<>();
     private CombatPhase combatPhase;
+    private PostClearPhase postClearPhase;
     private long nextVitalsLogAtMs;
+    private long rewardWindowEndsAtMs;
 
     public AgentEasyBalrogScenario(long seed) {
         roster = AgentBalrogTestFixtureService.selectRoster(seed);
@@ -63,14 +88,35 @@ public final class AgentEasyBalrogScenario implements AgentExpeditionScenario {
     public AgentExpeditionPreparedMember prepareMember(
             AgentRuntimeEntry entry, int ordinal, long memberSeed, long nowMs) throws Exception {
         AgentBalrogTestFixtureService.Build build = roster.get(ordinal);
+        int clothingRank = AgentBalrogTestFixtureService.clothingRank(roster, ordinal);
         AgentBalrogTestFixtureService.PreparationResult prepared =
-                AgentBalrogTestFixtureService.prepare(entry, build, memberSeed, nowMs);
+                AgentBalrogTestFixtureService.prepare(
+                        entry, build, clothingRank, memberSeed, nowMs);
+        Character member = AgentRuntimeIdentityRuntime.bot(entry);
+        if (member != null) {
+            memberOrdinals.put(member.getId(), ordinal);
+        }
         return new AgentExpeditionPreparedMember(
                 prepared.job().name(),
                 prepared.buildId(),
                 prepared.minimumHitChance(),
                 prepared.weaponItemId(),
                 prepared.weaponAttack());
+    }
+
+    @Override
+    public int quickEntryPortalId() {
+        return 1;
+    }
+
+    @Override
+    public int quickEntrySpacingPx() {
+        return 9;
+    }
+
+    @Override
+    public int lobbyRallySpacingPx() {
+        return 48;
     }
 
     @Override
@@ -82,8 +128,15 @@ public final class AgentEasyBalrogScenario implements AgentExpeditionScenario {
                 && AgentBalrogDefinition.CLAW_MOBS.contains(mob.getId()));
         boolean realBody = monsters.stream().anyMatch(mob -> mob.isAlive()
                 && mob.getId() == AgentBalrogDefinition.BODY_MOB && !mob.isFake());
+        boolean liveAdds = monsters.stream().anyMatch(mob -> mob.isAlive()
+                && AgentBalrogDefinition.SUMMONED_ADDS.contains(mob.getId()));
         boolean seal = monsters.stream().anyMatch(mob -> mob.isAlive()
                 && mob.getId() == AgentBalrogDefinition.RELEASE_SEAL_MOB);
+        boolean reflecting = monsters.stream().anyMatch(mob -> mob.isAlive()
+                && (mob.getId() == AgentBalrogDefinition.BODY_MOB
+                || AgentBalrogDefinition.CLAW_MOBS.contains(mob.getId()))
+                && (mob.isBuffed(MonsterStatus.WEAPON_REFLECT)
+                || mob.isBuffed(MonsterStatus.MAGIC_REFLECT)));
         CombatPhase nextPhase = liveClaw
                 ? (seal ? CombatPhase.SEALED_CLAW : CombatPhase.CLAW)
                 : (realBody ? CombatPhase.BODY : CombatPhase.TRANSITION);
@@ -96,21 +149,153 @@ public final class AgentEasyBalrogScenario implements AgentExpeditionScenario {
             AgentRuntimeEntry entry = AgentRuntimeRegistry.findByAgentCharacterId(member.getId());
             if (entry == null) continue;
             maintainBattleResources(entry, member);
-            if (liveClaw) {
-                AgentPrimitiveCapabilityGatewayRuntime.gateway().grind(
-                        entry, AgentBalrogDefinition.CLAW_MOBS);
-            } else if (realBody) {
-                AgentPrimitiveCapabilityGatewayRuntime.gateway().grind(
-                        entry, Set.of(AgentBalrogDefinition.BODY_MOB));
-            } else {
-                AgentPrimitiveCapabilityGatewayRuntime.gateway().stop(entry);
+            int ordinal = memberOrdinals.getOrDefault(member.getId(), 0);
+            Point authoredAnchor = realBody && !liveAdds
+                    ? AgentEasyBalrogCombatPolicy.headAnchor(ordinal)
+                    : AgentEasyBalrogCombatPolicy.clawAnchor(ordinal);
+            Point anchor = AgentPrimitiveCapabilityGatewayRuntime.gateway()
+                    .groundPoint(member.getMap(), authoredAnchor);
+            if (!AgentEasyBalrogCombatPolicy.atAnchor(member.getPosition(), anchor)) {
+                AgentPrimitiveCapabilityGatewayRuntime.gateway().navigate(entry, anchor, true);
+                continue;
             }
+            if (reflecting) {
+                AgentPrimitiveCapabilityGatewayRuntime.gateway().stop(entry);
+                continue;
+            }
+            Set<Integer> bossTargets = liveClaw
+                    ? AgentBalrogDefinition.CLAW_MOBS
+                    : realBody ? Set.of(AgentBalrogDefinition.BODY_MOB) : Set.of();
+            Set<Integer> preferred = liveAdds
+                    ? AgentBalrogDefinition.SUMMONED_ADDS : bossTargets;
+            Set<Integer> fallback = liveAdds ? bossTargets : Set.of();
+            if (preferred.isEmpty()) {
+                AgentPrimitiveCapabilityGatewayRuntime.gateway().stop(entry);
+                continue;
+            }
+            AgentPrimitiveCapabilityGatewayRuntime.gateway().grindFromAnchor(
+                    entry, anchor, preferred, fallback);
         }
         if (nowMs >= nextVitalsLogAtMs) {
             nextVitalsLogAtMs = nowMs + VITALS_LOG_INTERVAL_MS;
             log.info("Easy Balrog party vitals phase={} {}", combatPhase,
                     members.stream().map(AgentEasyBalrogScenario::vitals).toList());
+            log.info("Easy Balrog combat decisions phase={} {}", combatPhase,
+                    members.stream().map(member -> combatDecision(member, nowMs)).toList());
         }
+    }
+
+    @Override
+    public void beginPostClear(
+            List<Character> members, EventInstanceManager event, long nowMs) {
+        postClearPhase = PostClearPhase.ENTERING_REWARD_ROOM;
+        rewardWindowEndsAtMs = 0L;
+        log.info("Easy Balrog post-clear phase={} members={}", postClearPhase, members.size());
+    }
+
+    @Override
+    public boolean tickPostClear(
+            List<Character> members, EventInstanceManager event, long nowMs) {
+        if (members.stream().allMatch(
+                member -> member.getMapId() == AgentBalrogDefinition.RECRUIT_MAP)) {
+            return true;
+        }
+        boolean entering = false;
+        for (Character member : members) {
+            if (member.getMapId() != AgentBalrogDefinition.BATTLE_MAP) continue;
+            entering = true;
+            AgentRuntimeEntry entry = AgentRuntimeRegistry.findByAgentCharacterId(member.getId());
+            Point npc = AgentPrimitiveCapabilityGatewayRuntime.gateway()
+                    .npcPosition(member, BATTLE_EXIT_NPC);
+            if (entry == null || npc == null) continue;
+            if (!near(member.getPosition(), npc, INTERACTION_RANGE_PX)) {
+                AgentPrimitiveCapabilityGatewayRuntime.gateway().navigate(entry, npc, true);
+            } else {
+                AgentPrimitiveCapabilityGatewayRuntime.gateway().stop(entry);
+                AgentPrimitiveCapabilityGatewayRuntime.gateway()
+                        .runNpcScript(member, BATTLE_EXIT_NPC);
+            }
+        }
+        if (entering || members.stream().anyMatch(member -> member.getMapId()
+                != AgentBalrogDefinition.CLEAR_MAP
+                && member.getMapId() != AgentBalrogDefinition.RECRUIT_MAP)) {
+            return false;
+        }
+
+        Character breaker = members.stream()
+                .filter(member -> member.getMapId() == AgentBalrogDefinition.CLEAR_MAP)
+                .min(java.util.Comparator.comparingInt(member ->
+                        memberOrdinals.getOrDefault(member.getId(), Integer.MAX_VALUE)))
+                .orElse(null);
+        if (breaker == null) return false;
+        Reactor reactor = AgentPrimitiveCapabilityGatewayRuntime.gateway().reactors(breaker).stream()
+                .filter(candidate -> candidate != null && candidate.getId() == REWARD_REACTOR)
+                .filter(Reactor::isAlive).filter(Reactor::isActive)
+                .findFirst().orElse(null);
+        if (rewardWindowEndsAtMs == 0L && reactor != null) {
+            postClearPhase = PostClearPhase.BREAKING_REWARD_REACTOR;
+            spreadRewardParty(members, breaker);
+            AgentRuntimeEntry entry = AgentRuntimeRegistry.findByAgentCharacterId(breaker.getId());
+            Point target = AgentPrimitiveCapabilityGatewayRuntime.gateway()
+                    .groundPoint(breaker.getMap(), reactor.getPosition());
+            if (entry == null || target == null) return false;
+            if (!near(breaker.getPosition(), target, INTERACTION_RANGE_PX)) {
+                AgentPrimitiveCapabilityGatewayRuntime.gateway().navigate(entry, target, true);
+            } else if (AgentPrimitiveCapabilityGatewayRuntime.gateway()
+                    .hitReactor(breaker, reactor.getObjectId())) {
+                rewardWindowEndsAtMs = nowMs + REWARD_WINDOW_MS;
+                postClearPhase = PostClearPhase.COLLECTING_REWARDS;
+                log.info("Easy Balrog reward reactor hit by={} rewardWindowMs={}",
+                        breaker.getName(), REWARD_WINDOW_MS);
+            }
+            return false;
+        }
+        if (rewardWindowEndsAtMs == 0L) {
+            rewardWindowEndsAtMs = nowMs + REWARD_WINDOW_MS;
+            postClearPhase = PostClearPhase.COLLECTING_REWARDS;
+        }
+        if (nowMs < rewardWindowEndsAtMs) {
+            AgentPrimitiveCapabilityGatewayRuntime.gateway()
+                    .lootNearby(breaker, REWARD_DROP_ITEMS);
+            return false;
+        }
+
+        postClearPhase = PostClearPhase.EXITING_TO_LOBBY;
+        for (Character member : members) {
+            if (member.getMapId() != AgentBalrogDefinition.CLEAR_MAP) continue;
+            AgentRuntimeEntry entry = AgentRuntimeRegistry.findByAgentCharacterId(member.getId());
+            Point portal = AgentPrimitiveCapabilityGatewayRuntime.gateway()
+                    .portalPosition(member, REWARD_EXIT_PORTAL);
+            if (entry == null || portal == null) continue;
+            if (!near(member.getPosition(), portal, INTERACTION_RANGE_PX)) {
+                AgentPrimitiveCapabilityGatewayRuntime.gateway().navigate(entry, portal, true);
+            } else {
+                AgentPrimitiveCapabilityGatewayRuntime.gateway().stop(entry);
+                AgentPrimitiveCapabilityGatewayRuntime.gateway()
+                        .enterPortal(member, REWARD_EXIT_PORTAL);
+            }
+        }
+        return members.stream().allMatch(
+                member -> member.getMapId() == AgentBalrogDefinition.RECRUIT_MAP);
+    }
+
+    private void spreadRewardParty(List<Character> members, Character breaker) {
+        for (Character member : members) {
+            if (member == breaker || member.getMapId() != AgentBalrogDefinition.CLEAR_MAP) continue;
+            AgentRuntimeEntry entry = AgentRuntimeRegistry.findByAgentCharacterId(member.getId());
+            int ordinal = memberOrdinals.getOrDefault(member.getId(), 0);
+            Point spread = AgentPrimitiveCapabilityGatewayRuntime.gateway().groundPoint(
+                    member.getMap(), new Point(150 + ordinal * 58, 210));
+            if (entry != null && spread != null
+                    && !AgentEasyBalrogCombatPolicy.atAnchor(member.getPosition(), spread)) {
+                AgentPrimitiveCapabilityGatewayRuntime.gateway().navigate(entry, spread, true);
+            }
+        }
+    }
+
+    private static boolean near(Point from, Point to, int rangePx) {
+        return from != null && to != null
+                && from.distanceSq(to) <= (long) rangePx * rangePx;
     }
 
     private static void maintainBattleResources(AgentRuntimeEntry entry, Character member) {
@@ -132,14 +317,36 @@ public final class AgentEasyBalrogScenario implements AgentExpeditionScenario {
                 + "@(" + member.getPosition().x + ',' + member.getPosition().y + ')';
     }
 
+    private static String combatDecision(Character member, long nowMs) {
+        AgentRuntimeEntry entry = AgentRuntimeRegistry.findByAgentCharacterId(member.getId());
+        var decision = AgentCombatPolicyDiagnostics.snapshot(entry, nowMs).combatDecision();
+        return member.getName() + '=' + (decision == null
+                ? "none"
+                : decision.mode() + "/" + decision.outcome()
+                + " candidates=" + decision.objectiveCandidates() + '/' + decision.scoredCandidates()
+                + " target=" + decision.selectedMobId() + ':' + decision.selectedObjectId());
+    }
+
     @Override
     public List<String> battleStatus(Character leader) {
         if (leader == null || leader.getMap() == null) return List.of();
+        if (postClearPhase != null && (leader.getMapId() == AgentBalrogDefinition.CLEAR_MAP
+                || leader.getMapId() == AgentBalrogDefinition.RECRUIT_MAP)) {
+            return List.of("Easy Balrog rewards: phase=" + postClearPhase + '.');
+        }
         List<String> mobs = server.agents.perception.AgentMapPerception.monsters(leader.getMap()).stream()
                 .filter(Monster::isAlive)
-                .filter(mob -> mob.getId() >= 8830007 && mob.getId() <= 8830013)
+                .filter(mob -> AgentBalrogDefinition.COMBAT_MOBS.contains(mob.getId())
+                        || mob.getId() == AgentBalrogDefinition.RELEASE_SEAL_MOB)
                 .map(mob -> mob.getId() + (mob.isFake() ? "(fake)" : "")
-                        + "=" + mob.getHp() + '/' + mob.getMaxHp())
+                        + (ServerMobAutonomyService.isActiveInstance(mob)
+                        ? "(server)" : "(client)")
+                        + ((mob.isBuffed(MonsterStatus.WEAPON_REFLECT)
+                        || mob.isBuffed(MonsterStatus.MAGIC_REFLECT)) ? "(reflect)" : "")
+                        + "=" + mob.getHp() + '/' + mob.getMaxHp()
+                        + "@" + (mob.getPosition() == null
+                        ? "(?,?)" : '(' + Integer.toString(mob.getPosition().x)
+                        + ',' + mob.getPosition().y + ')'))
                 .toList();
         return mobs.isEmpty() ? List.of() : List.of("Easy Balrog mobs: " + mobs);
     }
@@ -153,6 +360,13 @@ public final class AgentEasyBalrogScenario implements AgentExpeditionScenario {
         CLAW,
         TRANSITION,
         BODY
+    }
+
+    enum PostClearPhase {
+        ENTERING_REWARD_ROOM,
+        BREAKING_REWARD_REACTOR,
+        COLLECTING_REWARDS,
+        EXITING_TO_LOBBY
     }
 
     @Override

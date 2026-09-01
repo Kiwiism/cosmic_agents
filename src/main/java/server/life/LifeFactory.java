@@ -29,6 +29,7 @@ import provider.DataProviderFactory;
 import provider.DataTool;
 import provider.wz.DataType;
 import provider.wz.WZFiles;
+import server.life.autonomy.balrog.EasyBalrogHpBarPolicy;
 import tools.Pair;
 import tools.StringUtil;
 
@@ -194,6 +195,9 @@ public class LifeFactory {
         boolean hpbarBoss = stats.isBoss() && hpbarBosses.contains(mid);
         stats.setTagColor(hpbarBoss ? DataTool.getIntConvert("hpTagColor", monsterInfoData, 0) : 0);
         stats.setTagBgColor(hpbarBoss ? DataTool.getIntConvert("hpTagBgcolor", monsterInfoData, 0) : 0);
+        if (hpbarBoss) {
+            EasyBalrogHpBarPolicy.applyMissingStyle(mid, stats);
+        }
 
         for (Data idata : monsterData) {
             if (!idata.getName().equals("info")) {

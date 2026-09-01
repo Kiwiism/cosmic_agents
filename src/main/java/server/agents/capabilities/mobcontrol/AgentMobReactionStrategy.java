@@ -6,6 +6,6 @@ import server.integration.MobHitReactionContext;
 
 @FunctionalInterface
 public interface AgentMobReactionStrategy {
-    void acceptedHit(Character attacker, Monster monster, int appliedDamage,
-                     MobHitReactionContext reactionContext);
+    boolean acceptedHit(Character attacker, Monster monster, int appliedDamage,
+                        MobHitReactionContext reactionContext);
 }

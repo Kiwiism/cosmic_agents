@@ -37,9 +37,10 @@ class AgentBalrogDefinitionTest {
 
     @Test
     void combatTargetsExcludeScriptKilledReleaseSealAndDisabledCorpse() {
-        assertEquals(java.util.Set.of(8830007, 8830008, 8830009),
+        assertEquals(java.util.Set.of(8830007, 8830008, 8830009, 6400008, 6400009),
                 AgentBalrogDefinition.COMBAT_MOBS);
         assertEquals(java.util.Set.of(8830008, 8830009), AgentBalrogDefinition.CLAW_MOBS);
+        assertEquals(java.util.Set.of(6400008, 6400009), AgentBalrogDefinition.SUMMONED_ADDS);
         assertEquals(8830007, AgentBalrogDefinition.BODY_MOB);
     }
 
@@ -53,7 +54,8 @@ class AgentBalrogDefinitionTest {
 
     @Test
     void scenarioUsesTheEasyNpcRegistrationAndStartSequence() {
-        var spec = new AgentEasyBalrogScenario(1234L).spec();
+        var scenario = new AgentEasyBalrogScenario(1234L);
+        var spec = scenario.spec();
 
         assertEquals(ExpeditionType.BALROG_EASY, spec.expeditionType());
         assertEquals(5_000L, spec.readyCountdownMs());
@@ -61,6 +63,9 @@ class AgentBalrogDefinitionTest {
         assertEquals(List.of(1, 1), spec.createSelections());
         assertEquals(List.of(1), spec.joinSelections());
         assertEquals(List.of(1, 2, 0), spec.startSelections());
+        assertEquals(1, scenario.quickEntryPortalId());
+        assertEquals(9, scenario.quickEntrySpacingPx());
+        assertEquals(48, scenario.lobbyRallySpacingPx());
     }
 
     @Test
@@ -73,5 +78,15 @@ class AgentBalrogDefinitionTest {
         assertTrue(script.contains("Encounter.start"));
         assertFalse(script.contains("eim.schedule(\"releaseLeftClaw\""));
         assertFalse(script.contains("spawnSealedBalrog"));
+    }
+
+    @Test
+    void clearRoomUsesNativeDropReactorAndRewardExitPortal() throws Exception {
+        String reactor = Files.readString(Path.of("scripts/reactor/1052002.js"));
+        String portal = Files.readString(Path.of("scripts/portal/balog_end.js"));
+
+        assertTrue(reactor.contains("sprayItems"));
+        assertTrue(portal.contains("pi.gainItem(4001261, 1)"));
+        assertTrue(portal.contains("pi.warp(105100100, 0)"));
     }
 }

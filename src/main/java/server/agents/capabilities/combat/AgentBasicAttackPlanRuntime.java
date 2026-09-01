@@ -12,7 +12,8 @@ public final class AgentBasicAttackPlanRuntime {
     public static AgentAttackPlan planBasicAttack(Character bot, Monster target) {
         AgentBasicAttackPlanner.BasicAttackSelection selection = AgentBasicAttackPlanner.selectBasicAttack(
                 target,
-                candidate -> AgentAttackExecutionProvider.buildBasicAttackData(bot, candidate.getPosition()),
+                candidate -> AgentAttackExecutionProvider.buildBasicAttackData(
+                        bot, AgentCombatAimPointPolicy.aimPoint(bot, candidate)),
                 (candidate, hitBox) -> AgentCombatTargetSelector.resolveEffectivePrimary(
                         bot.getPosition(), candidate, hitBox, server.agents.perception.AgentMapPerception.monsters(bot.getMap())),
                 AgentCombatHitboxIntersection::intersectsMonster,

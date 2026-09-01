@@ -2,6 +2,7 @@ package server.combat;
 
 import client.BuffStat;
 import client.Character;
+import client.Disease;
 import client.Job;
 import client.Skill;
 import client.SkillFactory;
@@ -74,6 +75,7 @@ public final class CombatFormulaProvider {
 
     private static final double MIN_HIT_CHANCE = 0.01d;
     private static final double MAX_HIT_CHANCE = 1.0d;
+    private static final double DARKNESS_ACCURACY_MULTIPLIER = 0.8d;
     private static final CombatFormulaProvider instance = new CombatFormulaProvider();
 
     /**
@@ -113,14 +115,21 @@ public final class CombatFormulaProvider {
 
     public int getTotalAccuracy(Character bot) {
         int derivedAccuracy = (int) Math.floor(bot.getTotalDex() * 0.8d + bot.getTotalLuk() * 0.5d);
-        return Math.max(0, derivedAccuracy + getFlatAccuracy(bot));
+        return darknessAdjustedAccuracy(bot, derivedAccuracy + getFlatAccuracy(bot));
     }
 
     public int getTotalMagicAccuracy(Character bot) {
         // Magic accuracy = 5 × (floor(INT/10) + floor(LUK/10))  — per cat123/Eric client research
         int derivedMagicAccuracy = 5 * ((int) Math.floor(bot.getTotalInt() / 10.0)
                 + (int) Math.floor(bot.getTotalLuk() / 10.0));
-        return Math.max(0, derivedMagicAccuracy);
+        return darknessAdjustedAccuracy(bot, derivedMagicAccuracy);
+    }
+
+    private static int darknessAdjustedAccuracy(Character bot, int accuracy) {
+        int normalized = Math.max(0, accuracy);
+        return bot.hasDisease(Disease.DARKNESS)
+                ? (int) Math.floor(normalized * DARKNESS_ACCURACY_MULTIPLIER)
+                : normalized;
     }
 
     public int getTotalAvoidability(Character bot) {

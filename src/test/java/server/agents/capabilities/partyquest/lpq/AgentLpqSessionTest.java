@@ -11,6 +11,39 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentLpqSessionTest {
     @Test
+    void flavorStageParsingIgnoresNamedPostStagePhases() {
+        for (int stage = 1; stage <= 9; stage++) {
+            assertEquals(stage, AgentLpqCoordinator.stageNumberOrZero(
+                    AgentLpqSession.Phase.valueOf("STAGE_" + stage)));
+        }
+        assertEquals(0, AgentLpqCoordinator.stageNumberOrZero(
+                AgentLpqSession.Phase.BONUS));
+        assertEquals(0, AgentLpqCoordinator.stageNumberOrZero(
+                AgentLpqSession.Phase.CLAIMING_REWARD));
+        assertEquals(0, AgentLpqCoordinator.stageNumberOrZero(
+                AgentLpqSession.Phase.EXITING));
+    }
+
+    @Test
+    void mixedSessionKeepsExplicitHumanRoleAndOneShotFlavorClaims() {
+        AgentLpqSession session = mixedSession(1_000L);
+
+        session.setHumanRolePreference(
+                900, AgentLpqSession.HumanRolePreference.DARK_SIGHT);
+
+        assertTrue(session.hasHumanMember());
+        assertEquals(900, session.preferredHumanId());
+        assertEquals(AgentLpqSession.HumanRolePreference.DARK_SIGHT,
+                session.humanRolePreference());
+        assertEquals(AgentLpqDefinition.STAGE_5_DARK_SIGHT_ROOM,
+                AgentLpqCoordinator.preferredStageFiveRoom(session));
+        assertTrue(session.claimFlavorChat("stage:1:flavor:0"));
+        assertFalse(session.claimFlavorChat("stage:1:flavor:0"));
+        session.transition(AgentLpqSession.Phase.STAGE_2, 2_000L);
+        assertFalse(session.claimFlavorChat("stage:1:flavor:0"));
+    }
+
+    @Test
     void mixedPartySupportsHumanAndAgentEventLeadershipWithAgentExecution() {
         AgentLpqSession humanLed = mixedSession(1_000L);
         humanLed.setLeadership(900, 101);
@@ -200,6 +233,15 @@ class AgentLpqSessionTest {
         assertTrue(AgentLpqCoordinator.balloonRallyForceTransferDue(1, 30_000L));
         assertFalse(AgentLpqCoordinator.balloonRallyForceTransferDue(5, 29_999L));
         assertTrue(AgentLpqCoordinator.balloonRallyForceTransferDue(5, 30_000L));
+    }
+
+    @Test
+    void humanLeaderKeepsNaturalBalloonNavigationUntilTheHardTransferCap() {
+        assertTrue(AgentLpqCoordinator.balloonRallyPlacementRecoveryDue(
+                1, 15_000L, true));
+        assertFalse(AgentLpqCoordinator.balloonRallyPlacementRecoveryDue(
+                1, 15_000L, false));
+        assertTrue(AgentLpqCoordinator.balloonRallyForceTransferDue(1, 30_000L));
     }
 
     @Test

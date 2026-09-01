@@ -42,6 +42,12 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /** GM-only full LPQ and mixed-party observation harness. */
 public final class AgentLpqTestService {
+    private static final List<Integer> RECRUITMENT_SLOT_OFFSETS =
+            List.of(-145, -95, -45, 5, 55);
+    private static final List<String> RESERVED_AGENT_NAMES = java.util.stream.IntStream
+            .rangeClosed(1, 6)
+            .mapToObj(index -> "LPQer%02d".formatted(index))
+            .toList();
     private static final Logger log = LoggerFactory.getLogger(AgentLpqTestService.class);
     private static final AgentSpawnCommandExecutor PROVISIONING = new AgentSpawnCommandExecutor();
     private static final ConcurrentHashMap<Integer, Run> RUNS = new ConcurrentHashMap<>();
@@ -58,13 +64,15 @@ public final class AgentLpqTestService {
         try {
             return switch (params[0].toLowerCase()) {
                 case "start" -> start(operator, seed(params, 1, nowMs), Flow.AGENTS_ONLY,
-                        StartStage.FULL_RUN, nowMs);
+                        StartStage.FULL_RUN, AgentLpqSession.HumanRolePreference.DEFAULT, nowMs);
                 case "boss" -> start(operator, seed(params, 1, nowMs), Flow.AGENTS_ONLY,
-                        StartStage.BOSS, nowMs);
-                case "withme", "humanleader" -> start(operator, seed(params, 1, nowMs), Flow.HUMAN_LEADER,
-                        StartStage.FULL_RUN, nowMs);
-                case "agentleader" -> start(operator, seed(params, 1, nowMs), Flow.AGENT_LEADER,
-                        StartStage.FULL_RUN, nowMs);
+                        StartStage.BOSS, AgentLpqSession.HumanRolePreference.DEFAULT, nowMs);
+                case "withme", "humanleader" -> start(operator, mixedSeed(params, 1, nowMs),
+                        Flow.HUMAN_LEADER, StartStage.FULL_RUN,
+                        humanRolePreference(operator, params, 1), nowMs);
+                case "agentleader" -> start(operator, mixedSeed(params, 1, nowMs),
+                        Flow.AGENT_LEADER, StartStage.FULL_RUN,
+                        humanRolePreference(operator, params, 1), nowMs);
                 case "invite" -> invite(operator);
                 case "spectate", "attach" -> spectate(operator);
                 case "follow" -> follow(operator, params);
@@ -85,8 +93,9 @@ public final class AgentLpqTestService {
         }
     }
 
-    private static List<String> start(
-            Character operator, long seed, Flow flow, StartStage startStage, long nowMs) throws Exception {
+    private static synchronized List<String> start(
+            Character operator, long seed, Flow flow, StartStage startStage,
+            AgentLpqSession.HumanRolePreference humanRolePreference, long nowMs) throws Exception {
         if (operator.getMapId() != AgentLpqDefinition.RECRUIT_MAP) {
             return List.of("Stand at the Ludibrium PQ entrance (221024500) first.");
         }
@@ -96,21 +105,19 @@ public final class AgentLpqTestService {
         if (AgentPartyGatewayRuntime.party().snapshot(operator) != null) {
             return List.of("Leave your current party before starting this LPQ test.");
         }
-        Run old = RUNS.get(operator.getId());
-        if (old != null) stop(operator, "replaced by a new LPQ test", nowMs);
+        resetReservedTestAgents(operator, nowMs);
         int agentCount = flow == Flow.AGENTS_ONLY ? 6 : 5;
-        List<String> names = new ArrayList<>();
-        for (int index = 1; index <= agentCount; index++) {
-            String name = "LPQer%02d".formatted(index);
+        List<String> names = RESERVED_AGENT_NAMES.subList(0, agentCount);
+        for (String name : names) {
             ensureBackingCharacter(operator, name);
-            names.add(name);
         }
         AgentPartyQuestEngagement engagement = new AgentPartyQuestEngagement(
                 "lpq", AgentPartyQuestEngagement.Mode.TEST_OBSERVATION,
                 seed, operator.getId(), 6, nowMs);
         if (flow != Flow.AGENTS_ONLY) engagement.addMember(
                 operator.getId(), AgentPartyQuestEngagement.MemberType.HUMAN, nowMs);
-        Run run = new Run(operator, engagement, seed, flow, startStage, new LinkedHashSet<>(names));
+        Run run = new Run(operator, engagement, seed, flow, startStage,
+                humanRolePreference, new LinkedHashSet<>(names));
         run.eventLeaderId = flow == Flow.HUMAN_LEADER ? operator.getId() : 0;
         RUNS.put(operator.getId(), run);
         AgentPartyQuestEngagementRegistry.register(engagement);
@@ -124,9 +131,31 @@ public final class AgentLpqTestService {
             case AGENTS_ONLY -> List.of(startStage == StartStage.BOSS
                     ? "Six LPQ Agents are preparing for a direct boss-stage test. They will enter the real event, then move together to Stage 9; use !lpqtest spectate after entry."
                     : "Six LPQ Agents are preparing off-screen, then will form up at the Red Sign and announce the five-second start. Use !lpqtest spectate after entry.");
-            case HUMAN_LEADER -> List.of("Five LPQ Agents are preparing off-screen. Create a party, invite all five, gather at the Red Sign, then talk to it after the five-second announcement.");
-            case AGENT_LEADER -> List.of("Five LPQ Agents are preparing off-screen. Chat 'looking for LPQ' or 'invite me LPQ', accept the invitation, and gather for the five-second start. !lpqtest invite remains a manual resend.");
+            case HUMAN_LEADER -> List.of("Five LPQ Agents are preparing off-screen. Create a party, invite all five, gather at the Red Sign, then talk to it after the five-second announcement. Human role: "
+                    + humanRolePreference + ".");
+            case AGENT_LEADER -> List.of("Five LPQ Agents are forming a party and recruiting one. Chat 'looking for LPQ' or 'invite me LPQ', accept the invitation, and gather for the five-second start. Human role: "
+                    + humanRolePreference + ". !lpqtest invite remains a manual resend.");
         };
+    }
+
+    /**
+     * The observation harness deliberately reuses LPQer01..06, so concurrent runs
+     * cannot safely coexist. Close any prior harness session and reclaim only those
+     * reserved test runtimes before the next operator starts.
+     */
+    private static void resetReservedTestAgents(Character operator, long nowMs) {
+        for (Run active : List.copyOf(RUNS.values())) {
+            String reason = active.operator.getId() == operator.getId()
+                    ? "replaced by a new LPQ test"
+                    : "replaced by LPQ test operator " + operator.getName();
+            stop(active.operator, reason, nowMs);
+        }
+        for (String name : RESERVED_AGENT_NAMES) {
+            AgentRuntimeEntry stale = AgentRuntimeRegistry.findByAgentName(name);
+            if (stale != null) {
+                disconnect(AgentRuntimeIdentityRuntime.botId(stale));
+            }
+        }
     }
 
     private static void openLobby(Run run, long nowMs) {
@@ -165,8 +194,10 @@ public final class AgentLpqTestService {
                 launched = result.agent();
                 AgentRuntimeEntry entry = AgentRuntimeRegistry.findByAgentCharacterId(launched.getId());
                 if (entry == null) throw new IllegalStateException("spawned LPQ Agent runtime is unavailable");
+                String buildId = AgentLpqTestFixtureService.buildIdForTestParty(
+                        ordinal, run.flow != Flow.AGENTS_ONLY, run.humanRolePreference);
                 AgentLpqTestFixtureService.PreparationResult prepared = AgentLpqTestFixtureService.prepare(
-                        entry, ordinal, run.seed + ordinal * 10_007L, System.currentTimeMillis());
+                        entry, buildId, run.seed + ordinal * 10_007L, System.currentTimeMillis());
                 AgentCombatVariationRuntime.configure(entry, new AgentCombatVariationSettings(
                         run.seed + ordinal * 10_007L, true, 0.35d, 8, true, 0.50d));
                 MapleMap lobbyMap = AgentMapGatewayRuntime.map().resolveMap(
@@ -176,8 +207,11 @@ public final class AgentLpqTestService {
                 }
                 var lobbyPortal = lobbyMap == null ? null : lobbyMap.getRandomPlayerSpawnpoint();
                 Point lobbySpawn = lobbyPortal == null ? new Point(0, 0) : lobbyPortal.getPosition();
+                var lobbyNpc = lobbyMap.getNPCById(AgentLpqDefinition.ENTRY_NPC);
+                Point lobbyAnchor = lobbyNpc == null ? lobbySpawn : lobbyNpc.getPosition();
                 Point spacedLobbySpawn = AgentPrimitiveCapabilityGatewayRuntime.gateway().groundPoint(
-                        lobbyMap, new Point(lobbySpawn.x + ordinal * 18, lobbySpawn.y));
+                        lobbyMap, new Point(lobbyAnchor.x + recruitmentSlotOffset(ordinal),
+                                lobbyAnchor.y));
                 AgentMapGatewayRuntime.map().changeMapNear(
                         launched, lobbyMap, spacedLobbySpawn == null ? lobbySpawn : spacedLobbySpawn);
                 if (!AgentActivityBootstrap.admission().prepare(
@@ -287,6 +321,11 @@ public final class AgentLpqTestService {
                 && AgentLpqDefinition.isEventMap(member.getMapId()));
     }
 
+    static int recruitmentSlotOffset(int ordinal) {
+        return RECRUITMENT_SLOT_OFFSETS.get(
+                Math.floorMod(ordinal, RECRUITMENT_SLOT_OFFSETS.size()));
+    }
+
     private static void attemptHandoff(Run run) {
         synchronized (run.lock) {
             if (run.lobby == null || !run.lobby.active() || run.lobby.paused()) return;
@@ -303,7 +342,9 @@ public final class AgentLpqTestService {
             run.engagement.lobbyReady(now);
             AgentLpqAdmissionService.AdmissionResult result = AgentLpqAdmissionService.admitFromLobby(
                     run.engagement, run.lobby, run.operator, leader, members,
-                    run.seed, now, AgentLpqSession.Mode.TEST_OBSERVATION);
+                    run.seed, now, AgentLpqSession.Mode.TEST_OBSERVATION,
+                    run.flow == Flow.AGENTS_ONLY ? 0 : run.operator.getId(),
+                    run.humanRolePreference);
             if (!result.success()) return;
             run.eventLeaderId = leader.getId();
             run.session = result.session();
@@ -545,7 +586,9 @@ public final class AgentLpqTestService {
             lines.add("Leader passes/key " + (leader == null ? "?" : leader.getItemQuantity(AgentLpqDefinition.PASS, false)
                     + "/" + leader.getItemQuantity(AgentLpqDefinition.BOSS_KEY, false))
                     + ", Stage 8 attempt " + (run.session.stage8Attempt() + 1)
-                    + ", IGN->box chat " + (run.session.stage8AssignmentChatEnabled() ? "on" : "off"));
+                    + ", IGN->box chat " + (run.session.stage8AssignmentChatEnabled() ? "on" : "off")
+                    + (run.session.hasHumanMember() ? ", human role "
+                    + run.session.humanRolePreference() : ""));
             lines.add("Members: " + run.session.members().stream().map(member -> {
                 Character character = online(member.characterId());
                 return (character == null ? member.characterId() : character.getName()) + "=" + member.role()
@@ -690,11 +733,43 @@ public final class AgentLpqTestService {
     private static long seed(String[] params, int index, long fallback) {
         return params.length <= index ? fallback : Long.parseLong(params[index]);
     }
+    private static long mixedSeed(String[] params, int index, long fallback) {
+        if (params.length <= index) return fallback;
+        String value = params[index];
+        if (value.equalsIgnoreCase("default") || value.equalsIgnoreCase("auto")) {
+            return seed(params, index + 1, fallback);
+        }
+        return parseHumanRole(value) == AgentLpqSession.HumanRolePreference.DEFAULT
+                ? Long.parseLong(value) : seed(params, index + 1, fallback);
+    }
+    private static AgentLpqSession.HumanRolePreference humanRolePreference(
+            Character operator, String[] params, int index) {
+        if (params.length <= index) return AgentLpqSession.HumanRolePreference.DEFAULT;
+        AgentLpqSession.HumanRolePreference requested = parseHumanRole(params[index]);
+        return switch (requested) {
+            case TELEPORT -> AgentLpqRosterRequirementPolicy.teleportMagic(operator)
+                    ? requested : AgentLpqSession.HumanRolePreference.DEFAULT;
+            case DARK_SIGHT -> AgentLpqRosterRequirementPolicy.darkSight(operator)
+                    ? requested : AgentLpqSession.HumanRolePreference.DEFAULT;
+            case RANGED -> AgentLpqRosterRequirementPolicy.rangedAttack(operator)
+                    ? requested : AgentLpqSession.HumanRolePreference.DEFAULT;
+            default -> AgentLpqSession.HumanRolePreference.DEFAULT;
+        };
+    }
+    private static AgentLpqSession.HumanRolePreference parseHumanRole(String value) {
+        if (value == null) return AgentLpqSession.HumanRolePreference.DEFAULT;
+        return switch (value.toLowerCase()) {
+            case "teleport", "tp" -> AgentLpqSession.HumanRolePreference.TELEPORT;
+            case "darksight", "dark-sight", "ds" -> AgentLpqSession.HumanRolePreference.DARK_SIGHT;
+            case "ranged", "range" -> AgentLpqSession.HumanRolePreference.RANGED;
+            default -> AgentLpqSession.HumanRolePreference.DEFAULT;
+        };
+    }
     private static List<String> help() {
         return List.of("!lpqtest start [seed] (six Agents; spectator remains outside party)",
                 "!lpqtest boss [seed] (six Agents enter the real event directly at Stage 9)",
-                "!lpqtest humanleader [seed] (you lead five Agents)",
-                "!lpqtest agentleader [seed] (chat a join request; Agent leads you and four other Agents)",
+                "!lpqtest humanleader [teleport|darksight|ranged] [seed] (you lead five Agents)",
+                "!lpqtest agentleader [teleport|darksight|ranged] [seed] (a five-Agent party recruits you)",
                 "!lpqtest invite (manual Agent-leader invitation resend)",
                 "!lpqtest spectate | follow <leader|AgentName> | stay | return",
                 "!warplpq <1-6|leader|scout [1-2]|teleport|darksight|magic|physical|top|bottom|platform|boss|room 501-506>",
@@ -711,6 +786,7 @@ public final class AgentLpqTestService {
         final long seed;
         final Flow flow;
         final StartStage startStage;
+        final AgentLpqSession.HumanRolePreference humanRolePreference;
         @SuppressWarnings("unused") final Set<String> names;
         volatile AgentPartyQuestLobbySession lobby;
         volatile AgentLpqSession session;
@@ -722,9 +798,12 @@ public final class AgentLpqTestService {
         volatile boolean startStageApplied;
         volatile int followId;
         Run(Character operator, AgentPartyQuestEngagement engagement, long seed, Flow flow,
-            StartStage startStage, Set<String> names) {
+            StartStage startStage, AgentLpqSession.HumanRolePreference humanRolePreference,
+            Set<String> names) {
             this.operator = operator; this.engagement = engagement; this.seed = seed;
-            this.flow = flow; this.startStage = startStage; this.names = Set.copyOf(names);
+            this.flow = flow; this.startStage = startStage;
+            this.humanRolePreference = humanRolePreference;
+            this.names = Set.copyOf(names);
         }
     }
 }

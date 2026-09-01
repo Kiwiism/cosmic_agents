@@ -34,6 +34,15 @@ public final class AgentLocalOpportunityAttackCoordinator {
                 hooks());
     }
 
+    public static AgentLocalOpportunityAttackService.Result tryAnchoredOpportunityAttack(
+            AgentRuntimeEntry entry,
+            Character agent,
+            Point agentPosition,
+            Point anchor) {
+        return AgentLocalOpportunityAttackService.tryAnchoredOpportunityAttack(
+                entry, agent, agentPosition, anchor, hooks());
+    }
+
     private static AgentLocalOpportunityAttackService.Hooks hooks() {
         return new AgentLocalOpportunityAttackService.Hooks(
                 AgentGrindNavigationTargetSelector::selectGrindNavigationTarget,

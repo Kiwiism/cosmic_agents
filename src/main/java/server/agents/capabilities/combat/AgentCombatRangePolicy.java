@@ -68,7 +68,8 @@ public final class AgentCombatRangePolicy {
         if (route != AgentAttackRoute.RANGED && route != AgentAttackRoute.CLOSE) {
             return true;
         }
-        boolean facingLeft = target.getPosition().x < bot.getPosition().x;
+        Point aimPoint = AgentCombatAimPointPolicy.aimPoint(bot, target);
+        boolean facingLeft = aimPoint.x < bot.getPosition().x;
         Rectangle basicReach = basicWeaponReachRect(bot, facingLeft, route);
         return basicReach != null && AgentCombatHitboxIntersection.intersectsMonster(basicReach, target);
     }

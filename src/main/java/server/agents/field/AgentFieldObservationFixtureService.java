@@ -115,7 +115,17 @@ final class AgentFieldObservationFixtureService {
                                      int level,
                                      Set<Integer> allowedMobIds,
                                      long nowMs) throws IOException {
-        return prepareSecondJobFixture(entry, build, level, allowedMobIds, nowMs, true);
+        return prepareForBalrog(entry, build, level, allowedMobIds, 0, nowMs);
+    }
+
+    static Prepared prepareForBalrog(AgentRuntimeEntry entry,
+                                     AgentBalrogTestFixtureService.Build build,
+                                     int level,
+                                     Set<Integer> allowedMobIds,
+                                     int clothingRank,
+                                     long nowMs) throws IOException {
+        return prepareSecondJobFixture(entry, build, level, allowedMobIds, nowMs, true,
+                clothingRank);
     }
 
     static Prepared prepareForPartyQuest(AgentRuntimeEntry entry,
@@ -128,7 +138,7 @@ final class AgentFieldObservationFixtureService {
                                          int capeScrollItemId,
                                          long nowMs) throws IOException {
         return prepareSecondJobFixture(entry, build, level, allowedMobIds, nowMs, false,
-                equipment, weaponScrollItemId, shoesScrollItemId, capeScrollItemId);
+                0, equipment, weaponScrollItemId, shoesScrollItemId, capeScrollItemId);
     }
 
     private static Prepared prepareSecondJobFixture(
@@ -139,7 +149,7 @@ final class AgentFieldObservationFixtureService {
             long nowMs,
             boolean includeLevelSixtyArmor) throws IOException {
         return prepareSecondJobFixture(entry, build, level, allowedMobIds, nowMs,
-                includeLevelSixtyArmor, List.of(), 0, 0, 0);
+                includeLevelSixtyArmor, 0, List.of(), 0, 0, 0);
     }
 
     private static Prepared prepareSecondJobFixture(
@@ -149,6 +159,19 @@ final class AgentFieldObservationFixtureService {
             Set<Integer> allowedMobIds,
             long nowMs,
             boolean includeLevelSixtyArmor,
+            int clothingRank) throws IOException {
+        return prepareSecondJobFixture(entry, build, level, allowedMobIds, nowMs,
+                includeLevelSixtyArmor, clothingRank, List.of(), 0, 0, 0);
+    }
+
+    private static Prepared prepareSecondJobFixture(
+            AgentRuntimeEntry entry,
+            AgentBalrogTestFixtureService.Build build,
+            int level,
+            Set<Integer> allowedMobIds,
+            long nowMs,
+            boolean includeLevelSixtyArmor,
+            int clothingRank,
             List<Integer> partyQuestEquipment,
             int weaponScrollItemId,
             int shoesScrollItemId,
@@ -186,7 +209,7 @@ final class AgentFieldObservationFixtureService {
         AgentBuildService.autoAssignSp(entry, agent, build.spBuild());
 
         List<Integer> equipment = applySecondJobEquipmentLoadout(
-                agent, build, includeLevelSixtyArmor, partyQuestEquipment);
+                agent, build, includeLevelSixtyArmor, clothingRank, partyQuestEquipment);
         if (!includeLevelSixtyArmor) {
             applyPartyQuestScrolls(agent, weaponScrollItemId, shoesScrollItemId, capeScrollItemId);
         }
@@ -212,13 +235,13 @@ final class AgentFieldObservationFixtureService {
 
     private static List<Integer> applySecondJobEquipmentLoadout(
             Character agent, AgentBalrogTestFixtureService.Build build,
-            boolean includeLevelSixtyArmor, List<Integer> partyQuestEquipment) {
+            boolean includeLevelSixtyArmor, int clothingRank, List<Integer> partyQuestEquipment) {
         InventoryGateway inventory = AgentInventoryGatewayRuntime.inventory();
         clearInventory(agent, InventoryType.EQUIP, agent.getInventory(InventoryType.EQUIP).getSlotLimit());
         clearInventory(agent, InventoryType.EQUIPPED, agent.getInventory(InventoryType.EQUIPPED).getSlotLimit());
         List<Integer> selected;
         if (includeLevelSixtyArmor) {
-            selected = build.equipment(agent.getGender());
+            selected = build.equipment(agent.getGender(), clothingRank);
         } else {
             selected = List.copyOf(partyQuestEquipment);
         }

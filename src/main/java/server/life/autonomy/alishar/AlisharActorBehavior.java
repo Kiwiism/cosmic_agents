@@ -25,6 +25,11 @@ public final class AlisharActorBehavior implements BossActorBehavior {
     }
 
     @Override
+    public boolean usesServerMobPhysics() {
+        return true;
+    }
+
+    @Override
     public Optional<SelectedAction> select(
             Monster monster,
             List<Character> targets,
@@ -40,7 +45,7 @@ public final class AlisharActorBehavior implements BossActorBehavior {
                 .sorted(Comparator.comparingDouble(target ->
                         target.getPosition().distanceSq(origin)))
                 .toList();
-        List<SelectedAction> eligible = new ArrayList<>();
+        List<SelectedAction> eligibleAttacks = new ArrayList<>();
 
         for (BossAction.OrdinaryAttack attack : actions.attacks()) {
             Character target = orderedTargets.stream()
@@ -48,10 +53,12 @@ public final class AlisharActorBehavior implements BossActorBehavior {
                     .findFirst()
                     .orElse(null);
             if (target != null && monster.getMp() >= attack.mpCost()) {
-                eligible.add(new SelectedAction(attack, target));
+                eligibleAttacks.add(new SelectedAction(attack, target));
             }
         }
 
+        List<SelectedAction> eligibleDebuffs = new ArrayList<>();
+        List<SelectedAction> eligibleSummons = new ArrayList<>();
         int hpPercent = (int) Math.ceil(monster.getHp() * 100.0 / monster.getMaxHp());
         for (BossAction.Skill skillAction : actions.skills()) {
             var skill = skillAction.mobSkill();
@@ -59,7 +66,7 @@ public final class AlisharActorBehavior implements BossActorBehavior {
                 continue;
             }
             if (skill.getType() == MobSkillType.SUMMON) {
-                eligible.add(new SelectedAction(skillAction,
+                eligibleSummons.add(new SelectedAction(skillAction,
                         orderedTargets.isEmpty() ? null : orderedTargets.getFirst()));
                 continue;
             }
@@ -69,10 +76,13 @@ public final class AlisharActorBehavior implements BossActorBehavior {
                     .findFirst()
                     .orElse(null);
             if (target != null) {
-                eligible.add(new SelectedAction(skillAction, target));
+                eligibleDebuffs.add(new SelectedAction(skillAction, target));
             }
         }
 
+        List<SelectedAction> eligible = !eligibleDebuffs.isEmpty()
+                ? eligibleDebuffs
+                : (!eligibleSummons.isEmpty() ? eligibleSummons : eligibleAttacks);
         if (eligible.isEmpty()) {
             return Optional.empty();
         }
