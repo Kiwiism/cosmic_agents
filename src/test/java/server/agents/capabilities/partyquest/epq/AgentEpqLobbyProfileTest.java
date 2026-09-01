@@ -15,7 +15,8 @@ class AgentEpqLobbyProfileTest {
         assertEquals(AgentEpqDefinition.ENTRY_NPC, profile.entryNpcId());
         assertEquals(44, profile.minimumLevel());
         assertEquals(55, profile.maximumLevel());
-        assertEquals(6, profile.maximumPartySize());
+        assertEquals(5, profile.maximumPartySize());
+        assertEquals(5, profile.memberRequirements().size());
         assertTrue(profile.phrases().stream().anyMatch(phrase ->
                 phrase.intent() == AgentPartyQuestLobbyIntent.RECRUITING_MEMBERS
                         && phrase.substring().contains("ellin forest pq")));

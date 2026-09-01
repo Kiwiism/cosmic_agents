@@ -1017,6 +1017,18 @@ tuning:
     # Purpose: Lets another live EPQ Agent take over shared phase observation if the current coordinator stops ticking.
     # Technical: AgentEpqSession owns this EPQ-only lease; all movement, combat, looting, and capture work remains per member.
     server.agents.capabilities.partyquest.epq.AgentEpqRuntime.COORDINATOR_LEASE_MS: '250'
+    # Values: 100-2000 milliseconds. Recommended: 350 to avoid simultaneous login, job-build, and equipment initialization pressure.
+    # Purpose: Spaces the five dedicated EPQ observation fixtures without affecting production Agent admission.
+    # Technical: Used only by !epqtest when scheduling EPQer01 through EPQer05.
+    server.agents.capabilities.partyquest.epq.AgentEpqTestService.SPAWN_STAGGER_MS: '350'
+    # Values: 60000-600000 milliseconds. Recommended: 240000 for an autonomous party whose maps, mob HP, items, and reactors should keep changing.
+    # Purpose: Terminates a genuinely stalled Agent-only EPQ stage with a phase-specific diagnostic.
+    # Technical: The signature observes authoritative EPQ state and never advances a script, damages a mob, or changes a map.
+    server.agents.capabilities.partyquest.epq.AgentEpqWatchdogRuntime.AUTONOMOUS_IDLE_MS: '240000'
+    # Values: 120000-900000 milliseconds. Recommended: 480000 to leave a human leader time to read dialogue, collect a handoff, and operate the stage NPC.
+    # Purpose: Bounds abandoned mixed EPQ runs without imposing autonomous timing on the human participant.
+    # Technical: Applies only to HUMAN_ASSISTED EPQ sessions and remains below the authored 30-minute event timeout.
+    server.agents.capabilities.partyquest.epq.AgentEpqWatchdogRuntime.HUMAN_ASSISTED_IDLE_MS: '480000'
     # Values: 250-3000 milliseconds. Recommended: 650 to prevent repeated portal, NPC, item-drop, or reactor inputs before the prior server action settles.
     # Purpose: Spaces ordinary OPQ interactions without slowing independent workers assigned to other rooms.
     # Technical: Each Agent stores its own next-action deadline; this value never pauses the session coordinator or another member's room tick.

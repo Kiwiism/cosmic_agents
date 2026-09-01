@@ -1499,7 +1499,11 @@ public class MapleMap {
         }
 
         try {
-            if (monster.getStats().getLevel() >= chr.getLevel() + 30 && !chr.isGM()) {
+            boolean authoredEpqBoss = mapid == 930_000_600 && monster.getId() == 9_300_182
+                    && chr.getLevel() >= 44 && chr.getLevel() <= 55
+                    && chr.getEventInstance() != null;
+            if (monster.getStats().getLevel() >= chr.getLevel() + 30
+                    && !chr.isGM() && !authoredEpqBoss) {
                 AutobanFactory.GENERAL.alert(chr, " for killing a " + monster.getName() + " which is over 30 levels higher.");
             }
 

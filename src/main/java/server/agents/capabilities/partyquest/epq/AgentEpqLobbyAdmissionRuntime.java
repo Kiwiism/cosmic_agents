@@ -33,14 +33,16 @@ public final class AgentEpqLobbyAdmissionRuntime {
     public static String blocker(Character agent, String scenarioId, int partySize, int maximumRuns) {
         if (agent == null) return "a live Agent is required";
         if (!"epq".equalsIgnoreCase(normalize(scenarioId))) return "this admission policy only owns EPQ";
-        if (partySize < AgentEpqDefinition.MIN_PARTY_SIZE || partySize > AgentEpqDefinition.MAX_PARTY_SIZE) {
-            return "EPQ requires a party size of four to six";
+        if (partySize != AgentEpqRosterRequirementPolicy.PARTY_SIZE) {
+            return "EPQ Agent parties require exactly five members";
         }
         if (maximumRuns != 1) return "Director EPQ admission supports one independently owned run";
         if (agent.getLevel() < AgentEpqDefinition.MIN_LEVEL || agent.getLevel() > AgentEpqDefinition.MAX_LEVEL) {
             return "EPQ requires level 44-55";
         }
-        if (agent.getJob() == null || agent.getJob().getId() >= 1_000) return "EPQ requires an Adventurer";
+        if (AgentEpqRosterRequirementPolicy.branch(agent) == null) {
+            return "EPQ requires an Explorer class";
+        }
         AgentPartyQuestEngagement existing = AgentPartyQuestEngagementRegistry.forMember(agent.getId());
         if (existing != null && !"epq".equals(existing.questKey())) {
             return "Agent already belongs to another party-quest engagement";

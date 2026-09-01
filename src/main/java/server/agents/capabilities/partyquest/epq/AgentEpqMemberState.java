@@ -1,5 +1,8 @@
 package server.agents.capabilities.partyquest.epq;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /** Mutable work state owned by exactly one EPQ participant. */
 public final class AgentEpqMemberState {
     public enum MemberType { AGENT, HUMAN }
@@ -7,6 +10,7 @@ public final class AgentEpqMemberState {
     private final MemberType memberType;
     private long nextActionAtMs;
     private int committedObjectId;
+    private final Set<String> announcements = new HashSet<>();
 
     AgentEpqMemberState(int characterId, MemberType memberType) {
         if (characterId <= 0 || memberType == null) throw new IllegalArgumentException("valid EPQ member required");
@@ -21,4 +25,7 @@ public final class AgentEpqMemberState {
     public void deferUntil(long value) { nextActionAtMs = Math.max(0L, value); }
     public void commitObject(int value) { committedObjectId = Math.max(0, value); }
     public void clearObject() { committedObjectId = 0; }
+    public boolean claimAnnouncement(String key) {
+        return key != null && !key.isBlank() && announcements.add(key);
+    }
 }

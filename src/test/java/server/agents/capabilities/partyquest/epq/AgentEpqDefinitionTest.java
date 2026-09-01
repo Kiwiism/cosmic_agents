@@ -31,5 +31,8 @@ class AgentEpqDefinitionTest {
         assertEquals(4, AgentEpqDefinition.stageForMap(AgentEpqDefinition.STAGE_FOUR_MAP));
         assertEquals(7, AgentEpqDefinition.stageForMap(AgentEpqDefinition.REWARD_MAP));
         assertEquals(-1, AgentEpqDefinition.stageForMap(930_000_700));
+        assertTrue(AgentEpqDefinition.BOSS_COMBAT_TARGETS.containsAll(AgentEpqDefinition.BOSS_MOBS));
+        assertTrue(AgentEpqDefinition.BOSS_COMBAT_TARGETS.containsAll(AgentEpqDefinition.BOSS_ADDS));
+        assertFalse(AgentEpqDefinition.BOSS_COMBAT_TARGETS.contains(AgentEpqDefinition.POST_DEATH_DUMMY));
     }
 }

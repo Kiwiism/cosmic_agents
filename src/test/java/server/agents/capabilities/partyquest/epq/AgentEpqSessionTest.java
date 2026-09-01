@@ -45,6 +45,20 @@ class AgentEpqSessionTest {
         assertTrue(session.claimExecutionTick(2, 141L, 100L));
     }
 
+    @Test
+    void progressSignaturesRefreshTheStageWatchdogOnlyWhenEvidenceChanges() {
+        AgentEpqSession session = session(5);
+        session.observeProgressSignature(100L, 20L);
+        session.observeProgressSignature(100L, 50L);
+        assertEquals(20L, session.lastProgressAtMs());
+
+        AgentEpqWatchdogRuntime.tick(session, 240_019L);
+        assertFalse(session.terminal());
+        AgentEpqWatchdogRuntime.tick(session, 240_020L);
+        assertEquals(AgentEpqSession.Phase.FAILED, session.phase());
+        assertTrue(session.failure().contains("stalled"));
+    }
+
     private static AgentEpqSession session(int memberCount) {
         AgentEpqSession session = new AgentEpqSession(AgentEpqSession.Mode.TEST_OBSERVATION, 7L, 1, 10L);
         for (int id = 1; id <= memberCount; id++) {

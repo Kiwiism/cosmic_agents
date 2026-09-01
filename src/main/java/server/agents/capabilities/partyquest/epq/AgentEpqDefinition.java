@@ -34,6 +34,10 @@ public final class AgentEpqDefinition {
     public static final int STAGE_TWO_MOB = 9_300_173;
     public static final int POISON_FLOWER = 9_300_175;
     public static final Set<Integer> BOSS_MOBS = Set.of(9_300_180, 9_300_181, 9_300_182);
+    public static final Set<Integer> BOSS_ADDS = Set.of(9_300_177, 9_300_178, 9_300_179);
+    public static final Set<Integer> BOSS_COMBAT_TARGETS = Set.of(
+            9_300_177, 9_300_178, 9_300_179, 9_300_180, 9_300_181, 9_300_182);
+    public static final int POST_DEATH_DUMMY = 9_300_183;
 
     public static final int POND_REACTOR = 3_002_000;
     public static final int SPINE_REACTOR = 3_009_000;

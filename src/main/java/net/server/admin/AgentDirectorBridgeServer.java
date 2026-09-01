@@ -11,6 +11,7 @@ import server.agents.capabilities.partyquest.hpq.AgentHpqTestService;
 import server.agents.capabilities.partyquest.kpq.AgentKpqTestService;
 import server.agents.capabilities.partyquest.lpq.AgentLpqTestService;
 import server.agents.capabilities.partyquest.opq.AgentOpqTestService;
+import server.agents.capabilities.partyquest.epq.AgentEpqTestService;
 import server.agents.integration.cosmic.CosmicAgentWorldDirectorApplicationFactory;
 import server.agents.integration.cosmic.CosmicAgentCleanSlateResetFactory;
 import server.agents.administration.AgentCleanSlateResetService;
@@ -263,7 +264,8 @@ public final class AgentDirectorBridgeServer {
             case "kpq" -> AgentKpqTestService.execute(operator, params, nowMs);
             case "lpq" -> AgentLpqTestService.execute(operator, params, nowMs);
             case "opq" -> AgentOpqTestService.execute(operator, params, nowMs);
-            default -> throw new IllegalArgumentException("quest must be hpq, kpq, lpq, or opq");
+            case "epq" -> AgentEpqTestService.execute(operator, params, nowMs);
+            default -> throw new IllegalArgumentException("quest must be hpq, kpq, lpq, opq, or epq");
         };
         send(exchange, 200, Map.of("status", "OK", "operator", operator.getName(), "lines", lines));
     }

@@ -32,6 +32,7 @@ public final class AgentEpqSession {
     private boolean terminating;
     private boolean rewardHit;
     private long bossClearedAtMs;
+    private long progressSignature = Long.MIN_VALUE;
     private String failure = "";
     private EventInstanceManager eventInstance;
 
@@ -73,6 +74,12 @@ public final class AgentEpqSession {
         }
     }
     public synchronized void markProgress(long nowMs) { lastProgressAtMs = Math.max(lastProgressAtMs, nowMs); }
+    public synchronized void observeProgressSignature(long signature, long nowMs) {
+        if (progressSignature != signature) {
+            progressSignature = signature;
+            markProgress(nowMs);
+        }
+    }
     public synchronized boolean beginTermination() { if (terminating) return false; terminating = true; return true; }
     public synchronized void fail(String reason, long nowMs) { failure = reason == null ? "EPQ failed" : reason; phase = Phase.FAILED; markProgress(nowMs); }
     public synchronized void complete(long nowMs) { phase = Phase.COMPLETED; markProgress(nowMs); }

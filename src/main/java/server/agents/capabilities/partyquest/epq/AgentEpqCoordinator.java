@@ -4,9 +4,15 @@ import client.Character;
 import client.inventory.Item;
 import client.inventory.InventoryType;
 import server.agents.capabilities.inventory.AgentInventoryReservationRuntime;
+import server.agents.capabilities.combat.AgentAttackDamageProfileService;
+import server.agents.capabilities.combat.AgentAttackPlan;
+import server.agents.capabilities.combat.AgentAttackTransactionResult;
+import server.agents.capabilities.combat.AgentBasicAttackPlanRuntime;
+import server.agents.capabilities.combat.AgentCombatAttackRuntime;
 import server.agents.integration.AgentCharacterGatewayRuntime;
 import server.agents.integration.AgentInventoryGatewayRuntime;
 import server.agents.integration.AgentPartyQuestGatewayRuntime;
+import server.agents.integration.AgentPartyGatewayRuntime;
 import server.agents.integration.AgentPrimitiveCapabilityGatewayRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.PartyQuestGateway;
@@ -56,6 +62,8 @@ public final class AgentEpqCoordinator {
         }
         AgentEpqSession.Phase observed = phaseForMap(leader.getMapId());
         if (observed != null) session.transition(observed, nowMs);
+        session.observeProgressSignature(progressSignature(session, leader), nowMs);
+        AgentEpqWatchdogRuntime.tick(session, nowMs);
         if (session.phase() == AgentEpqSession.Phase.EXITING
                 && session.members().stream().map(member -> character(member.characterId()))
                 .filter(java.util.Objects::nonNull)
@@ -112,19 +120,21 @@ public final class AgentEpqCoordinator {
 
     private static void stageTwo(AgentEpqSession session, AgentRuntimeEntry entry, Character agent,
                                  AgentEpqMemberState member, long nowMs) {
-        ACTIONS.lootNearby(agent, Set.of(AgentEpqDefinition.POISON, AgentEpqDefinition.PURIFIED_POISON));
+        boolean carrier = agent.getId() == workAgentId(session);
+        if (carrier) ACTIONS.lootNearby(agent,
+                Set.of(AgentEpqDefinition.POISON, AgentEpqDefinition.PURIFIED_POISON));
         Reactor spine = agent.getMap().getReactorById(AgentEpqDefinition.SPINE_REACTOR);
         if (spine != null && spine.getState() >= 4) {
             enterPortal(entry, agent, 3, member, nowMs);
             return;
         }
-        if (ACTIONS.itemCount(agent, AgentEpqDefinition.PURIFIED_POISON) > 0 && spine != null) {
+        if (carrier && ACTIONS.itemCount(agent, AgentEpqDefinition.PURIFIED_POISON) > 0 && spine != null) {
             dropAt(entry, agent, InventoryType.ETC, AgentEpqDefinition.PURIFIED_POISON,
                     spine.getPosition(), member, nowMs);
             return;
         }
         Reactor pond = agent.getMap().getReactorById(AgentEpqDefinition.POND_REACTOR);
-        if (ACTIONS.itemCount(agent, AgentEpqDefinition.POISON) > 0 && pond != null) {
+        if (carrier && ACTIONS.itemCount(agent, AgentEpqDefinition.POISON) > 0 && pond != null) {
             dropAt(entry, agent, InventoryType.ETC, AgentEpqDefinition.POISON,
                     pond.getPosition(), member, nowMs);
             return;
@@ -159,29 +169,45 @@ public final class AgentEpqCoordinator {
             if (runNearbyNpc(entry, agent, AgentEpqDefinition.STAGE_NPC)) member.deferUntil(nowMs + ACTION_RETRY_MS);
             return;
         }
-        if (agent.getId() != captureAgentId(session)) { ACTIONS.stop(entry); return; }
         if (agent.getId() != session.eventLeaderId() && monsterMarbles >= 20) {
             dropStackNearNpc(entry, agent, AgentEpqDefinition.MONSTER_MARBLE,
                     AgentEpqDefinition.STAGE_NPC, member, nowMs);
+            if (ACTIONS.itemCount(agent, AgentEpqDefinition.MONSTER_MARBLE) == 0) {
+                announce(member, agent, "stage4-human-handoff",
+                        "I dropped all 20 Monster Marbles beside the stage NPC for our leader.");
+            }
             return;
         }
         if (ACTIONS.itemCount(agent, AgentEpqDefinition.PURIFICATION_MARBLE) == 0) {
             if (runNearbyNpc(entry, agent, AgentEpqDefinition.STAGE_NPC)) member.deferUntil(nowMs + ACTION_RETRY_MS);
             return;
         }
-        Monster ready = flowers(agent).stream().filter(AgentEpqCaptureRuntime::ready)
+        Monster target = flowers(agent).stream()
                 .min(Comparator.comparingDouble(mob -> mob.getPosition().distanceSq(agent.getPosition())))
                 .orElse(null);
-        if (ready != null) {
-            if (!near(agent.getPosition(), ready.getPosition(), 220)) {
-                ACTIONS.navigate(entry, ready.getPosition(), true);
-            } else {
-                ACTIONS.stop(entry);
-                if (AgentEpqCaptureRuntime.capture(agent, ready)) member.deferUntil(nowMs + ACTION_RETRY_MS);
+        if (target == null || agent.getId() != captureAgentId(session, target)) {
+            ACTIONS.stop(entry);
+            return;
+        }
+        if (!near(agent.getPosition(), target.getPosition(), 220)) {
+            ACTIONS.navigate(entry, target.getPosition(), true);
+            return;
+        }
+        ACTIONS.stop(entry);
+        if (AgentEpqCaptureRuntime.ready(target)) {
+            if (AgentEpqCaptureRuntime.capture(agent, target)) {
+                member.deferUntil(nowMs + ACTION_RETRY_MS);
             }
             return;
         }
-        ACTIONS.grind(entry, Set.of(AgentEpqDefinition.POISON_FLOWER));
+        AgentAttackPlan basic = AgentBasicAttackPlanRuntime.planBasicAttack(agent, target);
+        if (basic == null || basic.primaryTarget() != target
+                || conservativeMaximumDamage(agent, basic) >= target.getHp()) {
+            member.deferUntil(nowMs + ACTION_RETRY_MS);
+            return;
+        }
+        AgentAttackTransactionResult attack = AgentCombatAttackRuntime.attackMonster(entry, agent, basic);
+        if (attack.committed()) session.markProgress(nowMs);
     }
 
     private static void stageFive(AgentEpqSession session, AgentRuntimeEntry entry, Character agent,
@@ -197,6 +223,10 @@ public final class AgentEpqCoordinator {
                 && ACTIONS.itemCount(agent, AgentEpqDefinition.MAGIC_STONE) > 0) {
             dropStackNearNpc(entry, agent, AgentEpqDefinition.MAGIC_STONE,
                     AgentEpqDefinition.STONE_NPC, member, nowMs);
+            if (ACTIONS.itemCount(agent, AgentEpqDefinition.MAGIC_STONE) == 0) {
+                announce(member, agent, "stage5-human-handoff",
+                        "I dropped the Magic Stone beside Yuris. Leader, please pick it up and continue.");
+            }
             return;
         }
         Reactor target = nearestActiveReactor(agent,
@@ -207,9 +237,12 @@ public final class AgentEpqCoordinator {
 
     private static void boss(AgentEpqSession session, AgentRuntimeEntry entry, Character agent,
                              AgentEpqMemberState member, long nowMs) {
-        ACTIONS.lootNearby(agent, Set.of(AgentEpqDefinition.MAGIC_STONE, AgentEpqDefinition.ALTAIRE_FRAGMENT));
+        Set<Integer> bossLoot = agent.getId() == fragmentCollectorId(session)
+                ? Set.of(AgentEpqDefinition.MAGIC_STONE, AgentEpqDefinition.ALTAIRE_FRAGMENT)
+                : Set.of(AgentEpqDefinition.MAGIC_STONE);
+        ACTIONS.lootNearby(agent, bossLoot);
         if (ACTIONS.liveMonsterCount(agent, AgentEpqDefinition.BOSS_MOBS) > 0) {
-            ACTIONS.grind(entry, AgentEpqDefinition.BOSS_MOBS);
+            ACTIONS.grind(entry, AgentEpqDefinition.BOSS_COMBAT_TARGETS);
             return;
         }
         if (session.eventInstance() == null || !session.eventInstance().isEventCleared()) {
@@ -223,7 +256,18 @@ public final class AgentEpqCoordinator {
             }
             return;
         }
+        AgentMapPerception.monsters(agent.getMap()).stream()
+                .filter(Monster::isAlive)
+                .filter(monster -> monster.getId() == AgentEpqDefinition.POST_DEATH_DUMMY)
+                .findFirst().ifPresent(dummy ->
+                        agent.getMap().killMonster(dummy, null, false, (short) 0));
         if (nowMs - session.observeBossCleared(nowMs) < BOSS_LOOT_SETTLE_MS) { ACTIONS.stop(entry); return; }
+        if (agent.getId() == workAgentId(session)
+                && session.members().stream().anyMatch(state ->
+                state.memberType() == AgentEpqMemberState.MemberType.HUMAN)) {
+            announce(member, agent, "boss-human-fragment",
+                    "The Altair Fragment is reserved for our human party member; loot it before exiting.");
+        }
         enterPortal(entry, agent, 1, member, nowMs);
     }
 
@@ -263,11 +307,27 @@ public final class AgentEpqCoordinator {
                 .filter(Monster::isAlive).filter(mob -> mob.getId() == AgentEpqDefinition.POISON_FLOWER).toList();
     }
 
-    private static int captureAgentId(AgentEpqSession session) {
-        if (session.member(session.eventLeaderId()).memberType() == AgentEpqMemberState.MemberType.AGENT) {
-            return session.eventLeaderId();
+    private static int captureAgentId(AgentEpqSession session, Monster flower) {
+        int selectedId = 0;
+        long selectedDamage = Long.MAX_VALUE;
+        for (AgentEpqMemberState member : session.members()) {
+            if (member.memberType() != AgentEpqMemberState.MemberType.AGENT) continue;
+            Character candidate = character(member.characterId());
+            if (candidate == null || candidate.getMap() != flower.getMap()) continue;
+            AgentAttackPlan plan = AgentBasicAttackPlanRuntime.planBasicAttack(candidate, flower);
+            long damage = plan == null || plan.primaryTarget() != flower
+                    ? Long.MAX_VALUE : conservativeMaximumDamage(candidate, plan);
+            if (damage < selectedDamage) {
+                selectedDamage = damage;
+                selectedId = member.characterId();
+            }
         }
-        return workAgentId(session);
+        return selectedId == 0 ? workAgentId(session) : selectedId;
+    }
+
+    private static long conservativeMaximumDamage(Character agent, AgentAttackPlan plan) {
+        var profile = AgentAttackDamageProfileService.resolve(agent, plan);
+        return Math.max(1L, (long) profile.maxDamage() * Math.max(1, plan.numDamage) * 3L);
     }
 
     private static int workAgentId(AgentEpqSession session) {
@@ -278,6 +338,41 @@ public final class AgentEpqCoordinator {
         return session.members().stream()
                 .filter(member -> member.memberType() == AgentEpqMemberState.MemberType.AGENT)
                 .mapToInt(AgentEpqMemberState::characterId).min().orElse(session.executionAgentId());
+    }
+
+    private static int fragmentCollectorId(AgentEpqSession session) {
+        return session.members().stream()
+                .filter(member -> member.memberType() == AgentEpqMemberState.MemberType.HUMAN)
+                .mapToInt(AgentEpqMemberState::characterId).findFirst()
+                .orElseGet(() -> workAgentId(session));
+    }
+
+    private static long progressSignature(AgentEpqSession session, Character leader) {
+        long signature = session.phase().ordinal();
+        for (AgentEpqMemberState member : session.members()) {
+            Character character = character(member.characterId());
+            signature = signature * 31L + (character == null ? -1 : character.getMapId());
+            if (character != null) {
+                signature = signature * 31L + ACTIONS.itemCount(character, AgentEpqDefinition.POISON);
+                signature = signature * 31L + ACTIONS.itemCount(character, AgentEpqDefinition.PURIFIED_POISON);
+                signature = signature * 31L + ACTIONS.itemCount(character, AgentEpqDefinition.MONSTER_MARBLE);
+                signature = signature * 31L + ACTIONS.itemCount(character, AgentEpqDefinition.MAGIC_STONE);
+            }
+        }
+        if (leader.getMap() != null && AgentEpqDefinition.isEventMap(leader.getMapId())) {
+            for (Monster monster : AgentMapPerception.monsters(leader.getMap()).stream()
+                    .filter(Monster::isAlive).sorted(Comparator.comparingInt(Monster::getObjectId)).toList()) {
+                signature = signature * 31L + monster.getObjectId();
+                signature = signature * 31L + monster.getHp();
+            }
+            for (Reactor reactor : ACTIONS.reactors(leader).stream()
+                    .filter(java.util.Objects::nonNull)
+                    .sorted(Comparator.comparingInt(Reactor::getObjectId)).toList()) {
+                signature = signature * 31L + reactor.getObjectId();
+                signature = signature * 31L + reactor.getState();
+            }
+        }
+        return signature;
     }
 
     private static Reactor nearestActiveReactor(Character agent, Set<Integer> reactorIds) {
@@ -368,6 +463,13 @@ public final class AgentEpqCoordinator {
 
     private static boolean near(Point first, Point second, int radius) {
         return first != null && second != null && first.distanceSq(second) <= (long) radius * radius;
+    }
+
+    private static void announce(AgentEpqMemberState member, Character agent,
+                                 String key, String message) {
+        if (member.claimAnnouncement(key)) {
+            AgentPartyGatewayRuntime.party().sendPartyChat(agent, message);
+        }
     }
 
     public static Character character(int id) {

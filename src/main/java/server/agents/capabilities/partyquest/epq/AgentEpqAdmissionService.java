@@ -66,9 +66,10 @@ public final class AgentEpqAdmissionService {
         partyMembers.stream().filter(java.util.Objects::nonNull).forEach(member -> {
             if (unique.stream().noneMatch(existing -> existing.getId() == member.getId())) unique.add(member);
         });
-        if (unique.size() < AgentEpqDefinition.MIN_PARTY_SIZE || unique.size() > AgentEpqDefinition.MAX_PARTY_SIZE) {
-            return Validation.failure("EPQ requires 4-6 party members");
-        }
+        AgentEpqRosterRequirementPolicy.Coverage coverage =
+                AgentEpqRosterRequirementPolicy.evaluate(unique);
+        if (!coverage.complete()) return Validation.failure(
+                "Missing EPQ coverage: " + String.join(", ", coverage.missingRequirements()));
         if (unique.stream().noneMatch(AgentEpqAdmissionService::isAgent)) {
             return Validation.failure("EPQ Agent control requires at least one Agent");
         }

@@ -97,6 +97,20 @@ public final class AgentDirectorActionCatalog {
                     AgentWorldInterruptionPolicy.WAIT_FOR_SAFE_BOUNDARY,
                     AgentWorldCompletionPolicy.REQUEST_NEXT_DECISION, 650, false));
         }
+        if (victoriaReached && context.level() >= 44 && context.level() <= 55) {
+            result.add(new AgentDirectorAction(
+                    "party-quest:epq", "Enter Ellin Forest Party Quest lobby",
+                    operatorEnabled ? AgentDirectorActionAvailability.RECOMMENDED
+                            : AgentDirectorActionAvailability.UNAVAILABLE,
+                    operatorEnabled
+                            ? "normal travel to EPQ; the lobby requires one of every Explorer family"
+                            : "Director is not in an operator-controlled mode",
+                    AgentWorldDirectiveType.START_ACTIVITY, AgentActivityKind.PARTY_QUEST,
+                    AgentWorldActivityRequestType.PARTY_QUEST_VISIT, "epq",
+                    Map.of("scenarioId", "epq", "partySize", "5", "maximumRuns", "1"),
+                    AgentWorldInterruptionPolicy.WAIT_FOR_SAFE_BOUNDARY,
+                    AgentWorldCompletionPolicy.REQUEST_NEXT_DECISION, 640, false));
+        }
         boolean active = context.currentActivityKind() != null
                 && !context.currentSessionId().isEmpty();
         boolean suspended = session.phase() == AgentWorldDirectorPhase.PAUSED

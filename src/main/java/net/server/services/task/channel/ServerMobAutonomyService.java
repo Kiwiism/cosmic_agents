@@ -102,7 +102,8 @@ public final class ServerMobAutonomyService extends BaseService {
         synchronized (tickLock) {
             AuthorityRuntime authority = authorityByMonster.get(monster);
             if (authority == null) {
-                authority = register(monster, behavior, monster, ordinaryServerMob,
+                authority = register(monster, behavior, monster,
+                        ordinaryServerMob || behavior.forceServerAuthority(),
                         ordinaryServerMob, ordinaryServerMob ? -1 : eligiblePartyId(activatingAgent),
                         System.nanoTime());
             } else if (ordinaryServerMob && authority.mode != AuthorityMode.SERVER_STICKY) {
@@ -130,7 +131,8 @@ public final class ServerMobAutonomyService extends BaseService {
         }
         synchronized (tickLock) {
             if (!authorityByMonster.containsKey(monster)) {
-                register(monster, behavior, monster, false, false, -1, System.nanoTime());
+                register(monster, behavior, monster, behavior.forceServerAuthority(),
+                        false, -1, System.nanoTime());
             }
         }
         ensureScheduled();
@@ -152,7 +154,8 @@ public final class ServerMobAutonomyService extends BaseService {
                 release(monster, "join-encounter");
             }
             if (!authorityByMonster.containsKey(monster)) {
-                register(monster, behavior, encounterKey, false, false, -1, System.nanoTime());
+                register(monster, behavior, encounterKey, behavior.forceServerAuthority(),
+                        false, -1, System.nanoTime());
             }
         }
         ensureScheduled();

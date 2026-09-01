@@ -21,6 +21,11 @@ public interface BossActorBehavior {
         return false;
     }
 
+    /** Whether this encounter must remain server-owned even with a capable human client present. */
+    default boolean forceServerAuthority() {
+        return false;
+    }
+
     /** Whether an ordinary unsupported summon may be promoted to generic server combat. */
     default boolean allowServerTakeoverForOrdinarySummons() {
         return true;

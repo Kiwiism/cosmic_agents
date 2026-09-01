@@ -16,10 +16,12 @@ import server.agents.capabilities.partyquest.lpq.AgentLpqSessionRegistry;
 import server.expeditions.Expedition;
 import server.life.Monster;
 import server.life.autonomy.BossClientSimulationCapability;
+import server.life.autonomy.ServerMobBehaviorRegistry;
 import server.life.autonomy.alishar.AlisharActorBehavior;
 import server.life.autonomy.balrog.EasyBalrogInitialClawBehavior;
 import server.life.autonomy.balrog.EasyBalrogReleasedClawBehavior;
 import server.life.autonomy.papapixie.PapaPixieActorBehavior;
+import server.life.autonomy.poisongolem.PoisonGolemActorBehavior;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -304,6 +306,25 @@ class ServerMobAutonomyServiceTest {
 
             assertFalse(guardedService.isActive(fixture.monster));
             assertEquals(1, guardedService.nativeAuthorityCountForTest());
+        } finally {
+            guardedService.dispose();
+            AgentLpqSessionRegistry.remove(fixture.session);
+        }
+    }
+
+    @Test
+    void poisonGolemRemainsServerOwnedWithCapableHumanPartyMember() {
+        NativeFixture fixture = nativeFixture(91_013, 91_014, 9_300_180);
+        ServerMobAutonomyService guardedService =
+                new ServerMobAutonomyService(random, false, 1_000_000L);
+        try {
+            assertTrue(guardedService.acquire(fixture.monster, fixture.agent));
+
+            assertTrue(guardedService.isActive(fixture.monster));
+            assertEquals(0, guardedService.nativeAuthorityCountForTest());
+            assertTrue(ServerMobBehaviorRegistry.behaviorFor(fixture.monster.getId())
+                    .filter(behavior -> behavior instanceof PoisonGolemActorBehavior)
+                    .isPresent());
         } finally {
             guardedService.dispose();
             AgentLpqSessionRegistry.remove(fixture.session);

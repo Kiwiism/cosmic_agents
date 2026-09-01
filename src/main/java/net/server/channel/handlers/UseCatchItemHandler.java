@@ -34,6 +34,7 @@ import net.packet.InPacket;
 import net.server.Server;
 import server.ItemInformationProvider;
 import server.life.Monster;
+import server.life.EpqPoisonFlowerCaptureService;
 import tools.PacketCreator;
 
 /**
@@ -162,15 +163,12 @@ public final class UseCatchItemHandler extends AbstractPacketHandler {
                 c.sendPacket(PacketCreator.enableActions());
                 break;
             case ItemId.EPQ_PURIFICATION_MARBLE:
-                if (mob.getId() == MobId.POISON_FLOWER) {
-                    if (mob.getHp() < ((mob.getMaxHp() / 10) * 4)) {
-                        chr.getMap().broadcastMessage(PacketCreator.catchMonster(monsterid, itemId, (byte) 1));
-                        killMonster(mob);
-                        InventoryManipulator.removeById(c, InventoryType.USE, itemId, 1, true, true);
-                        InventoryManipulator.addById(c, ItemId.EPQ_MONSTER_MARBLE, (short) 1, "", -1);
-                    } else {
-                        c.sendPacket(PacketCreator.catchMessage(0));
-                    }
+                EpqPoisonFlowerCaptureService.Result result =
+                        EpqPoisonFlowerCaptureService.capture(chr, mob);
+                if (result == EpqPoisonFlowerCaptureService.Result.NOT_READY) {
+                    c.sendPacket(PacketCreator.catchMessage(0));
+                } else if (result == EpqPoisonFlowerCaptureService.Result.NO_INVENTORY_SPACE) {
+                    chr.dropMessage(5, "Make an ETC slot available before using this item.");
                 }
                 c.sendPacket(PacketCreator.enableActions());
                 break;

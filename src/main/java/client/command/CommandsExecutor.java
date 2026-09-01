@@ -200,6 +200,7 @@ import client.command.commands.gm6.KpqTestCommand;
 import client.command.commands.gm6.HpqTestCommand;
 import client.command.commands.gm6.LpqTestCommand;
 import client.command.commands.gm6.OpqTestCommand;
+import client.command.commands.gm6.EpqTestCommand;
 import client.command.commands.gm6.WarpLpqCommand;
 import client.command.commands.gm6.MushroomTestCommand;
 import client.command.commands.gm6.BalrogTestCommand;
@@ -619,6 +620,7 @@ public class CommandsExecutor {
         addCommand("hpqtest", 6, HpqTestCommand.class);
         addCommand("lpqtest", 6, LpqTestCommand.class);
         addCommand("opqtest", 6, OpqTestCommand.class);
+        addCommand("epqtest", 6, EpqTestCommand.class);
         addCommand("warplpq", 6, WarpLpqCommand.class);
         addCommand("mushroomtest", 6, MushroomTestCommand.class);
         addCommand("balrogtest", 6, BalrogTestCommand.class);
