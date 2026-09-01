@@ -61,6 +61,8 @@ public final class AgentEpqTestService {
                 case "agentleader" -> start(
                         operator, seed(params, 1, nowMs), Flow.AGENT_LEADER, nowMs);
                 case "invite" -> invite(operator);
+                case "spectate", "attach" -> spectate(operator);
+                case "return", "detach" -> returnFromSpectating(operator);
                 case "status" -> status(operator);
                 case "pause" -> pause(operator, true);
                 case "resume" -> pause(operator, false);
@@ -225,6 +227,7 @@ public final class AgentEpqTestService {
         try {
             if (run.flow == Flow.AGENT_LEADER) maybeInvite(run);
             if (run.session == null) attemptHandoff(run);
+            if (run.spectating) updateSpectator(run);
             if (run.session != null && run.session.terminal()) {
                 if (run.session.phase() == AgentEpqSession.Phase.FAILED) {
                     fail(run, run.session.failure());
@@ -288,6 +291,58 @@ public final class AgentEpqTestService {
         return List.of(run.inviteSent ? "EPQ invitation sent." : "EPQ party is still assembling.");
     }
 
+    private static List<String> spectate(Character operator) {
+        Run run = RUNS.get(operator.getId());
+        if (run == null || run.flow != Flow.AGENTS_ONLY || run.session == null) {
+            return List.of("Spectating requires an active five-Agent EPQ session.");
+        }
+        Character leader = online(run.session.eventLeaderId());
+        if (leader == null || leader.getEventInstance() == null
+                || !AgentEpqDefinition.isEventMap(leader.getMapId())) {
+            return List.of("The EPQ party has not entered its event instance yet.");
+        }
+        run.spectating = true;
+        run.followId = leader.getId();
+        updateSpectator(run);
+        return List.of("Attached as an EPQ spectator; stage changes will auto-follow.",
+                "Do not attack, loot, use portals/NPCs, or hit reactors. Use !epqtest return to leave.");
+    }
+
+    private static List<String> returnFromSpectating(Character operator) {
+        Run run = RUNS.get(operator.getId());
+        if (run == null || !run.spectating) return List.of("You are not spectating EPQ.");
+        returnObserver(run);
+        return List.of("Returned to the EPQ recruitment map.");
+    }
+
+    private static void updateSpectator(Run run) {
+        Character target = online(run.followId);
+        if (target == null || run.session == null
+                || target.getEventInstance() != run.session.eventInstance()) {
+            target = run.session == null ? null : online(run.session.eventLeaderId());
+            if (target == null) return;
+            run.followId = target.getId();
+        }
+        if (target.getMap() != null && run.operator.getMap() != target.getMap()) {
+            AgentMapGatewayRuntime.map().changeMapNear(
+                    run.operator, target.getMap(), target.getPosition());
+        }
+    }
+
+    private static void returnObserver(Run run) {
+        if (!run.spectating) return;
+        MapleMap recruit = AgentMapGatewayRuntime.map().resolveMap(
+                run.operator.getWorld(), AgentClientGatewayRuntime.clients().channel(run.operator),
+                AgentEpqDefinition.RECRUIT_MAP);
+        if (recruit != null) {
+            Point spawn = recruit.getRandomPlayerSpawnpoint() == null ? new Point(0, 0)
+                    : recruit.getRandomPlayerSpawnpoint().getPosition();
+            AgentMapGatewayRuntime.map().changeMapNear(run.operator, recruit, spawn);
+        }
+        run.spectating = false;
+        run.followId = 0;
+    }
+
     private static List<String> status(Character operator) {
         Run run = RUNS.get(operator.getId());
         if (run == null) return List.of("No EPQ test is active.");
@@ -320,6 +375,7 @@ public final class AgentEpqTestService {
     }
 
     private static void close(Run run, String reason, long nowMs) {
+        returnObserver(run);
         if (run.session != null) AgentEpqTerminationService.release(run.session, reason, nowMs, true);
         if (run.lobby != null) AgentPartyQuestLobbyRuntime.unregister(run.lobby.lobbyId(), nowMs);
         if (AgentPartyQuestEngagementRegistry.byId(run.engagement.engagementId()) != null) {
@@ -360,6 +416,7 @@ public final class AgentEpqTestService {
                 "!epqtest start [seed] (five Agents, one per Explorer class)",
                 "!epqtest humanleader [seed] (you lead four missing-class Agents)",
                 "!epqtest agentleader [seed] (an Agent leads; accept the invitation)",
+                "!epqtest spectate | return (five-Agent run only)",
                 "!epqtest invite | status | pause | resume | stop");
     }
 
@@ -375,6 +432,8 @@ public final class AgentEpqTestService {
         final Set<Integer> agents = new LinkedHashSet<>();
         volatile int eventLeaderId;
         volatile boolean inviteSent;
+        volatile boolean spectating;
+        volatile int followId;
         volatile AgentPartyQuestLobbySession lobby;
         volatile AgentEpqSession session;
 
