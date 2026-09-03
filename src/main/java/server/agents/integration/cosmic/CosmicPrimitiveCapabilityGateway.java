@@ -14,6 +14,7 @@ import server.agents.capabilities.movement.AgentMovementBroadcastStateRuntime;
 import server.agents.capabilities.movement.AgentMovementPoseService;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.capabilities.movement.AgentGroundingService;
+import server.agents.capabilities.movement.AgentHorizontalBoundaryStateRuntime;
 import server.agents.capabilities.movement.AgentJumpActionService;
 import server.agents.capabilities.looting.AgentLootEligibility;
 import server.agents.capabilities.movement.AgentFarmAnchorStateRuntime;
@@ -308,6 +309,17 @@ public enum CosmicPrimitiveCapabilityGateway implements PrimitiveCapabilityGatew
     @Override
     public void navigate(AgentRuntimeEntry entry, Point destination, boolean precise) {
         AgentModeService.startMoveTo(entry, destination, precise);
+    }
+
+    @Override
+    public void setHorizontalBoundary(
+            AgentRuntimeEntry entry, int mapId, int minX, int maxX) {
+        AgentHorizontalBoundaryStateRuntime.set(entry, mapId, minX, maxX);
+    }
+
+    @Override
+    public void clearHorizontalBoundary(AgentRuntimeEntry entry) {
+        AgentHorizontalBoundaryStateRuntime.clear(entry);
     }
 
     @Override

@@ -44,10 +44,18 @@ public final class AgentAirbornePhysicsService {
         applyPendingFlashJump(entry);
         Point previousPosition = roundedAirPosition(entry);
         Point nextPosition = advanceAirbornePosition(entry);
+        MapleMap map = agent.getMap();
+        int boundedX = AgentHorizontalBoundaryStateRuntime.clampX(
+                entry, map == null ? -1 : map.getId(), nextPosition.x);
+        if (boundedX != nextPosition.x) {
+            Point boundaryCollision = new Point(boundedX, nextPosition.y);
+            collideWithAirWall(entry, agent, boundaryCollision);
+            return AgentAirborneStepResult.WALL;
+        }
         int moverZMass = AgentWallCollisionPolicy.moverZMassForRegion(
-                agent.getMap(), entry.navigationContinuityState().lastRegionIdForMap(agent.getMapId()));
+                map, entry.navigationContinuityState().lastRegionIdForMap(agent.getMapId()));
         AgentJumpProbeService.AirCollision collision =
-                AgentJumpProbeService.resolveAirCollision(agent.getMap(), previousPosition, nextPosition, moverZMass);
+                AgentJumpProbeService.resolveAirCollision(map, previousPosition, nextPosition, moverZMass);
         if (collision.type() == AgentJumpProbeService.AirCollisionType.WALL) {
             collideWithAirWall(entry, agent, collision.point());
             return AgentAirborneStepResult.WALL;
@@ -62,7 +70,7 @@ public final class AgentAirbornePhysicsService {
             return AgentAirborneStepResult.LANDED;
         }
         Point recoveryPoint = belowMapRecoveryPoint(
-                agent.getMap(), nextPosition, AgentMapStateRuntime.entryPortalId(entry));
+                map, nextPosition, AgentMapStateRuntime.entryPortalId(entry));
         if (recoveryPoint != null) {
             log.warn("Recovered Agent '{}' below map bounds map={} from={} to={}",
                     agent.getName(), agent.getMapId(), nextPosition, recoveryPoint);

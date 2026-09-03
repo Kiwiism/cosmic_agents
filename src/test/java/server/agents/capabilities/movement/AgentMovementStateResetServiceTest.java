@@ -11,6 +11,7 @@ import server.life.Monster;
 import java.awt.Point;
 import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -39,5 +40,16 @@ class AgentMovementStateResetServiceTest {
         assertTrue(AgentCombatObjectiveTargetStateRuntime.prefers(entry, 100));
         assertTrue(AgentCombatObjectiveTargetStateRuntime.allows(entry, 200));
         assertNull(AgentNavigationDebugStateRuntime.activeNavigationEdge(entry));
+    }
+
+    @Test
+    void teleportResetDoesNotLeakAnActivityBoundaryIntoTheDestinationMap() {
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
+        AgentHorizontalBoundaryStateRuntime.set(entry, 105100400, -100, 1068);
+
+        AgentMovementStateResetService.resetEntryStateAfterTeleport(entry);
+
+        assertEquals(-140,
+                AgentHorizontalBoundaryStateRuntime.clampX(entry, 105100400, -140));
     }
 }

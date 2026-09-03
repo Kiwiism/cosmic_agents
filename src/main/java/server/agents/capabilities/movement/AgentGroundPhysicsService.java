@@ -51,6 +51,27 @@ public final class AgentGroundPhysicsService {
                         AgentMovementPhysicsStateRuntime.groundPhysicsCarryMs(entry)),
                 AgentMovementStateRuntime.movementProfile(entry));
 
+        int boundedX = AgentHorizontalBoundaryStateRuntime.clampX(
+                entry, map == null ? -1 : map.getId(), step.point().x);
+        if (boundedX != step.point().x) {
+            AgentGroundCollisionService.GroundStepPreview boundaryPreview =
+                    AgentGroundCollisionService.previewGroundStep(
+                            map, currentPosition, foothold, boundedX);
+            Point boundaryPoint = boundaryPreview != null
+                    && !boundaryPreview.blocked() && !boundaryPreview.lostGround()
+                    ? boundaryPreview.point() : currentPosition;
+            Foothold boundaryFoothold = boundaryPreview != null
+                    && boundaryPreview.foothold() != null
+                    ? boundaryPreview.foothold() : foothold;
+            step = new GroundStepResult(
+                    boundaryPoint,
+                    boundaryFoothold,
+                    initialGroundTravelState(boundaryPoint),
+                    boundaryPoint.x - currentPosition.x,
+                    0,
+                    false);
+        }
+
         if (step.lostGround()) {
             beginFall(entry, agent, step.point(), step.stepX());
             return new AgentGroundMotion(step.stepX(), true);

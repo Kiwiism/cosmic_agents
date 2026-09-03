@@ -23,6 +23,7 @@ public final class AgentMovementStateResetService {
     }
 
     public static void resetEntryStateAfterTeleport(AgentRuntimeEntry entry) {
+        AgentHorizontalBoundaryStateRuntime.clear(entry);
         clearTransientState(entry);
     }
 

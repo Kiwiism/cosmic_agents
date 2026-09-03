@@ -60,4 +60,10 @@ class AgentMobKnockbackPolicyTest {
     void shouldScaleOpenStoryStepByTickLength() {
         assertEquals(3.0f, AgentMobKnockbackPolicy.scaledOpenStoryStep(1.5f, 16));
     }
+
+    @Test
+    void shouldConvertDamagePacketDirectionToAgentAirVelocity() {
+        assertEquals(-3, AgentMobKnockbackPolicy.airVelocityForDamageDirection(0, 1.5f, 16));
+        assertEquals(3, AgentMobKnockbackPolicy.airVelocityForDamageDirection(1, 1.5f, 16));
+    }
 }

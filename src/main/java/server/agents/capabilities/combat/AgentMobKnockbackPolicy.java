@@ -41,6 +41,12 @@ public final class AgentMobKnockbackPolicy {
         return new MobHitKnockback(direction, airVelX);
     }
 
+    public static int airVelocityForDamageDirection(
+            int damageDirection, float knockbackHspeed, int tickMs) {
+        int sign = damageDirection == 0 ? -1 : 1;
+        return Math.round(sign * scaledOpenStoryStep(knockbackHspeed, tickMs));
+    }
+
     public static float scaledOpenStoryStep(float openStoryStepValue, int tickMs) {
         return openStoryStepValue * (tickMs / 8.0f);
     }

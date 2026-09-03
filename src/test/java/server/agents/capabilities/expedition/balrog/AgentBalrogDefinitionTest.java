@@ -108,9 +108,13 @@ class AgentBalrogDefinitionTest {
         String npc = Files.readString(Path.of("scripts/npc/1061018.js"));
 
         assertTrue(reactor.contains("sprayItems"));
+        assertTrue(reactor.contains("claimEventReactorAction(\"balrog-reward\")"));
         assertTrue(reactor.contains("balrogRewardOpenedAt"));
+        assertTrue(reactor.contains("destroyReactor"));
         assertTrue(reactor.indexOf("sprayItems")
                 < reactor.indexOf("balrogRewardOpenedAt"));
+        assertTrue(reactor.indexOf("balrogRewardOpenedAt")
+                < reactor.indexOf("destroyReactor"));
         assertTrue(npc.contains("warpEventTeamToMapSpawnPoint(105100400, 105100401, 0)"));
         assertTrue(portal.contains("pi.gainItem(4001261, 1)"));
         assertTrue(portal.contains("pi.warp(105100100, 0)"));

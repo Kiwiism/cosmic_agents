@@ -137,4 +137,33 @@ class AgentAirbornePhysicsServiceTest {
 
         assertTrue(entry.capabilityStates().find(AgentMovementSkillState.STATE_KEY).isEmpty());
     }
+
+    @Test
+    void airborneAgentCollidesWithConfiguredActivityBoundary() {
+        MapleMap map = mock(MapleMap.class);
+        when(map.getId()).thenReturn(105100400);
+        Character agent = mock(Character.class);
+        AtomicReference<Point> position = new AtomicReference<>(new Point(1067, 100));
+        when(agent.getPosition()).thenAnswer(ignored -> new Point(position.get()));
+        doAnswer(invocation -> {
+            position.set(new Point(invocation.getArgument(0)));
+            return null;
+        }).when(agent).setPosition(any(Point.class));
+        when(agent.getHp()).thenReturn(1);
+        when(agent.getMap()).thenReturn(map);
+
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+        AgentMovementStateRuntime.setInAir(entry, true);
+        AgentMovementPhysicsStateRuntime.setPhysicsPosition(entry, position.get());
+        AgentMovementPhysicsStateRuntime.setAirVelocityX(entry, 5);
+        AgentHorizontalBoundaryStateRuntime.set(entry, 105100400, -100, 1068);
+
+        AgentAirborneStepResult result = AgentAirbornePhysicsService.stepAirborne(entry, agent);
+
+        assertEquals(AgentAirborneStepResult.WALL, result);
+        assertEquals(1068, position.get().x);
+        assertTrue(position.get().y > 100, "the wall must preserve ordinary vertical physics");
+        assertEquals(0, AgentMovementPhysicsStateRuntime.airVelocityX(entry));
+        assertTrue(AgentMovementStateRuntime.inAir(entry));
+    }
 }

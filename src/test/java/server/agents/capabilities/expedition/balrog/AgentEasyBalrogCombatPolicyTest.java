@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentEasyBalrogCombatPolicyTest {
     @Test
-    void bodyFormationUsesOnlyTheUpperLeftPlatform() {
+    void bodyFormationUsesOnlyTheLeftPlatforms() {
         for (int ordinal = 0; ordinal < AgentBalrogDefinition.ROSTER_SIZE; ordinal++) {
             for (boolean ranged : new boolean[]{false, true}) {
                 Point anchor = AgentEasyBalrogCombatPolicy.headAnchor(ordinal, ranged);
@@ -33,7 +33,19 @@ class AgentEasyBalrogCombatPolicyTest {
             Point ranged = AgentEasyBalrogCombatPolicy.headAnchor(ordinal, true);
             Point melee = AgentEasyBalrogCombatPolicy.headAnchor(ordinal, false);
             assertTrue(ranged.x < melee.x);
+            assertTrue(ranged.y < -92,
+                    "ranged ground probes must begin above the upper-left foothold");
+            assertTrue(melee.y > -85,
+                    "melee ground probes must retain the close-range lower ledge");
         }
+    }
+
+    @Test
+    void battleWallsRemainInsideTheCanonicalContinuousFloor() {
+        assertTrue(AgentEasyBalrogCombatPolicy.battleMinX() > -116);
+        assertTrue(AgentEasyBalrogCombatPolicy.battleMaxX() < 1084);
+        assertTrue(AgentEasyBalrogCombatPolicy.battleMinX()
+                < AgentEasyBalrogCombatPolicy.battleMaxX());
     }
 
     @Test
@@ -43,5 +55,17 @@ class AgentEasyBalrogCombatPolicyTest {
             Point melee = AgentEasyBalrogCombatPolicy.headAnchor(ordinal, false);
             assertTrue(visibleHeadLeftX - melee.x <= 80);
         }
+    }
+
+    @Test
+    void initialClawFormationClearsTheFutureLeftClawBody() {
+        int releasedLeftClawRightX = 294;
+        for (int ordinal = 0; ordinal < AgentBalrogDefinition.ROSTER_SIZE; ordinal++) {
+            Point safe = AgentEasyBalrogCombatPolicy.initialClawSafePoint(ordinal);
+            assertTrue(safe.x > releasedLeftClawRightX);
+            assertTrue(safe.y > 0);
+        }
+        assertTrue(AgentEasyBalrogCombatPolicy.needsInitialClawStaging(new Point(100, 258)));
+        assertFalse(AgentEasyBalrogCombatPolicy.needsInitialClawStaging(new Point(360, 258)));
     }
 }

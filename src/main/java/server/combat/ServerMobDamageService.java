@@ -10,6 +10,7 @@ import constants.id.MapId;
 import constants.skills.Aran;
 import server.StatEffect;
 import server.agents.capabilities.combat.data.AgentDefenseDataProvider;
+import server.agents.capabilities.combat.AgentCombatDamageRuntime;
 import server.life.MobAttackInfo;
 import server.life.MobAttackInfoFactory;
 import server.life.MobSkill;
@@ -108,6 +109,10 @@ public final class ServerMobDamageService {
         map.broadcastMessage(target, PacketCreator.damagePlayer(
                 attackIndex, attacker.getId(), target.getId(), damage, 0, direction,
                 false, 0, true, attacker.getObjectId(), 0, 0), true);
+        if (damage > 0 && target.getClient() instanceof BotClient) {
+            AgentCombatDamageRuntime.reactToServerAttack(
+                    target, attacker, direction);
+        }
         for (Character banished : banishPlayers) {
             banished.changeMapBanish(attacker.getBanish());
         }

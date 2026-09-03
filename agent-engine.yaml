@@ -4372,3 +4372,31 @@ tuning:
     # Purpose: Controls how frequently Easy Balrog writes one aggregate health, mana, Magic Guard, and formation diagnostic for the expedition party.
     # Technical: Used only by the Balrog scenario telemetry gate during combat and does not change scheduler cadence, attack decisions, recovery timing, or lobby behavior.
     server.agents.capabilities.expedition.balrog.AgentEasyBalrogScenario.VITALS_LOG_INTERVAL_MS: '30000'
+    # Values: a lower-platform map x-coordinate. Recommended: 340-400; 360 clears the released left claw's canonical WZ body while remaining within practical range of the initial claw.
+    # Purpose: Sets the leftmost pre-release staging position so arriving Easy Balrog Agents do not wait inside the space later occupied by the released left claw.
+    # Technical: Applied only while the initial claw is alive and the released claw has not appeared; normal hitbox-driven combat positioning resumes immediately afterward.
+    server.agents.capabilities.expedition.balrog.AgentEasyBalrogCombatPolicy.INITIAL_CLAW_SAFE_FIRST_X: '360'
+    # Values: a positive integer in pixels. Recommended: 4-12; 8 spreads twelve Agents visibly without pushing the formation out of useful initial-claw engagement range.
+    # Purpose: Spaces Easy Balrog Agents across the temporary pre-release staging line instead of stacking every participant on one exact coordinate.
+    # Technical: Multiplied by the stable roster ordinal and added to the first staging x-coordinate; it does not constrain later generic combat movement.
+    server.agents.capabilities.expedition.balrog.AgentEasyBalrogCombatPolicy.INITIAL_CLAW_SAFE_SPACING_X: '8'
+    # Values: the canonical lower-platform map y-coordinate. Recommended: 258 for map 105100400; change only if the map geometry is replaced.
+    # Purpose: Grounds the temporary Easy Balrog staging formation on the battle map's lower foothold before the released left claw can appear.
+    # Technical: Passed through the primitive capability gateway's ground-point resolver before navigation, so the configured coordinate remains foothold-valid.
+    server.agents.capabilities.expedition.balrog.AgentEasyBalrogCombatPolicy.LOWER_PLATFORM_Y: '258'
+    # Values: a positive height above map y=0. Recommended: 105-130; 120 makes ground resolution select the upper platform instead of the overlapping lower ledge.
+    # Purpose: Keeps ranged Easy Balrog head attackers on the upper-left platform, reducing repeated falls caused by knockback from the lower ledge.
+    # Technical: Used as the vertical probe passed to the normal ground-point resolver; it does not teleport Agents or alter the head's legal attack hitbox.
+    server.agents.capabilities.expedition.balrog.AgentEasyBalrogCombatPolicy.RANGED_HEAD_HEIGHT: '120'
+    # Values: a positive height above map y=0. Recommended: 65-80; 70 retains melee access to the head's nearest legal body edge.
+    # Purpose: Keeps close-range Easy Balrog head attackers on the lower-left ledge where their ordinary weapon hitboxes can still intersect the head.
+    # Technical: Used only as a ground-resolution probe for melee head anchors; attack range and damage remain enforced by the shared combat handlers.
+    server.agents.capabilities.expedition.balrog.AgentEasyBalrogCombatPolicy.MELEE_HEAD_HEIGHT: '70'
+    # Values: a positive distance left of map x=0. Recommended: 90-105; 100 leaves a safe inset from the canonical WZ endpoint at -116.
+    # Purpose: Provides an Agent-only virtual left wall during Easy Balrog so spell or contact knockback cannot throw headless participants below the map.
+    # Technical: Applied by the opt-in horizontal movement boundary during map 105100400 only; players and Agents in every other map retain native geometry.
+    server.agents.capabilities.expedition.balrog.AgentEasyBalrogCombatPolicy.BATTLE_LEFT_X_OFFSET: '100'
+    # Values: an x-coordinate inside the battle floor's right endpoint. Recommended: 1050-1070; 1068 leaves a safe inset from the canonical WZ endpoint at 1084.
+    # Purpose: Provides the matching Agent-only virtual right wall so high-velocity knockback cannot launch expedition Agents beyond the continuous floor.
+    # Technical: Both grounded displacement and airborne integration clamp against this bound only while the Balrog scenario has explicitly enabled it.
+    server.agents.capabilities.expedition.balrog.AgentEasyBalrogCombatPolicy.BATTLE_MAX_X: '1068'

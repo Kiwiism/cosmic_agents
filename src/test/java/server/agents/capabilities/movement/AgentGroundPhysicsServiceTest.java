@@ -92,6 +92,26 @@ class AgentGroundPhysicsServiceTest {
         verify(agent).setPosition(new Point(100, 100));
     }
 
+    @Test
+    void groundedAgentStopsAtConfiguredActivityBoundaryWithoutFalling() {
+        MapleMap map = createEmptyTestMap(105100400);
+        Foothold foothold = new Foothold(new Point(0, 100), new Point(400, 100), 1);
+        map.getFootholds().insert(foothold);
+        Character agent = mockAgent(new Point(100, 100), map);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+        AgentMovementPhysicsStateRuntime.setPhysicsX(entry, 100);
+        AgentMovementStateRuntime.setMoveDirection(entry, 1);
+        AgentHorizontalBoundaryStateRuntime.set(entry, 105100400, 0, 100);
+
+        AgentGroundMotion motion = AgentGroundPhysicsService.applyGroundMotion(entry, agent, foothold);
+
+        assertFalse(motion.lostGround());
+        assertEquals(0, motion.stepX());
+        assertEquals(new Point(100, 100), agent.getPosition());
+        assertEquals(0.0, AgentMovementPhysicsStateRuntime.horizontalSpeed(entry));
+        assertEquals(0, AgentMovementStateRuntime.movementVelocityX(entry));
+    }
+
     private static MapleMap createEmptyTestMap(int mapId) {
         MapleMap map = new MapleMap(mapId, 0, 0, mapId, 1.0f);
         map.setFootholds(new FootholdTree(new Point(-2000, -2000), new Point(2000, 2000)));

@@ -121,6 +121,14 @@ public interface PrimitiveCapabilityGateway {
 
     void navigate(AgentRuntimeEntry entry, Point destination, boolean precise);
 
+    /** Enables map-local virtual walls for an activity; ordinary maps remain unconstrained. */
+    default void setHorizontalBoundary(
+            AgentRuntimeEntry entry, int mapId, int minX, int maxX) {
+    }
+
+    default void clearHorizontalBoundary(AgentRuntimeEntry entry) {
+    }
+
     /** Starts one ordinary, physics-simulated ground jump in the requested direction. */
     default boolean jump(AgentRuntimeEntry entry, int direction) {
         return false;
