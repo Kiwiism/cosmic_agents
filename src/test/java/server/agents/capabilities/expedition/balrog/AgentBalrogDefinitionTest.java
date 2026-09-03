@@ -10,6 +10,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentBalrogDefinitionTest {
@@ -20,6 +21,22 @@ class AgentBalrogDefinitionTest {
         assertTrue(AgentEasyBalrogScenario.needsExpeditionRecovery(750, 1_000));
         assertTrue(AgentEasyBalrogScenario.needsExpeditionRecovery(0, 1_000));
         assertFalse(AgentEasyBalrogScenario.needsExpeditionRecovery(0, 0));
+    }
+
+    @Test
+    void postClearFormationKeepsTheNpcTransitionerInInteractionRange() {
+        assertEquals(-99, AgentEasyBalrogScenario.expeditionFormationOffset(0, 12, 18));
+        assertEquals(99, AgentEasyBalrogScenario.expeditionFormationOffset(11, 12, 18));
+    }
+
+    @Test
+    void rewardFidgetPeriodsArePerMemberRatherThanLockstep() {
+        long first = AgentEasyBalrogScenario.rewardFidgetPeriodMs(0, 1);
+        long second = AgentEasyBalrogScenario.rewardFidgetPeriodMs(1, 1);
+
+        assertTrue(first >= 1_400L && first < 3_000L);
+        assertTrue(second >= 1_400L && second < 3_000L);
+        assertNotEquals(first, second);
     }
 
     @Test
@@ -66,6 +83,9 @@ class AgentBalrogDefinitionTest {
         assertEquals(1, scenario.quickEntryPortalId());
         assertEquals(9, scenario.quickEntrySpacingPx());
         assertEquals(48, scenario.lobbyRallySpacingPx());
+        assertTrue(scenario.preserveNonAgentParticipantsAfterClear());
+        assertEquals(180_000L, scenario.postClearTimeoutMs());
+        assertTrue(scenario.retainReturnedMembersUntilNextRun());
     }
 
     @Test
@@ -76,6 +96,7 @@ class AgentBalrogDefinitionTest {
         assertTrue(script.contains("player.changeMap(exitMap, 0);"));
         assertTrue(script.contains("EasyBalrogEncounterService"));
         assertTrue(script.contains("Encounter.start"));
+        assertTrue(script.contains("if (eim.isEventCleared())"));
         assertFalse(script.contains("eim.schedule(\"releaseLeftClaw\""));
         assertFalse(script.contains("spawnSealedBalrog"));
     }
@@ -84,8 +105,13 @@ class AgentBalrogDefinitionTest {
     void clearRoomUsesNativeDropReactorAndRewardExitPortal() throws Exception {
         String reactor = Files.readString(Path.of("scripts/reactor/1052002.js"));
         String portal = Files.readString(Path.of("scripts/portal/balog_end.js"));
+        String npc = Files.readString(Path.of("scripts/npc/1061018.js"));
 
         assertTrue(reactor.contains("sprayItems"));
+        assertTrue(reactor.contains("balrogRewardOpenedAt"));
+        assertTrue(reactor.indexOf("sprayItems")
+                < reactor.indexOf("balrogRewardOpenedAt"));
+        assertTrue(npc.contains("warpEventTeamToMapSpawnPoint(105100400, 105100401, 0)"));
         assertTrue(portal.contains("pi.gainItem(4001261, 1)"));
         assertTrue(portal.contains("pi.warp(105100100, 0)"));
     }

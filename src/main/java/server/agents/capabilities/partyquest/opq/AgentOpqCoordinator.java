@@ -52,6 +52,11 @@ final class AgentOpqCoordinator {
     private static final Point WALKWAY_EAK = new Point(552, -138);
     private static final Point LOUNGE_EAK = new Point(97, -737);
     private static final Point MUSIC_PLAYER = new Point(-1706, -240);
+    private static final Point LOBBY_FIRST_ROPE_BOTTOM = new Point(-1598, -408);
+    private static final Point LOBBY_FIRST_ROPE_TOP = new Point(-1598, -581);
+    private static final Point LOBBY_SECOND_ROPE_BOTTOM = new Point(-1777, -528);
+    private static final Point LOBBY_SECOND_ROPE_TOP = new Point(-1777, -905);
+    private static final Point LOBBY_UPPER_PLATFORM = new Point(-1717, -926);
     private static final Point ROOT_POT = new Point(-755, 19);
     private static final Point MINERVA_BASE = new Point(-48, -916);
     private static final List<int[]> SEALED_COMBINATIONS = sealedCombinations();
@@ -101,8 +106,17 @@ final class AgentOpqCoordinator {
             ACTIONS.refreshNavigation(entry, agent);
             member.clearLocalWork();
             member.deferUntil(nowMs + ACTION_RETRY_MS);
-            log.warn("OPQ legal navigation route refreshed after local stall: session={} member={} map={}",
-                    session.sessionId(), agent.getId(), agent.getMapId());
+            long activeClouds = agent.getMapId() == AgentOpqDefinition.ENTRANCE_MAP
+                    ? activeReactors(agent).stream().filter(r -> r.getId() == 2_002_001).count() : -1L;
+            long cloudDrops = agent.getMapId() == AgentOpqDefinition.ENTRANCE_MAP
+                    ? AgentMapPerception.items(agent.getMap()).stream()
+                    .filter(drop -> !drop.isPickedUp() && drop.getItemId() == AgentOpqDefinition.CLOUD_PIECE)
+                    .count() : -1L;
+            log.warn("OPQ legal navigation route refreshed after local stall: session={} member={} map={}"
+                            + " role={} pos={} reactor={} activeClouds={} cloudDrops={} heldClouds={}",
+                    session.sessionId(), agent.getId(), agent.getMapId(), member.role(),
+                    agent.getPosition(), member.committedReactorObjectId(), activeClouds, cloudDrops,
+                    agent.getItemQuantity(AgentOpqDefinition.CLOUD_PIECE, false));
             return;
         }
         switch (session.phase()) {
@@ -123,7 +137,12 @@ final class AgentOpqCoordinator {
             session.transition(AgentOpqSession.Phase.ENTRANCE, nowMs);
         }
         if (leader.getMapId() == AgentOpqDefinition.CENTER_MAP
-                && session.phase() == AgentOpqSession.Phase.ENTRANCE) {
+                && session.phase() == AgentOpqSession.Phase.ENTRANCE
+                && session.members().stream()
+                .filter(member -> member.memberType() == AgentOpqMemberState.MemberType.AGENT)
+                .map(member -> character(member.characterId()))
+                .allMatch(member -> member != null
+                        && member.getMapId() == AgentOpqDefinition.CENTER_MAP)) {
             session.transition(AgentOpqSession.Phase.SPLIT_ROOMS, nowMs);
         }
         if (session.phase() == AgentOpqSession.Phase.SPLIT_ROOMS && session.rooms().allComplete()) {
@@ -162,26 +181,57 @@ final class AgentOpqCoordinator {
     private static void tickEntranceWorker(AgentOpqSession session, AgentRuntimeEntry entry,
                                            Character agent, AgentOpqMemberState member, long nowMs) {
         if (agent.getMapId() != AgentOpqDefinition.ENTRANCE_MAP) return;
-        if (collectReservedDrop(session, entry, agent, Set.of(AgentOpqDefinition.CLOUD_PIECE), nowMs)) return;
+        if (propertyInt(agent, "statusStg0") == 1) {
+            // Eak's authored clear script places the party at spawn 2 near the
+            // top exit. Continue through the map's in00 portal; do not map-warp.
+            enterAuthoredPortal(entry, agent, 4, nowMs, member);
+            return;
+        }
         List<Reactor> clouds = activeReactors(agent).stream().filter(r -> r.getId() == 2_002_001).toList();
         if (!clouds.isEmpty()) {
-            hitNearestLegalReactor(entry, agent, member, clouds, nowMs);
+            if (collectReservedDrop(session, entry, agent,
+                    Set.of(AgentOpqDefinition.CLOUD_PIECE), nowMs)) return;
+            List<Reactor> ownedClouds = entranceCloudsForMember(session, member, clouds);
+            if (ownedClouds.isEmpty()) {
+                ACTIONS.stop(entry);
+                member.clearReactor();
+                return;
+            }
+            hitNearestLegalReactor(entry, agent, member, ownedClouds, nowMs);
             return;
         }
         int held = agent.getItemQuantity(AgentOpqDefinition.CLOUD_PIECE, false);
         if (agent.getId() != session.eventLeaderId() && held > 0) {
-            if (!moveTo(entry, agent, ENTRANCE_HANDOFF, AgentOpqInteractionPolicy.ITEM_DROP_RADIUS_PX)) return;
+            Point handoffGround = ACTIONS.groundPoint(agent.getMap(), ENTRANCE_HANDOFF);
+            if (!moveTo(entry, agent, handoffGround, AgentOpqInteractionPolicy.ITEM_DROP_RADIUS_PX)) return;
             if (dropItem(entry, InventoryType.ETC,
                     AgentOpqDefinition.CLOUD_PIECE, (short) held)) member.deferUntil(nowMs + ACTION_RETRY_MS);
             return;
         }
         Character leader = character(session.eventLeaderId());
         if (agent.getId() == session.eventLeaderId()) {
+            if (entranceOfferingReady(agent)) {
+                // The authored drop reactor consumes this stack and spawns Eak. Do not
+                // let the leader's generic collector reclaim the offering while that
+                // server-side reactor check is pending.
+                ACTIONS.stop(entry);
+                return;
+            }
             if (collectGroundItem(entry, agent, AgentOpqDefinition.CLOUD_PIECE, false, nowMs)) return;
             if (held >= 20) {
-                if (!moveTo(entry, agent, ENTRANCE_EAK, AgentOpqInteractionPolicy.ITEM_DROP_RADIUS_PX)) return;
+                Point eakGround = ACTIONS.groundPoint(agent.getMap(), ENTRANCE_EAK);
+                if (!moveTo(entry, agent, eakGround, AgentOpqInteractionPolicy.ITEM_DROP_RADIUS_PX)) return;
                 if (dropItem(entry, InventoryType.ETC,
-                        AgentOpqDefinition.CLOUD_PIECE, (short) 20)) member.deferUntil(nowMs + ACTION_RETRY_MS);
+                        AgentOpqDefinition.CLOUD_PIECE, (short) 20)) {
+                    // Complete the hand-in in the same tick. Waiting here lets the generic
+                    // exclusive-item collector pick the offering back up on the next tick,
+                    // trapping the entrance in a drop/pickup loop even though the leader is
+                    // standing legally beside Eak.
+                    if (runNearbyNpc(entry, agent, AgentOpqDefinition.EAK_NPC)) {
+                        session.markProgress(nowMs);
+                    }
+                    member.deferUntil(nowMs + ACTION_RETRY_MS);
+                }
                 return;
             }
             boolean cloudDropRemaining = AgentMapPerception.items(agent.getMap()).stream()
@@ -192,6 +242,41 @@ final class AgentOpqCoordinator {
                 runNearbyNpc(entry, leader, AgentOpqDefinition.EAK_NPC);
             }
         }
+    }
+
+    private static boolean entranceOfferingReady(Character agent) {
+        Reactor eak = agent == null || agent.getMap() == null
+                ? null : agent.getMap().getReactorByName("eak");
+        if (eak == null) return false;
+        Point anchor = eak.getPosition();
+        int quantity = 0;
+        for (MapItem drop : AgentMapPerception.items(agent.getMap())) {
+            if (drop.isPickedUp() || drop.getItemId() != AgentOpqDefinition.CLOUD_PIECE
+                    || drop.getPosition().distanceSq(anchor) > 100L * 100L) continue;
+            quantity += drop.getItem() == null ? 1 : Math.max(1, drop.getItem().getQuantity());
+        }
+        return quantity >= 20;
+    }
+
+    static List<Reactor> entranceCloudsForMember(AgentOpqSession session,
+                                                  AgentOpqMemberState member,
+                                                  List<Reactor> clouds) {
+        if (session == null || member == null || clouds == null || clouds.isEmpty()) return List.of();
+        List<Integer> agents = session.members().stream()
+                .filter(candidate -> candidate.memberType() == AgentOpqMemberState.MemberType.AGENT)
+                .map(AgentOpqMemberState::characterId)
+                .sorted()
+                .toList();
+        int ordinal = agents.indexOf(member.characterId());
+        if (ordinal < 0 || agents.isEmpty()) return List.of();
+        return clouds.stream()
+                .filter(reactor -> entranceCloudOwner(reactor.getPosition(), agents.size()) == ordinal)
+                .toList();
+    }
+
+    static int entranceCloudOwner(Point position, int partySize) {
+        if (position == null || partySize <= 0) throw new IllegalArgumentException("valid entrance cloud required");
+        return Math.floorMod(31 * position.x + position.y, partySize);
     }
 
     private static void assignSplitRooms(AgentOpqSession session, long nowMs) {
@@ -362,6 +447,7 @@ final class AgentOpqCoordinator {
             dropItem(entry, InventoryType.ETC, lpItem, (short) 1);
             member.deferUntil(nowMs + ACTION_RETRY_MS); return;
         }
+        if (navigateLobbyLpAscent(entry, agent)) return;
         if (propertyInt(agent, "statusStg3") == 0 && agent.getId() == session.eventLeaderId()) {
             if (runNearbyNpc(entry, agent, AgentOpqDefinition.EAK_NPC)) member.deferUntil(nowMs + ACTION_RETRY_MS);
             return;
@@ -515,7 +601,11 @@ final class AgentOpqCoordinator {
             member.clearPortalObservation();
         }
         int row = wayUpRow(agent.getPosition().y);
-        if (row < 0 || row >= 16) return;
+        if (row < 0) {
+            navigateWayUpInitialAscent(entry, agent);
+            return;
+        }
+        if (row >= 16) return;
         int choice = session.wayUpRoute().choice(row);
         int portalId = 24 + row * 4 + choice;
         Point portal = ACTIONS.portalPosition(agent, portalId);
@@ -526,6 +616,56 @@ final class AgentOpqCoordinator {
         member.beginPortalObservation(agent.getMapId(), row, choice, agent.getPosition().y);
         if (OPQ.enterPortal(agent, portalId)) member.deferUntil(nowMs + ACTION_RETRY_MS);
         else member.clearPortalObservation();
+    }
+
+    private static boolean navigateLobbyLpAscent(AgentRuntimeEntry entry, Character agent) {
+        Point position = agent.getPosition();
+        Point target = lobbyAscentTarget(position);
+        if (target != null) {
+            ACTIONS.navigate(entry, target, true);
+            return true;
+        }
+        return false;
+    }
+
+    static Point lobbyAscentTarget(Point position) {
+        if (position == null || position.y <= -850) return null;
+        if (position.y > -540) {
+            boolean committedToFirstExit = position.x <= -1650
+                    || (Math.abs(position.x - LOBBY_FIRST_ROPE_BOTTOM.x) <= 34
+                    && position.y <= LOBBY_FIRST_ROPE_BOTTOM.y
+                    && position.y >= LOBBY_FIRST_ROPE_TOP.y);
+            return committedToFirstExit ? new Point(LOBBY_SECOND_ROPE_BOTTOM)
+                    : new Point(LOBBY_FIRST_ROPE_BOTTOM);
+        }
+        return new Point(LOBBY_UPPER_PLATFORM);
+    }
+
+    private static void navigateWayUpInitialAscent(AgentRuntimeEntry entry, Character agent) {
+        Point position = agent.getPosition();
+        int y = position.y;
+        Point target;
+        if (y > -540) target = new Point(-176, -551);
+        else if (y > -820) target = new Point(-173, -844);
+        else if (y > -1_590) {
+            // The long rope begins just beyond the right edge of this platform.
+            // Walk to the authored jump launch, then use ordinary jump physics so
+            // the airborne rope-grab service can attach; the graph cannot model
+            // this ground-to-rope gap as a direct climb edge.
+            if (Math.abs(position.x + 43) <= 18 && y <= -870) {
+                target = new Point(-43, -1_623);
+            } else if (position.x < -118) {
+                target = new Point(-112, -846);
+            } else {
+                ACTIONS.jump(entry, 1);
+                return;
+            }
+        }
+        else if (y > -1_840) target = Math.abs(position.x - 178) > 28
+                ? new Point(178, -1_664) : new Point(178, -1_862);
+        else target = Math.abs(position.x - 100) > 28
+                ? new Point(100, -1_866) : new Point(100, -2_022);
+        ACTIONS.navigate(entry, target, true);
     }
 
     private static void configureWayUpLevers(AgentOpqSession session, AgentRuntimeEntry entry,
@@ -600,12 +740,15 @@ final class AgentOpqCoordinator {
                 .filter(agent -> agent.getMapId() == AgentOpqDefinition.GARDEN_MAP)
                 .anyMatch(agent -> papaPixie(agent) != null);
         session.observePapaPixie(papaPixieAlive, nowMs);
-        for (AgentOpqMemberState agent : agents) agent.assign(
-                papaPixieAlive ? AgentOpqMemberState.Role.BOSS_ATTACKER
-                        : agent.characterId() == session.eventLeaderId()
-                        ? AgentOpqMemberState.Role.GARDEN_SEEDER
-                        : AgentOpqMemberState.Role.BOSS_ATTACKER,
-                null, 0);
+        for (int index = 0; index < agents.size(); index++) {
+            AgentOpqMemberState agent = agents.get(index);
+            agent.assign(papaPixieAlive
+                            ? papaPixieCombatRole(index, agents.size())
+                            : agent.characterId() == session.eventLeaderId()
+                            ? AgentOpqMemberState.Role.GARDEN_SEEDER
+                            : AgentOpqMemberState.Role.BOSS_ATTACKER,
+                    null, 0);
+        }
     }
 
     private static void tickGardenWorker(AgentOpqSession session, AgentRuntimeEntry entry,
@@ -672,17 +815,37 @@ final class AgentOpqCoordinator {
     private static void tickPapaPixieCombat(AgentOpqSession session, AgentRuntimeEntry entry,
                                              Character agent, AgentOpqMemberState member,
                                              Monster papaPixie, long nowMs) {
-        if (member.role() != AgentOpqMemberState.Role.BOSS_ATTACKER) {
+        if (member.role() != AgentOpqMemberState.Role.BOSS_ATTACKER
+                && member.role() != AgentOpqMemberState.Role.BOSS_SUMMON_CLEARER) {
             ACTIONS.stop(entry);
             member.assign(AgentOpqMemberState.Role.BOSS_ATTACKER, null, 0);
-            log.info("OPQ Papa Pixie combat scheduled: session={} member={}({}) position={} bossPosition={}",
-                    session.sessionId(), agent.getName(), agent.getId(),
-                    agent.getPosition(), papaPixie.getPosition());
         }
         if (member.observeBossCombat(papaPixie.getObjectId(), papaPixie.getHp())) {
             session.markProgress(nowMs);
         }
-        ACTIONS.grind(entry, Set.of(AgentOpqDefinition.PAPA_PIXIE));
+        boolean summonsAlive = ACTIONS.liveMonsterCount(
+                agent, AgentOpqDefinition.PAPA_PIXIE_SUMMONS) > 0;
+        Set<Integer> targets = papaPixieCombatTargets(member.role(), summonsAlive);
+        // Grind owns route traversal, reachable firing positions, range checks, and
+        // the authoritative attack transaction. OPQ must never stage or move an
+        // Agent directly to either Papa Pixie or one of his summons.
+        ACTIONS.grind(entry, targets);
+    }
+
+    static AgentOpqMemberState.Role papaPixieCombatRole(int ordinal, int partySize) {
+        if (ordinal < 0 || ordinal >= partySize || partySize <= 0) {
+            throw new IllegalArgumentException("valid Papa Pixie party ordinal required");
+        }
+        return ordinal >= Math.max(0, partySize - 2)
+                ? AgentOpqMemberState.Role.BOSS_SUMMON_CLEARER
+                : AgentOpqMemberState.Role.BOSS_ATTACKER;
+    }
+
+    static Set<Integer> papaPixieCombatTargets(AgentOpqMemberState.Role role,
+                                                boolean summonsAlive) {
+        return role == AgentOpqMemberState.Role.BOSS_SUMMON_CLEARER && summonsAlive
+                ? AgentOpqDefinition.PAPA_PIXIE_SUMMONS
+                : Set.of(AgentOpqDefinition.PAPA_PIXIE);
     }
 
     private static Monster papaPixie(Character agent) {
@@ -815,15 +978,78 @@ final class AgentOpqCoordinator {
             if (committed == null) { member.clearReactor(); return false; }
             member.commitReactor(agent.getMapId(), committed.getObjectId());
         }
-        if (!AgentOpqInteractionPolicy.mayHitReactor(agent.getMapId(), agent.getPosition(), ACTIONS.grounded(agent), committed)) {
-            Point target = ACTIONS.groundPoint(agent.getMap(), committed.getPosition());
-            if (target != null) ACTIONS.navigate(entry, target, true);
+        Point target = ACTIONS.groundPoint(agent.getMap(), committed.getPosition());
+        Point directGroundStrikePoint = findDirectGroundStrikePoint(agent, committed.getPosition());
+        boolean grounded = ACTIONS.grounded(agent);
+        boolean groundStrike = AgentOpqInteractionPolicy.mayHitReactor(
+                agent.getMapId(), agent.getPosition(), grounded,
+                committed.getMap().getId(), committed.getPosition())
+                || AgentOpqInteractionPolicy.mayHitReactorFromGround(
+                agent.getMapId(), agent.getPosition(), grounded,
+                committed.getMap().getId(), committed.getPosition(), target);
+        boolean jumpStrike = AgentOpqInteractionPolicy.mayHitReactorInAir(
+                agent.getMapId(), agent.getPosition(), grounded,
+                committed.getMap().getId(), committed.getPosition());
+        if (!groundStrike && !jumpStrike) {
+            Point approach = AgentOpqInteractionPolicy.legalGroundStrikePoint(
+                    committed.getPosition(), target) ? target : directGroundStrikePoint;
+            if (approach == null) approach = findReactorJumpLaunch(agent, committed.getPosition());
+            if (approach == null) {
+                ACTIONS.navigate(entry, committed.getPosition(), true);
+            } else if (!near(agent.getPosition(), approach, 18)) {
+                ACTIONS.navigate(entry, approach, true);
+            } else if (ACTIONS.grounded(agent)) {
+                int direction = Integer.compare(committed.getPosition().x, approach.x);
+                if (ACTIONS.jump(entry, direction)) member.deferUntil(nowMs + ACTION_RETRY_MS);
+            }
             return true;
         }
         ACTIONS.stop(entry);
         if (ACTIONS.hitReactor(agent, committed.getObjectId())) member.deferUntil(nowMs + ACTION_RETRY_MS);
         if (!committed.isAlive() || !committed.isActive()) member.clearReactor();
         return true;
+    }
+
+    private static Point findDirectGroundStrikePoint(Character agent, Point reactorPosition) {
+        if (agent == null || agent.getMap() == null || reactorPosition == null) return null;
+        Point best = null;
+        long bestDistanceSq = Long.MAX_VALUE;
+        for (int offsetX = -AgentOpqInteractionPolicy.REACTOR_HORIZONTAL_REACH_PX;
+             offsetX <= AgentOpqInteractionPolicy.REACTOR_HORIZONTAL_REACH_PX; offsetX += 5) {
+            Point probe = new Point(reactorPosition.x + offsetX,
+                    reactorPosition.y - AgentOpqInteractionPolicy.REACTOR_VERTICAL_TOLERANCE_PX);
+            Point candidate = ACTIONS.groundPoint(agent.getMap(), probe);
+            if (!AgentOpqInteractionPolicy.legalDirectGroundStrikePoint(reactorPosition, candidate)) continue;
+            long dx = candidate.x - reactorPosition.x;
+            long dy = candidate.y - reactorPosition.y;
+            long distanceSq = dx * dx + dy * dy;
+            if (distanceSq < bestDistanceSq) {
+                best = candidate;
+                bestDistanceSq = distanceSq;
+            }
+        }
+        return best == null ? null : new Point(best);
+    }
+
+    private static Point findReactorJumpLaunch(Character agent, Point reactorPosition) {
+        if (agent == null || agent.getMap() == null || reactorPosition == null) return null;
+        Point best = null;
+        long bestDistanceSq = Long.MAX_VALUE;
+        for (int offsetX = -AgentOpqInteractionPolicy.REACTOR_JUMP_LAUNCH_REACH_PX;
+             offsetX <= AgentOpqInteractionPolicy.REACTOR_JUMP_LAUNCH_REACH_PX; offsetX += 5) {
+            Point probe = new Point(reactorPosition.x + offsetX,
+                    reactorPosition.y - AgentOpqInteractionPolicy.REACTOR_JUMP_LAUNCH_MAX_OFFSET_Y_PX);
+            Point candidate = ACTIONS.groundPoint(agent.getMap(), probe);
+            if (!AgentOpqInteractionPolicy.legalJumpLaunchPoint(reactorPosition, candidate)) continue;
+            long dx = candidate.x - reactorPosition.x;
+            long dy = candidate.y - reactorPosition.y;
+            long distanceSq = dx * dx + dy * dy;
+            if (distanceSq < bestDistanceSq) {
+                best = candidate;
+                bestDistanceSq = distanceSq;
+            }
+        }
+        return best == null ? null : new Point(best);
     }
 
     private static boolean enterAuthoredPortal(AgentRuntimeEntry entry, Character agent, int portalId,
@@ -883,8 +1109,12 @@ final class AgentOpqCoordinator {
         if (agent == null || type == null) return false;
         var inventory = agent.getInventory(type);
         var item = inventory == null ? null : inventory.findById(itemId);
+        boolean opqOwned = AgentOpqDefinition.EXCLUSIVE_ITEMS.contains(itemId)
+                && AgentOpqSessionRegistry.active(agent.getId())
+                && AgentOpqSessionRegistry.canLootExclusive(agent, itemId);
         if (item == null || item.getQuantity() <= 0
-                || !AgentInventoryReservationRuntime.mayConsume(entry, item, System.currentTimeMillis())) return false;
+                || (!opqOwned && !AgentInventoryReservationRuntime.mayConsume(
+                entry, item, System.currentTimeMillis()))) return false;
         short amount = quantity <= 0 ? item.getQuantity() : (short) Math.min(quantity, item.getQuantity());
         AgentInventoryGatewayRuntime.inventory().dropItem(agent, type, item.getPosition(), amount);
         return true;

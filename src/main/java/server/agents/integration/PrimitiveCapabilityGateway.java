@@ -121,6 +121,11 @@ public interface PrimitiveCapabilityGateway {
 
     void navigate(AgentRuntimeEntry entry, Point destination, boolean precise);
 
+    /** Starts one ordinary, physics-simulated ground jump in the requested direction. */
+    default boolean jump(AgentRuntimeEntry entry, int direction) {
+        return false;
+    }
+
     void grind(AgentRuntimeEntry entry, Set<Integer> allowedMobIds);
 
     default void grind(AgentRuntimeEntry entry,
@@ -208,6 +213,11 @@ public interface PrimitiveCapabilityGateway {
     boolean hitReactor(Character agent, int objectId);
 
     boolean lootNearby(Character agent, Set<Integer> itemIds);
+
+    /** Picks one specific nearby drop; callers own approach and assignment policy. */
+    default boolean lootItem(Character agent, int objectId, int maximumDistancePx) {
+        return false;
+    }
 
     boolean sitChair(Character agent, int itemId);
 

@@ -85,11 +85,12 @@ class AgentFieldObservationFixtureServiceTest {
         cape.setUpgradeSlots(5);
 
         AgentFieldObservationFixtureService.applySuccessfulScrollEffects(
-                shoes, Map.of("Speed", 3, "success", 10), 5);
+                shoes, Map.of("Speed", 1, "Jump", 5, "success", 100), 5);
         AgentFieldObservationFixtureService.applySuccessfulScrollEffects(
                 cape, Map.of("STR", 3, "success", 10), 5);
 
-        assertEquals(15, shoes.getSpeed());
+        assertEquals(5, shoes.getSpeed());
+        assertEquals(25, shoes.getJump());
         assertEquals(15, cape.getStr());
         assertEquals(0, shoes.getUpgradeSlots());
         assertEquals(0, cape.getUpgradeSlots());

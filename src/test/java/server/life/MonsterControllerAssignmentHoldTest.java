@@ -75,6 +75,26 @@ class MonsterControllerAssignmentHoldTest {
     }
 
     @Test
+    void serverBossPinRejectsOrdinaryClientControllerUntilReleased() {
+        MonsterStats stats = new MonsterStats();
+        stats.setHp(100);
+        TestMonster monster = new TestMonster(100100, stats);
+        MapleMap map = mock(MapleMap.class);
+        monster.setMap(map);
+        Character candidate = controllerOn(map);
+
+        monster.pinServerBossController();
+        monster.aggroSwitchController(candidate, true);
+
+        assertNull(monster.getController());
+
+        monster.clearBossControllerPin();
+        monster.aggroSwitchController(candidate, true);
+
+        assertSame(candidate, monster.getController());
+    }
+
+    @Test
     void syntheticReactionSuspendsExistingControllerAndBlocksReassignment() {
         MonsterStats stats = new MonsterStats();
         stats.setHp(100);

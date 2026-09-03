@@ -119,6 +119,7 @@ function setup(level, lobbyid) {
     var eim = em.newInstance("Balrog" + lobbyid);
     eim.setProperty("level", level);
     eim.setProperty("boss", "0");
+    eim.setProperty("balrogRewardOpenedAt", "0");
 
     eim.getInstanceMap(105100400).resetPQ(level);
     eim.getInstanceMap(105100401).resetPQ(level);
@@ -161,11 +162,16 @@ function playerLeft(eim, player) {
 
 function changedMap(eim, player, mapid) {
     if (mapid < minMapId || mapid > maxMapId) {
-        if (eim.isExpeditionTeamLackingNow(true, minPlayers, player)) {
+        if (eim.isEventCleared()) {
+            eim.unregisterPlayer(player);
+        } else if (eim.isExpeditionTeamLackingNow(true, minPlayers, player)) {
             eim.unregisterPlayer(player);
             end(eim);
         } else {
             eim.unregisterPlayer(player);
+        }
+        if (eim.getPlayers().isEmpty()) {
+            eim.dispose();
         }
     }
 }

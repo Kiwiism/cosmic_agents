@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /** KPQ vocabulary and lobby geometry; behavior remains owned by the generic lobby runtime. */
-final class AgentKpqLobbyProfile {
+public final class AgentKpqLobbyProfile {
     private static final AgentPartyQuestLobbyProfile PROFILE = new AgentPartyQuestLobbyProfile(
             "kpq",
             AgentKpqDefinition.RECRUIT_MAP,
@@ -27,7 +27,7 @@ final class AgentKpqLobbyProfile {
     private AgentKpqLobbyProfile() {
     }
 
-    static AgentPartyQuestLobbyProfile profile() {
+    public static AgentPartyQuestLobbyProfile profile() {
         return PROFILE;
     }
 

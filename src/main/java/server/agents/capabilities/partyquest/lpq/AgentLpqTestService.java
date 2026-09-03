@@ -14,6 +14,7 @@ import server.agents.capabilities.partyquest.lobby.AgentPartyQuestLobbyReconcile
 import server.agents.capabilities.partyquest.lobby.AgentPartyQuestLobbyRegistry;
 import server.agents.capabilities.partyquest.lobby.AgentPartyQuestLobbyRuntime;
 import server.agents.capabilities.partyquest.lobby.AgentPartyQuestLobbySession;
+import server.agents.capabilities.partyquest.lobby.AgentPartyQuestTestQueueRuntime;
 import server.agents.commands.AgentSpawnCommandExecutor;
 import server.agents.field.AgentLpqTestFixtureService;
 import server.agents.integration.AgentCharacterGatewayRuntime;
@@ -220,21 +221,36 @@ public final class AgentLpqTestService {
                     throw new IllegalStateException(name + " could not release its activity");
                 }
                 long now = System.currentTimeMillis();
-                AgentPartyQuestEngagementRegistry.addAndIndexMember(run.engagement, launched.getId(),
-                        AgentPartyQuestEngagement.MemberType.AGENT, now);
-                if (run.flow != Flow.HUMAN_LEADER) joinOwnedParty(run, launched);
-                AgentPartyQuestLobbyRegistry.addAndIndexMember(run.lobby, launched.getId(),
-                        AgentPartyQuestLobbySession.MemberType.AGENT,
-                        run.flow == Flow.HUMAN_LEADER ? AgentPartyQuestLobbySession.MemberRole.LOOKING_FOR_PARTY
-                                : launched.getId() == run.eventLeaderId
-                                ? AgentPartyQuestLobbySession.MemberRole.RECRUITING_LEADER
-                                : AgentPartyQuestLobbySession.MemberRole.JOINED_MEMBER, now);
-                if (run.lobby.coordinatorAgentId() == 0) run.lobby.setCoordinatorAgentId(launched.getId());
                 log.info("LPQ fixture launched: name={} career={} level={}", name, prepared.career(), prepared.level());
+                int cohortSize = run.flow == Flow.HUMAN_LEADER ? 6
+                        : run.flow == Flow.AGENTS_ONLY ? 6 : 5;
+                var queued = AgentPartyQuestTestQueueRuntime.enqueue(
+                        AgentLpqLobbyProfile.profile(), entry, launched, cohortSize, now,
+                        (queuedAgent, admittedAtMs) -> admitQueued(run, queuedAgent, admittedAtMs));
+                if (queued.status() != server.agents.runtime.activity.session.AgentActivityAdmissionResult.Status.ACCEPTED) {
+                    throw new IllegalStateException(queued.reason());
+                }
             } catch (Exception failure) {
                 if (launched != null) disconnect(launched.getId());
                 failRun(run, "Could not launch " + name + ": " + failure.getMessage());
             }
+        }
+    }
+
+    private static void admitQueued(Run run, Character agent, long nowMs) {
+        synchronized (run.lock) {
+            if (RUNS.get(run.operator.getId()) != run) {
+                throw new IllegalStateException("LPQ test is no longer active");
+            }
+            AgentPartyQuestEngagementRegistry.addAndIndexMember(
+                    run.engagement, agent.getId(), AgentPartyQuestEngagement.MemberType.AGENT, nowMs);
+            if (AgentPartyGatewayRuntime.party().snapshot(agent) == null) joinOwnedParty(run, agent);
+            AgentPartyQuestLobbyRegistry.addAndIndexMember(
+                    run.lobby, agent.getId(), AgentPartyQuestLobbySession.MemberType.AGENT,
+                    agent.getId() == run.eventLeaderId
+                            ? AgentPartyQuestLobbySession.MemberRole.RECRUITING_LEADER
+                            : AgentPartyQuestLobbySession.MemberRole.JOINED_MEMBER, nowMs);
+            if (run.lobby.coordinatorAgentId() == 0) run.lobby.setCoordinatorAgentId(agent.getId());
         }
     }
 
@@ -552,8 +568,7 @@ public final class AgentLpqTestService {
 
     private static void returnObserver(Run run) {
         if (!run.spectating) return;
-        if (run.operator.getClient() == null
-                || run.operator.getClient().getPlayer() != run.operator) {
+        if (!AgentClientGatewayRuntime.clients().isActiveSession(run.operator)) {
             run.spectating = false;
             run.autoFollow = false;
             run.followId = 0;

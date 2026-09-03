@@ -99,6 +99,8 @@ class EasyBalrogEncounterServiceTest {
         assertNotNull(release.get());
         Monster body = mob(spawned, EasyBalrogEncounterService.BODY_ID);
         Monster initial = mob(spawned, EasyBalrogEncounterService.INITIAL_CLAW_ID);
+        assertTrue(body.dropsDisabled());
+        assertTrue(initial.dropsDisabled());
         assertTrue(body.isFake());
         EasyBalrogEncounterService.HpBarSnapshot initialGauge =
                 EasyBalrogEncounterService.hpBarSnapshot(initial).orElseThrow();

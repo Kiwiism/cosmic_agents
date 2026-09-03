@@ -17,6 +17,7 @@ import server.agents.capabilities.movement.AgentMovementProfile;
 import server.life.Monster;
 
 class AgentCombatRangePolicyTest {
+
     @Test
     void shouldAcceptBasicTargetsWithinLegacyHorizontalAndVerticalRange() {
         assertTrue(AgentCombatRangePolicy.isBasicAttackInRange(new Point(100, 200), new Point(170, 160)));

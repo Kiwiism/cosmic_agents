@@ -2,6 +2,7 @@ package server.agents.integration;
 
 import client.Character;
 import client.Client;
+import server.ScrollTransactionService;
 
 import java.sql.SQLException;
 
@@ -17,6 +18,8 @@ public interface AgentClientGateway {
 
     boolean hasClient(Character character);
 
+    boolean isActiveSession(Character character);
+
     @AgentGatewayAffinity(
             value = AgentGatewayThreadAffinity.READ_ONLY_SNAPSHOT,
             rationale = "Client type is immutable for the lifetime of a live Agent or player session.")
@@ -25,6 +28,10 @@ public interface AgentClientGateway {
     boolean tryAcquire(Character character);
 
     void release(Character character);
+
+    ScrollTransactionService.Result applyScroll(
+            Character character, short scrollPosition, short equipmentPosition,
+            byte legendarySpirit);
 
     int world(Character character);
 

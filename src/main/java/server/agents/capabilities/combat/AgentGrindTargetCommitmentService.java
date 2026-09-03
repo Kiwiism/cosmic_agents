@@ -48,14 +48,14 @@ public final class AgentGrindTargetCommitmentService {
         commitTarget(entry, target, nowMs);
         AgentGrindWanderStateRuntime.clearWanderDirection(entry);
         AgentPatrolStateRuntime.clearPatrolWanderTarget(entry);
-        Point targetPosition = target.getPosition();
+        Point targetPosition = AgentCombatTargetPositionPolicy.approachPoint(agent, target);
 
         Monster rangedPriorityTarget = alreadyCommitted ? null : hooks.rangedPriorityTargetSelector().select(
                 entry, agent, agentPosition, target);
         if (rangedPriorityTarget != null && rangedPriorityTarget != target) {
             target = rangedPriorityTarget;
             commitTarget(entry, rangedPriorityTarget, nowMs);
-            targetPosition = target.getPosition();
+            targetPosition = AgentCombatTargetPositionPolicy.approachPoint(agent, target);
             attackPlan = null;
         }
 
@@ -65,7 +65,7 @@ public final class AgentGrindTargetCommitmentService {
         if (closerThreat != null && closerThreat != target) {
             target = closerThreat;
             commitTarget(entry, closerThreat, nowMs);
-            targetPosition = target.getPosition();
+            targetPosition = AgentCombatTargetPositionPolicy.approachPoint(agent, target);
             attackPlan = null;
         }
 

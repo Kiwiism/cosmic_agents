@@ -60,6 +60,9 @@ public final class AgentLpqSessionRegistry {
                 || character.getEventInstance() != session.eventInstance()
                 || !AgentLpqDefinition.isEventMap(character.getMapId())) return false;
         int stage = AgentLpqDefinition.stageNumber(character.getMapId());
+        if (itemId == AgentLpqDefinition.BOSS_KEY) {
+            return character.getId() == session.eventLeaderId();
+        }
         if (itemId == AgentLpqDefinition.PASS && session.couponRegrouping(stage)) {
             return character.getId() == session.eventLeaderId();
         }

@@ -321,6 +321,7 @@ final class AgentFieldObservationFixtureService {
                 case "MAD" -> equip.setMatk(add(equip.getMatk(), value));
                 case "ACC" -> equip.setAcc(add(equip.getAcc(), value));
                 case "Speed" -> equip.setSpeed(add(equip.getSpeed(), value));
+                case "Jump" -> equip.setJump(add(equip.getJump(), value));
                 default -> { }
             }
         }

@@ -110,7 +110,7 @@ public final class AgentPartyQuestEngagement {
     public synchronized void finishRun(boolean success, String reason, long nowMs) {
         requireState(State.ACTIVE_EVENT);
         activeSessionId = "";
-        if (mode == Mode.TEST_OBSERVATION) {
+        if (mode == Mode.TEST_OBSERVATION || success) {
             transition(State.POST_RUN_HOLD, nowMs, reason);
         } else {
             transition(State.RECOVERING, nowMs, reason);

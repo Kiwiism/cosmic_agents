@@ -8,7 +8,7 @@ public final class AgentOpqMemberState {
     public enum Role {
         LEADER, ENTRANCE_COLLECTOR, SEALED_PLATFORM, WALKWAY_COLLECTOR,
         STORAGE_RUNNER, LOBBY_RUNNER, LOUNGE_RUNNER, WAY_UP_RUNNER,
-        PIECE_CARRIER, GARDEN_SEEDER, BOSS_ATTACKER, IDLE
+        PIECE_CARRIER, GARDEN_SEEDER, BOSS_ATTACKER, BOSS_SUMMON_CLEARER, IDLE
     }
     private final int characterId;
     private final MemberType memberType;

@@ -161,6 +161,7 @@ public final class EasyBalrogEncounterService {
                 throw new IllegalStateException("Missing Easy Balrog mob " + mobId);
             }
             monster.suppressRevives();
+            monster.disableDrops();
             monster.addListener(new EncounterMonsterListener(this, role, monster));
             return monster;
         }
@@ -238,6 +239,7 @@ public final class EasyBalrogEncounterService {
                     Monster helper = monsterFactory.apply(helperId);
                     if (helper != null) {
                         helper.suppressRevives();
+                        helper.disableDrops();
                         helpers.add(helper);
                         map.spawnMonsterOnGroundBelow(helper, position);
                     }

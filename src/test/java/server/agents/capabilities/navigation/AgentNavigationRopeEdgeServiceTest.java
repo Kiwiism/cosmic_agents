@@ -80,8 +80,12 @@ class AgentNavigationRopeEdgeServiceTest {
 
         assertTrue(AgentNavigationRopeEdgeService.isTopRopeJumpExitReady(
                 rope, new Point(300, firstClimbableY + AgentMovementKinematicsService.climbStepPerTick() + 2), jumpExit));
+        assertTrue(AgentNavigationRopeEdgeService.isTopRopeJumpExitReady(
+                rope, new Point(300, firstClimbableY - AgentMovementKinematicsService.climbStepPerTick() - 2), jumpExit));
         assertFalse(AgentNavigationRopeEdgeService.isTopRopeJumpExitReady(
                 rope, new Point(300, firstClimbableY + AgentMovementKinematicsService.climbStepPerTick() + 3), jumpExit));
+        assertFalse(AgentNavigationRopeEdgeService.isTopRopeJumpExitReady(
+                rope, new Point(300, firstClimbableY - AgentMovementKinematicsService.climbStepPerTick() - 3), jumpExit));
         assertFalse(AgentNavigationRopeEdgeService.isTopRopeJumpExitReady(
                 rope, new Point(301, firstClimbableY), jumpExit));
         assertFalse(AgentNavigationRopeEdgeService.isTopRopeJumpExitReady(

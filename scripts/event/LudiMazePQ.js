@@ -227,7 +227,10 @@ function clearPQ(eim) {
     eim.stopEventTimer();
     eim.setEventCleared();
 
-    eim.warpEventTeam(809050016);
+    // Room 16 is wider than the reward map. Preserve the normal scripted map
+    // transition, but land every participant at the reward map's authored spawn
+    // instead of carrying a Room 16 x-coordinate outside its only foothold.
+    eim.warpEventTeamToMapSpawnPoint(809050016, 0);
 }
 
 function monsterKilled(mob, eim) {}

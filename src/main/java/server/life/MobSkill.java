@@ -327,8 +327,8 @@ public class MobSkill {
                 for (Integer mobId : summons.subList(0, summonLimit)) {
                     Monster toSpawn = LifeFactory.getMonster(mobId);
                     if (toSpawn != null) {
-                        if (bossRushMap) {
-                            toSpawn.disableDrops();  // no littering on BRPQ pls
+                        if (bossRushMap || monster.dropsDisabled()) {
+                            toSpawn.disableDrops();  // Suppressed encounters should not leak summon drops.
                         }
                         toSpawn.setPosition(monster.getPosition());
                         int ypos, xpos;

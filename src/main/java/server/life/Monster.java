@@ -96,6 +96,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class Monster extends AbstractLoadedLife {
     private static final Logger log = LoggerFactory.getLogger(Monster.class);
+    private static final int SERVER_BOSS_CONTROLLER_PIN = Integer.MIN_VALUE;
 
     private ChangeableStats ostats = null;  //unused, v83 WZs offers no support for changeable stats.
     private MonsterStats stats;
@@ -1058,6 +1059,11 @@ public class Monster extends AbstractLoadedLife {
 
     public void pinBossController(Character controller) {
         pinnedBossControllerId = controller == null ? 0 : controller.getId();
+    }
+
+    /** Prevents ordinary client-controller selection while the server owns boss actions. */
+    public void pinServerBossController() {
+        pinnedBossControllerId = SERVER_BOSS_CONTROLLER_PIN;
     }
 
     public void clearBossControllerPin() {

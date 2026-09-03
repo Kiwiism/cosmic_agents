@@ -19,11 +19,19 @@ class AgentCombatHitboxIntersectionTest {
     }
 
     @Test
-    void shouldStillAcceptMonsterPositionInsideHitBoxWhenBoundsMiss() {
+    void shouldRejectDetachedMonsterOriginWhenVisibleBoundsMiss() {
+        Rectangle hitBox = new Rectangle(100, 100, 40, 40);
+
+        assertFalse(AgentCombatHitboxIntersection.intersectsMonsterBounds(
+                hitBox, new Rectangle(200, 200, 30, 30), new Point(120, 120)));
+    }
+
+    @Test
+    void shouldKeepOriginFallbackWhenOrdinaryBoundsStraddleOrigin() {
         Rectangle hitBox = new Rectangle(100, 100, 40, 40);
 
         assertTrue(AgentCombatHitboxIntersection.intersectsMonsterBounds(
-                hitBox, new Rectangle(200, 200, 30, 30), new Point(120, 120)));
+                hitBox, new Rectangle(110, 200, 30, 30), new Point(120, 120)));
     }
 
     @Test

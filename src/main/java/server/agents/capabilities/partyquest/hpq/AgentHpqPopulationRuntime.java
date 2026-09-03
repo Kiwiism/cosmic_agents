@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import server.agents.capabilities.partyquest.AgentPartyQuestEngagement;
 import server.agents.capabilities.partyquest.AgentPartyQuestEngagementRegistry;
 import server.agents.capabilities.partyquest.AgentPartyQuestLifecycleRuntime;
+import server.agents.capabilities.partyquest.AgentPartyQuestRuntime;
 import server.agents.capabilities.partyquest.lobby.AgentPartyQuestCandidateScope;
 import server.agents.capabilities.partyquest.lobby.AgentPartyQuestLobbyRuntime;
 import server.agents.capabilities.partyquest.lobby.AgentPartyQuestLobbySession;
@@ -114,14 +115,14 @@ public final class AgentHpqPopulationRuntime {
     }
 
     private static boolean admitParty(ChannelKey channel, List<Character> members, long nowMs) {
-        Character leader = members.getFirst();
-        long seed = nowMs ^ leader.getId();
-        AgentPartyQuestEngagement engagement = new AgentPartyQuestEngagement(
-                "hpq", AgentPartyQuestEngagement.Mode.BACKGROUND_POPULATION,
-                seed, leader.getId(), members.size(), nowMs);
-        AgentPartyQuestLobbySession lobby = null;
+        List<Integer> queued = new ArrayList<>();
         try {
-            AgentPartyQuestEngagementRegistry.register(engagement);
+            MapleMap henesys = AgentMapGatewayRuntime.map().resolveMap(
+                    channel.world(), channel.channel(), AgentHpqDefinition.RECRUIT_MAP);
+            if (henesys == null) throw new IllegalStateException("HPQ recruit map is unavailable");
+            var portal = henesys.getRandomPlayerSpawnpoint();
+            Point spawn = portal == null ? new Point(0, 0) : portal.getPosition();
+            int index = 0;
             for (Character member : members) {
                 AgentRuntimeEntry entry = AgentRuntimeRegistry.findByAgentCharacterId(member.getId());
                 if (entry == null || !AgentActivityBootstrap.admission().prepare(
@@ -130,64 +131,25 @@ public final class AgentHpqPopulationRuntime {
                     throw new IllegalStateException(member.getName()
                             + " could not release its current activity");
                 }
-                AgentPartyQuestEngagementRegistry.addAndIndexMember(
-                        engagement, member.getId(),
-                        AgentPartyQuestEngagement.MemberType.AGENT, nowMs);
-            }
-            if (!AgentPartyGatewayRuntime.party().createAgentParty(leader)) {
-                throw new IllegalStateException("could not create background HPQ party");
-            }
-            var party = AgentPartyGatewayRuntime.party().snapshot(leader);
-            if (party == null) throw new IllegalStateException("created HPQ party has no snapshot");
-            for (Character member : members.subList(1, members.size())) {
-                if (!AgentPartyGatewayRuntime.party().joinAgentParty(member, party.id())) {
-                    throw new IllegalStateException(member.getName()
-                            + " could not join background HPQ party");
-                }
-                AgentPartyGatewayRuntime.party().publishAgentOnline(member, party.id());
-            }
-            MapleMap henesys = AgentMapGatewayRuntime.map().resolveMap(
-                    channel.world(), channel.channel(), AgentHpqDefinition.RECRUIT_MAP);
-            if (henesys == null) throw new IllegalStateException("HPQ recruit map is unavailable");
-            var portal = henesys.getRandomPlayerSpawnpoint();
-            Point spawn = portal == null ? new Point(0, 0) : portal.getPosition();
-            for (int index = 0; index < members.size(); index++) {
                 AgentMapGatewayRuntime.map().changeMapNear(
-                        members.get(index), henesys, new Point(spawn.x + index * 18, spawn.y));
+                        member, henesys, new Point(spawn.x + index * 18, spawn.y));
+                var result = AgentPartyQuestRuntime.requireSystem("hpq").requestEntry(
+                        entry, member, "hpq", members.size(), 1, nowMs);
+                if (result.status()
+                        != server.agents.runtime.activity.session.AgentActivityAdmissionResult.Status.ACCEPTED) {
+                    throw new IllegalStateException(member.getName() + " could not queue: " + result.reason());
+                }
+                queued.add(member.getId());
+                index++;
             }
-            lobby = new AgentPartyQuestLobbySession(
-                    engagement.engagementId(), AgentHpqLobbyProfile.profile(), seed,
-                    leader.getId(), members.size(), AgentPartyQuestCandidateScope.OWNER_ONLY, nowMs);
-            for (Character member : members) {
-                lobby.addMember(member.getId(), AgentPartyQuestLobbySession.MemberType.AGENT,
-                        member == leader
-                                ? AgentPartyQuestLobbySession.MemberRole.RECRUITING_LEADER
-                                : AgentPartyQuestLobbySession.MemberRole.JOINED_MEMBER, nowMs);
-            }
-            lobby.setCoordinatorAgentId(leader.getId());
-            lobby.reconcileParty(party.id(), leader.getId(),
-                    members.stream().map(Character::getId)
-                            .collect(java.util.stream.Collectors.toSet()), nowMs);
-            lobby.markReady(nowMs);
-            engagement.beginLobby(lobby.lobbyId(), nowMs);
-            engagement.lobbyReady(nowMs);
-            AgentPartyQuestLobbyRuntime.register(lobby, nowMs);
-            AgentHpqAdmissionService.AdmissionResult result = AgentHpqAdmissionService.admitFromLobby(
-                    engagement, lobby, leader, leader, members, seed, nowMs,
-                    AgentHpqSession.Mode.BACKGROUND_POPULATION);
-            if (!result.success()) throw new IllegalStateException(result.message());
-            log.info("Background HPQ admitted: session={} world={} channel={} members={}",
-                    result.session().sessionId(), channel.world(), channel.channel(),
+            log.info("Background HPQ queued: world={} channel={} members={}",
+                    channel.world(), channel.channel(),
                     members.stream().map(Character::getName).toList());
             return true;
         } catch (RuntimeException failure) {
-            if (lobby != null) AgentPartyQuestLobbyRuntime.unregister(lobby.lobbyId(), nowMs);
-            if (AgentPartyQuestEngagementRegistry.byId(engagement.engagementId()) == engagement) {
-                engagement.beginRecovery(failure.getMessage(), nowMs);
-                AgentPartyQuestLifecycleRuntime.recover(engagement, nowMs);
-            }
-            cleanupParty(members, leader);
-            log.warn("Background HPQ admission rolled back for members {}",
+            queued.forEach(id -> AgentPartyQuestRuntime.forceStop(
+                    id, "background HPQ queue rolled back", nowMs));
+            log.warn("Background HPQ queue rolled back for members {}",
                     members.stream().map(Character::getName).toList(), failure);
             return false;
         }

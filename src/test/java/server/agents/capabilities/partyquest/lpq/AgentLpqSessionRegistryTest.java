@@ -122,6 +122,8 @@ class AgentLpqSessionRegistryTest {
             assertFalse(AgentLpqSessionRegistry.canLootExclusive(
                     member, AgentLpqDefinition.PASS));
             assertTrue(AgentLpqSessionRegistry.canLootExclusive(
+                    leader, AgentLpqDefinition.BOSS_KEY));
+            assertFalse(AgentLpqSessionRegistry.canLootExclusive(
                     member, AgentLpqDefinition.BOSS_KEY));
         } finally {
             AgentLpqSessionRegistry.remove(session);

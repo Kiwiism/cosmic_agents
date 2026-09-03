@@ -63,6 +63,11 @@ public final class AgentCombatAttackRuntime {
                     AgentAttackTransactionResult.Reason.TARGET_NOT_IN_AGENT_MAP,
                     bot.getMapId(), attackPlan.skillId);
         }
+        if (!AgentCombatRangePolicy.isTargetInAttackRange(attackPlan, bot, primaryTarget)) {
+            return AgentAttackTransactionResult.rejected(
+                    AgentAttackTransactionResult.Reason.TARGET_OUT_OF_RANGE,
+                    bot.getMapId(), attackPlan.skillId);
+        }
 
         int targetLimit = AgentAttackPacketPolicy.targetCount(attackPlan.targets.size());
         List<Monster> authoritativeTargets = authoritativeTargets(attackPlan.targets, targetLimit, attackMap);

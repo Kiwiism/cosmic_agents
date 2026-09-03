@@ -12,7 +12,10 @@ public final class AgentOpqRuntime {
 
     public static boolean tick(AgentRuntimeEntry entry, Character agent, long nowMs) {
         AgentOpqSession session = AgentOpqSessionRegistry.forMember(agent.getId());
-        if (session == null) return AgentPartyQuestLifecycleRuntime.tick(agent.getId(), nowMs);
+        if (session == null) {
+            AgentOpqLobbyAdmissionRuntime.tick(agent.getId(), nowMs);
+            return AgentPartyQuestLifecycleRuntime.tick(agent.getId(), nowMs);
+        }
         if (session.paused()) return true;
         AgentOpqCoordinator.tickMember(session, entry, agent, nowMs);
         if (session.claimExecutionTick(agent.getId(), nowMs, COORDINATOR_LEASE_MS)) {
@@ -23,7 +26,10 @@ public final class AgentOpqRuntime {
 
     public static boolean requestStop(int id, String reason, long nowMs) {
         AgentOpqSession session = AgentOpqSessionRegistry.forMember(id);
-        if (session == null) return AgentPartyQuestLifecycleRuntime.requestStop(id, reason, nowMs);
+        if (session == null) {
+            AgentOpqLobbyAdmissionRuntime.releaseTracking(id);
+            return AgentPartyQuestLifecycleRuntime.requestStop(id, reason, nowMs);
+        }
         if (!session.terminal()) return false;
         AgentOpqTerminationService.release(session, reason, nowMs, false);
         return true;
@@ -31,7 +37,10 @@ public final class AgentOpqRuntime {
 
     public static void forceStop(int id, String reason, long nowMs) {
         AgentOpqSession session = AgentOpqSessionRegistry.forMember(id);
-        if (session == null) AgentPartyQuestLifecycleRuntime.forceStop(id, reason, nowMs);
+        if (session == null) {
+            AgentOpqLobbyAdmissionRuntime.releaseTracking(id);
+            AgentPartyQuestLifecycleRuntime.forceStop(id, reason, nowMs);
+        }
         else AgentOpqTerminationService.release(session, reason, nowMs, true);
     }
 

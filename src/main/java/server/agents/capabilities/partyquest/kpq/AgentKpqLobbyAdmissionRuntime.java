@@ -8,6 +8,7 @@ import server.agents.capabilities.partyquest.lobby.AgentPartyQuestLobbyReconcile
 import server.agents.capabilities.partyquest.lobby.AgentPartyQuestLobbyRegistry;
 import server.agents.capabilities.partyquest.lobby.AgentPartyQuestLobbyRuntime;
 import server.agents.capabilities.partyquest.lobby.AgentPartyQuestLobbySession;
+import server.agents.capabilities.partyquest.lobby.AgentPartyQuestReadyGate;
 import server.agents.integration.AgentCharacterGatewayRuntime;
 import server.agents.integration.AgentClientGatewayRuntime;
 import server.agents.integration.AgentPartyGatewayRuntime;
@@ -130,6 +131,8 @@ public final class AgentKpqLobbyAdmissionRuntime {
             return true;
         }
 
+        if (!AgentPartyQuestReadyGate.ready(
+                lobby.lobbyId(), lobby.rosterRevision(), engagement.seed(), nowMs)) return true;
         lobby.markReady(nowMs);
         engagement.lobbyReady(nowMs);
         boolean agentLeader = AgentRuntimeRegistry.findByAgentCharacterId(leader.getId()) != null;
@@ -139,7 +142,10 @@ public final class AgentKpqLobbyAdmissionRuntime {
                         engagement.seed(), nowMs, AgentKpqSession.Mode.PRODUCTION,
                         agentLeader ? AgentKpqSession.PartyOwnership.KPQ_OWNED
                                 : AgentKpqSession.PartyOwnership.EXTERNAL);
-        if (result.success()) DIRECTED.remove(engagement.engagementId(), directed);
+        if (result.success()) {
+            AgentPartyQuestReadyGate.release(lobby.lobbyId());
+            DIRECTED.remove(engagement.engagementId(), directed);
+        }
         else engagement.addDiagnostic("KPQ lobby handoff deferred: " + result.message(), nowMs);
         return true;
     }

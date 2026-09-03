@@ -14,8 +14,13 @@ import server.agents.capabilities.partyquest.kpq.AgentKpqSession;
 import server.agents.capabilities.partyquest.kpq.AgentKpqSessionRegistry;
 import server.agents.capabilities.partyquest.lpq.AgentLpqDefinition;
 import server.agents.capabilities.partyquest.lpq.AgentLpqSessionRegistry;
+import server.agents.capabilities.partyquest.lmpq.AgentLmpqDefinition;
+import server.agents.capabilities.partyquest.lmpq.AgentLmpqSessionRegistry;
 import server.agents.capabilities.partyquest.opq.AgentOpqDefinition;
 import server.agents.capabilities.partyquest.opq.AgentOpqSessionRegistry;
+import server.agents.capabilities.partyquest.ppq.AgentPpqDefinition;
+import server.agents.capabilities.partyquest.ppq.AgentPpqSessionRegistry;
+import server.agents.capabilities.expedition.balrog.AgentEasyBalrogRewardGracePolicy;
 import server.agents.runtime.AgentSessionLifecycleRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.partyquest.AgentPartyQuestHooks;
@@ -41,6 +46,20 @@ public final class AgentLootEligibility {
     }
 
     public static boolean canBotLoot(AgentRuntimeEntry entry, Character bot, MapItem drop) {
+        if (!canBotReceiveAssignedLoot(entry, bot, drop)) {
+            return false;
+        }
+        if (!AgentEasyBalrogRewardGracePolicy.permitsAgentLoot(
+                bot, drop, System.currentTimeMillis())) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /** Base inventory/quest eligibility used before a scenario publishes reward claims. */
+    public static boolean canBotReceiveAssignedLoot(
+            AgentRuntimeEntry entry, Character bot, MapItem drop) {
         if (entry == null || bot == null || drop == null || !drop.canBePickedBy(bot)) {
             return false;
         }
@@ -49,6 +68,7 @@ public final class AgentLootEligibility {
         if (AgentLpqSessionRegistry.preservesRoomDoorMarker(bot, drop)) {
             return false;
         }
+        if (AgentLmpqSessionRegistry.preservesPortalMarker(bot, drop)) return false;
         if (AgentOpqSessionRegistry.preservesMarker(bot, drop)) return false;
         AgentKpqSession kpqSession = AgentKpqSessionRegistry.forMember(bot.getId());
         if (kpqSession != null) {
@@ -78,10 +98,14 @@ public final class AgentLootEligibility {
                 && !AgentLpqSessionRegistry.canLootExclusive(bot, itemId)) {
             return false;
         }
+        if (itemId == AgentLmpqDefinition.COUPON
+                && !AgentLmpqSessionRegistry.canLootCoupon(bot)) return false;
         if (AgentOpqDefinition.EXCLUSIVE_ITEMS.contains(itemId)
                 && !AgentOpqSessionRegistry.canLootExclusive(bot, itemId)) return false;
         if (AgentEpqDefinition.EXCLUSIVE_ITEMS.contains(itemId)
                 && !AgentEpqSessionRegistry.canLootExclusive(bot, itemId)) return false;
+        if (AgentPpqDefinition.EXCLUSIVE_ITEMS.contains(itemId)
+                && !AgentPpqSessionRegistry.canLootExclusive(bot, itemId)) return false;
         int kpqCouponTarget = AgentPqRuntime.kpqCouponTarget(entry);
         if (itemId == KPQ_COUPON && (AgentPartyQuestHooks.shouldSkipCouponLoot(entry)
                 || (kpqCouponTarget > 0 && bot.getItemQuantity(KPQ_COUPON, false) >= kpqCouponTarget))) {

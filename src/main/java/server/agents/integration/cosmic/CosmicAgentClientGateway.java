@@ -4,6 +4,7 @@ import client.BotClient;
 import client.Character;
 import client.Client;
 import client.creator.BotCreator;
+import server.ScrollTransactionService;
 import server.agents.integration.AgentClientGateway;
 
 import java.sql.SQLException;
@@ -28,7 +29,12 @@ public enum CosmicAgentClientGateway implements AgentClientGateway {
 
     @Override
     public boolean hasClient(Character character) {
-        return character.getClient() != null;
+        return character != null && character.getClient() != null;
+    }
+
+    @Override
+    public boolean isActiveSession(Character character) {
+        return hasClient(character) && character.getClient().getPlayer() == character;
     }
 
     @Override
@@ -45,6 +51,21 @@ public enum CosmicAgentClientGateway implements AgentClientGateway {
     @Override
     public void release(Character character) {
         character.getClient().releaseClient();
+    }
+
+    @Override
+    public ScrollTransactionService.Result applyScroll(
+            Character character, short scrollPosition, short equipmentPosition,
+            byte legendarySpirit) {
+        if (!hasClient(character) || !tryAcquire(character)) {
+            return null;
+        }
+        try {
+            return ScrollTransactionService.apply(
+                    character.getClient(), scrollPosition, equipmentPosition, legendarySpirit);
+        } finally {
+            release(character);
+        }
     }
 
     @Override

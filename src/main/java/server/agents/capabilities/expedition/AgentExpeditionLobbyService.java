@@ -201,6 +201,8 @@ public final class AgentExpeditionLobbyService {
             long timeout = switch (run.phase) {
                 case ASSEMBLING -> ASSEMBLY_TIMEOUT_MS;
                 case NAVIGATING -> TRAVEL_TIMEOUT_MS;
+                case POST_CLEAR -> run.scenario.postClearTimeoutMs() > 0L
+                        ? run.scenario.postClearTimeoutMs() : PHASE_TIMEOUT_MS;
                 default -> PHASE_TIMEOUT_MS;
             };
             if (run.phase != Phase.FIGHTING && run.phase != Phase.CLEARED
@@ -424,6 +426,9 @@ public final class AgentExpeditionLobbyService {
         }
         transition(run, Phase.CLEARED, nowMs);
         boolean returned = returnToLobby(run);
+        if (returned) {
+            AgentExpeditionLobbyIdleService.begin(members(run));
+        }
         log.info("Agent expedition cleared scenario={} members={} returnedToLobby={} total={} {}",
                 run.spec().scenarioId(), run.spec().participantCount(), returned,
                 formattedDuration(nowMs - run.startedAtMs), timingSummary(run, nowMs));
@@ -432,11 +437,13 @@ public final class AgentExpeditionLobbyService {
                 + "; returned-to-lobby=" + returned + ". " + timingSummary(run, nowMs));
         run.operator.dropMessage(6,
                 "Use !balrogtest status to inspect the returned Agents, then stop when done.");
-        AgentSchedulerRuntime.schedule(() -> {
-            if (runs.remove(run.operator.getId(), run)) {
-                release(run, Phase.STOPPED);
-            }
-        }, CLEARED_RETENTION_MS);
+        if (!run.scenario.retainReturnedMembersUntilNextRun()) {
+            AgentSchedulerRuntime.schedule(() -> {
+                if (runs.remove(run.operator.getId(), run)) {
+                    release(run, Phase.STOPPED);
+                }
+            }, CLEARED_RETENTION_MS);
+        }
     }
 
     private boolean returnToLobby(Run run) {
@@ -448,7 +455,12 @@ public final class AgentExpeditionLobbyService {
             return members(run).stream().allMatch(
                     member -> member.getMapId() == run.spec().returnMapId());
         }
+        Set<Integer> agentIds = run.members.keySet();
         for (Character participant : new ArrayList<>(event.getPlayers())) {
+            if (run.scenario.preserveNonAgentParticipantsAfterClear()
+                    && !agentIds.contains(participant.getId())) {
+                continue;
+            }
             try {
                 event.exitPlayer(participant);
             } catch (RuntimeException failure) {
@@ -456,7 +468,9 @@ public final class AgentExpeditionLobbyService {
                         participant.getId(), failure);
             }
         }
-        event.dispose();
+        if (event.getPlayers().isEmpty()) {
+            event.dispose();
+        }
         run.event = null;
         run.expedition = null;
         return members(run).stream().allMatch(
@@ -525,15 +539,24 @@ public final class AgentExpeditionLobbyService {
         Expedition expedition = run.expedition;
         run.event = null;
         run.expedition = null;
+        run.scenario.endRun(event);
         if (event != null && !event.isEventDisposed()) {
+            Set<Integer> agentIds = run.members.keySet();
             for (Character participant : new ArrayList<>(event.getPlayers())) {
+                if (event.isEventCleared()
+                        && run.scenario.preserveNonAgentParticipantsAfterClear()
+                        && !agentIds.contains(participant.getId())) {
+                    continue;
+                }
                 try {
                     event.exitPlayer(participant);
                 } catch (RuntimeException failure) {
                     log.warn("Could not exit expedition participant {}", participant.getId(), failure);
                 }
             }
-            event.dispose();
+            if (event.getPlayers().isEmpty()) {
+                event.dispose();
+            }
         } else if (event == null && expedition != null) {
             expedition.dispose(false);
             AgentExpeditionGatewayRuntime.expedition().remove(run.operator, expedition);

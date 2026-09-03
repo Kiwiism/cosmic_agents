@@ -68,6 +68,7 @@ public final class AgentPartyQuestLobbyRuntime {
             if (lobby.active()) lobby.close(nowMs);
             AgentPartyQuestLobbyRegistry.remove(lobby);
         }
+        AgentPartyQuestReadyGate.release(lobbyId);
         presentations.remove(lobbyId);
         if (AgentPartyQuestLobbyRegistry.lobbies().isEmpty() && tickTask != null) {
             tickTask.cancel(false);
@@ -78,6 +79,7 @@ public final class AgentPartyQuestLobbyRuntime {
     public static void observeChat(Character speaker, String message, long nowMs) {
         if (speaker == null || message == null
                 || AgentRuntimeRegistry.findByAgentCharacterId(speaker.getId()) != null) return;
+        AgentPartyQuestQueueRuntime.observeChat(speaker, message, nowMs);
         for (AgentPartyQuestLobbySession lobby : AgentPartyQuestLobbyRegistry.lobbies()) {
             if (!lobby.active() || lobby.paused() || !eligibleHuman(lobby, speaker)) continue;
             AgentPartyQuestLobbyIntent intent = AgentPartyQuestLobbyIntentMatcher.match(
@@ -100,7 +102,8 @@ public final class AgentPartyQuestLobbyRuntime {
         if (lobby == null || !lobby.active() || lobby.paused() || member == null
                 || member.type() != AgentPartyQuestLobbySession.MemberType.AGENT
                 || member.role() != AgentPartyQuestLobbySession.MemberRole.LOOKING_FOR_PARTY) {
-            return InviteDecision.NOT_LOBBY_WAITER;
+            return AgentPartyQuestQueueRuntime.canAcceptInvite(agent, inviter)
+                    ? InviteDecision.DELAY_ACCEPT : InviteDecision.NOT_LOBBY_WAITER;
         }
         if (!eligibleHuman(lobby, inviter) || agent.getMapId() != lobby.profile().mapId()
                 || !sameWorldAndChannel(inviter, agent)) return InviteDecision.REJECT;
@@ -119,7 +122,10 @@ public final class AgentPartyQuestLobbyRuntime {
             Character agent, Character inviter, int partyId) {
         AgentPartyQuestLobbySession lobby = agent == null
                 ? null : AgentPartyQuestLobbyRegistry.forMember(agent.getId());
-        if (lobby == null || decidePartyInvite(agent, inviter) != InviteDecision.DELAY_ACCEPT) {
+        if (lobby == null) {
+            return AgentPartyQuestQueueRuntime.scheduleInviteResponse(agent, inviter, partyId);
+        }
+        if (decidePartyInvite(agent, inviter) != InviteDecision.DELAY_ACCEPT) {
             return false;
         }
         long minimumMs = lobby.profile().inviteResponseMinimumMs() > 0L
@@ -158,7 +164,7 @@ public final class AgentPartyQuestLobbyRuntime {
     public static String inviteRejectionMessage(Character agent) {
         AgentPartyQuestLobbySession lobby = agent == null
                 ? null : AgentPartyQuestLobbyRegistry.forMember(agent.getId());
-        if (lobby == null) return "This Agent is not accepting that party invitation.";
+        if (lobby == null) return AgentPartyQuestQueueRuntime.inviteRejectionMessage(agent);
         return agent.getName() + " is waiting for its level " + lobby.profile().minimumLevel()
                 + '-' + lobby.profile().maximumLevel() + ' ' + lobby.profile().questKey().toUpperCase()
                 + " lobby leader on the same map and channel.";

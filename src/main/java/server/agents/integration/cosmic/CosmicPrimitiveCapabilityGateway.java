@@ -14,6 +14,8 @@ import server.agents.capabilities.movement.AgentMovementBroadcastStateRuntime;
 import server.agents.capabilities.movement.AgentMovementPoseService;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.capabilities.movement.AgentGroundingService;
+import server.agents.capabilities.movement.AgentJumpActionService;
+import server.agents.capabilities.looting.AgentLootEligibility;
 import server.agents.capabilities.movement.AgentFarmAnchorStateRuntime;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentRouteOutcome;
@@ -48,7 +50,6 @@ import server.quest.Quest;
 import java.awt.Point;
 import java.util.Collection;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -310,11 +311,24 @@ public enum CosmicPrimitiveCapabilityGateway implements PrimitiveCapabilityGatew
     }
 
     @Override
+    public boolean jump(AgentRuntimeEntry entry, int direction) {
+        Character agent = entry == null ? null : AgentRuntimeIdentityRuntime.bot(entry);
+        if (agent == null || direction == 0 || !AgentJumpActionService.grounded(entry)) {
+            return false;
+        }
+        stop(entry);
+        AgentJumpActionService.initiateFixedArcJump(entry, agent, Integer.signum(direction));
+        return true;
+    }
+
+    @Override
     public void grind(AgentRuntimeEntry entry, Set<Integer> allowedMobIds) {
+        boolean authoredAnchorActive = AgentFarmAnchorStateRuntime.hasFarmAnchor(entry);
         AgentCombatVariationRuntime.retainAutomaticAnchorFor(entry, allowedMobIds);
         AgentCombatObjectiveTargetStateRuntime.setAllowedMobIds(entry, allowedMobIds);
-        if (!AgentModeStateRuntime.grinding(entry)) {
+        if (!AgentModeStateRuntime.grinding(entry) || authoredAnchorActive) {
             AgentModeService.startGrind(entry, AgentMovementStateResetService::clearNavigationState);
+            AgentCombatObjectiveTargetStateRuntime.setAllowedMobIds(entry, allowedMobIds);
         }
     }
 
@@ -322,16 +336,17 @@ public enum CosmicPrimitiveCapabilityGateway implements PrimitiveCapabilityGatew
     public void grind(AgentRuntimeEntry entry,
                       Set<Integer> preferredMobIds,
                       Set<Integer> fallbackMobIds) {
-        Set<Integer> permittedMobIds = new LinkedHashSet<>(preferredMobIds);
-        permittedMobIds.addAll(fallbackMobIds);
+        boolean authoredAnchorActive = AgentFarmAnchorStateRuntime.hasFarmAnchor(entry);
         // An automatic platform anchor belongs to the active preference tier. Keeping an
         // anchor merely because its mob remains in the fallback set can strand the Agent on an
         // empty platform when an objective advances to a boss or another mob group.
         AgentCombatVariationRuntime.retainAutomaticAnchorFor(entry, preferredMobIds);
         AgentCombatObjectiveTargetStateRuntime.setTargetPreferences(
                 entry, preferredMobIds, fallbackMobIds);
-        if (!AgentModeStateRuntime.grinding(entry)) {
+        if (!AgentModeStateRuntime.grinding(entry) || authoredAnchorActive) {
             AgentModeService.startGrind(entry, AgentMovementStateResetService::clearNavigationState);
+            AgentCombatObjectiveTargetStateRuntime.setTargetPreferences(
+                    entry, preferredMobIds, fallbackMobIds);
         }
     }
 
@@ -656,6 +671,28 @@ public enum CosmicPrimitiveCapabilityGateway implements PrimitiveCapabilityGatew
             }
         }
         return found;
+    }
+
+    @Override
+    public boolean lootItem(Character agent, int objectId, int maximumDistancePx) {
+        if (agent == null || agent.getMap() == null || agent.getPosition() == null
+                || maximumDistancePx < 0) {
+            return false;
+        }
+        MapObject object = agent.getMap().getMapObject(objectId);
+        if (!(object instanceof MapItem item) || item.isPickedUp()
+                || item.getPosition() == null
+                || agent.getPosition().distanceSq(item.getPosition())
+                > (long) maximumDistancePx * maximumDistancePx) {
+            return false;
+        }
+        AgentRuntimeEntry entry = AgentRuntimeRegistry.findByAgentCharacterId(agent.getId());
+        if (!AgentLootEligibility.canBotTargetLoot(
+                entry, agent, agent.getMap(), item, System.currentTimeMillis())) {
+            return false;
+        }
+        agent.pickupItem(item);
+        return item.isPickedUp();
     }
 
     @Override

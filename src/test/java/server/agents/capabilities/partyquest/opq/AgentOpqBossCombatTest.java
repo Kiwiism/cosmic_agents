@@ -8,6 +8,7 @@ import provider.wz.WZFiles;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -58,7 +59,7 @@ class AgentOpqBossCombatTest {
     }
 
     @Test
-    void bossRoutineSchedulesOnlyPapaPixieThroughOrdinaryCombat() throws Exception {
+    void bossRoutineUsesOrdinaryCombatWithoutInteractionShortcuts() throws Exception {
         String source = Files.readString(Path.of(
                 "src/main/java/server/agents/capabilities/partyquest/opq/AgentOpqCoordinator.java"));
         int start = source.indexOf("private static void tickPapaPixieCombat(");
@@ -66,11 +67,40 @@ class AgentOpqBossCombatTest {
         assertTrue(start >= 0 && end > start);
         String routine = source.substring(start, end);
 
-        assertTrue(routine.contains("ACTIONS.grind(entry, Set.of(AgentOpqDefinition.PAPA_PIXIE))"));
+        assertTrue(routine.contains("ACTIONS.grind(entry, targets)"));
+        assertFalse(routine.contains("ACTIONS.navigate("));
+        assertFalse(routine.contains("attackMonster("));
+        assertFalse(routine.contains("teleport"));
+        assertFalse(routine.contains("flyTo("));
         assertFalse(routine.contains("hitReactor("));
         assertFalse(routine.contains("stagePosition("));
         assertFalse(routine.contains("changeMap"));
         assertFalse(routine.contains("setHp("));
+    }
+
+    @Test
+    void fullAgentPartyAssignsFourBossAttackersAndTwoSummonClearers() {
+        List<AgentOpqMemberState.Role> roles = java.util.stream.IntStream.range(0, 6)
+                .mapToObj(index -> AgentOpqCoordinator.papaPixieCombatRole(index, 6))
+                .toList();
+
+        assertEquals(4, roles.stream()
+                .filter(role -> role == AgentOpqMemberState.Role.BOSS_ATTACKER).count());
+        assertEquals(2, roles.stream()
+                .filter(role -> role == AgentOpqMemberState.Role.BOSS_SUMMON_CLEARER).count());
+    }
+
+    @Test
+    void summonClearersReturnToPapaWhenNoSummonIsAlive() {
+        assertEquals(AgentOpqDefinition.PAPA_PIXIE_SUMMONS,
+                AgentOpqCoordinator.papaPixieCombatTargets(
+                        AgentOpqMemberState.Role.BOSS_SUMMON_CLEARER, true));
+        assertEquals(Set.of(AgentOpqDefinition.PAPA_PIXIE),
+                AgentOpqCoordinator.papaPixieCombatTargets(
+                        AgentOpqMemberState.Role.BOSS_SUMMON_CLEARER, false));
+        assertEquals(Set.of(AgentOpqDefinition.PAPA_PIXIE),
+                AgentOpqCoordinator.papaPixieCombatTargets(
+                        AgentOpqMemberState.Role.BOSS_ATTACKER, true));
     }
 
     @Test

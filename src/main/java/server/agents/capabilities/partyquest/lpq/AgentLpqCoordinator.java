@@ -3273,7 +3273,11 @@ final class AgentLpqCoordinator {
                             recovered++;
                         }
                     } else if (entry != null && portal != null) {
-                        ACTIONS.navigate(entry, portal, true);
+                        // Keep the ordinary post-clear transition on the same authored
+                        // waypoint/rope overlay used by every other LPQ portal approach.
+                        // A direct request for the final portal can otherwise select a
+                        // visually invalid long graph edge and look like a cross-map zip.
+                        enterPortalTo(entry, participant, destination);
                     }
                 }
             }
@@ -3384,7 +3388,7 @@ final class AgentLpqCoordinator {
         enterPortalTo(entry, agent, destinationMapId);
         int sourceStage = AgentLpqDefinition.stageNumber(agent.getMapId());
         if (agent.getMapId() == destinationMapId || sourceStage < 1 || sourceStage > 9
-                || inactiveForMs < recovery(sourceStage).traversalMs()) return;
+                || !postClearTransitionRecoveryDue(sourceStage, inactiveForMs)) return;
         int sourceMapId = agent.getMapId();
         if (!moveWithinEvent(session, agent, destinationMapId, nowMs)) return;
         if (member != null) member.clearTraversalProgress();

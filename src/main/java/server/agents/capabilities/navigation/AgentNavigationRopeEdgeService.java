@@ -87,11 +87,14 @@ public final class AgentNavigationRopeEdgeService {
             return false;
         }
         int firstClimbableY = AgentNavigationPhysicsService.firstClimbableY(rope);
+        int launchTolerance = AgentMovementKinematicsService.climbStepPerTick() + 2;
         return edge.startPoint.x == rope.x()
                 && edge.startPoint.y == firstClimbableY
                 && botPos.x == rope.x()
-                && botPos.y >= firstClimbableY
-                && botPos.y <= firstClimbableY + AgentMovementKinematicsService.climbStepPerTick() + 2;
+                // A completed top climb can settle a few pixels above the graph's
+                // first-climbable pixel. Keep the same bounded launch window on
+                // both sides so the authored rope-exit jump remains executable.
+                && Math.abs(botPos.y - firstClimbableY) <= launchTolerance;
     }
 
     public static boolean canExecuteClimbExitFromCurrentPosition(AgentNavigationGraph graph,

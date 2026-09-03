@@ -284,7 +284,7 @@ agent:
     # Values: a comma-separated IGN allowlist; an empty string means nobody. Recommended: keep the list minimal and grant only the narrowest required authority (tested baseline empty).
     # Purpose: Lists the character names used for authority operator names. Separate multiple names with commas; an empty value grants the role to nobody.
     # Technical: the Agent engine deployment configuration consumes this as a text. Domain: component-specific policy value; startup validation rejects missing, blank, or malformed values.
-    AGENT_AUTHORITY_OPERATOR_NAMES: ''
+    AGENT_AUTHORITY_OPERATOR_NAMES: FieldOp26
     # Values: a comma-separated IGN allowlist; an empty string means nobody. Recommended: keep the list minimal and grant only the narrowest required authority (tested baseline empty).
     # Purpose: Lists the character names used for authority observer names. Separate multiple names with commas; an empty value grants the role to nobody.
     # Technical: the Agent engine deployment configuration consumes this as a text. Domain: component-specific policy value; startup validation rejects missing, blank, or malformed values.
@@ -1061,6 +1061,9 @@ tuning:
     # Purpose: Spaces creation of the six dedicated OPQ observation fixtures.
     # Technical: The GM-only harness consumes this value before PQ entry; active OPQ travel and room ticks do not use it.
     server.agents.capabilities.partyquest.opq.AgentOpqTestService.SPAWN_STAGGER_MS: '500'
+    # Purpose: Spaces GM-only LMPQ observation fixture launches to avoid simultaneous login and build pressure.
+    # Technical: Production LMPQ admission and coordination never read this value.
+    server.agents.capabilities.partyquest.lmpq.AgentLmpqTestService.SPAWN_STAGGER_MS: '500'
     # Values: 35-50. Recommended: 45 to provide learned second-job utility skills and legal equipment without approaching the entry ceiling.
     # Purpose: Selects the legal test-fixture level for role-covered LPQ observation parties while production Agents retain their real progression state.
     # Technical: AgentLpqTestFixtureService applies this level through the existing second-job build pipeline and admission revalidates the authored LPQ range.
@@ -1988,6 +1991,38 @@ tuning:
     # Purpose: Caps the varied delay before an Agent leader responds and sends its party invitation.
     # Technical: The deterministic delay is seeded by the lobby and both character IDs, so retries remain bounded and reproducible.
     server.agents.capabilities.partyquest.lobby.AgentPartyQuestLobbyRuntime.INVITE_RESPONSE_MAXIMUM_MS: '1800'
+    # Values: 0-60000 milliseconds. Recommended: 10000. This is the window in which an unpartied Agent remains available to human leaders before an all-Agent party may be formed.
+    # Purpose: Gives human players first priority while still allowing unattended PQ populations to make progress.
+    # Technical: The shared queue starts this countdown from the newest compatible ticket in the selected roster.
+    server.agents.capabilities.partyquest.lobby.AgentPartyQuestQueueRuntime.AGENT_FORMATION_GRACE_MS: '10000'
+    # Values: 30000-1800000 milliseconds. Recommended: 300000. A timed-out Agent returns to the Director for another activity.
+    # Purpose: Prevents an undersupplied PQ lobby from holding an Agent forever.
+    # Technical: Queue ownership ends cleanly without creating a MapleStory party or event instance.
+    server.agents.capabilities.partyquest.lobby.AgentPartyQuestQueueRuntime.QUEUE_TIMEOUT_MS: '300000'
+    # Values: 5000-120000 milliseconds. Recommended: 18000. This is independently varied per waiting Agent.
+    # Purpose: Minimum interval between an unpartied Agent's visible lobby messages.
+    # Technical: Queue presentation remains independent from PQ execution and never blocks the Agent runtime thread.
+    server.agents.capabilities.partyquest.lobby.AgentPartyQuestQueueRuntime.CHAT_MINIMUM_MS: '18000'
+    # Values: 5000-180000 milliseconds. Recommended: 38000. Keep this above the queue minimum.
+    # Purpose: Maximum interval between an unpartied Agent's visible lobby messages.
+    # Technical: The deterministic range prevents queued Agents from speaking in unison.
+    server.agents.capabilities.partyquest.lobby.AgentPartyQuestQueueRuntime.CHAT_MAXIMUM_MS: '38000'
+    # Values: 0-60000 milliseconds. Recommended: 8000. Roster changes restart the countdown.
+    # Purpose: Minimum stable-party preparation time before an Agent leader starts a PQ.
+    # Technical: The gate keys stability to the authoritative lobby roster revision.
+    server.agents.capabilities.partyquest.lobby.AgentPartyQuestReadyGate.READY_MINIMUM_MS: '8000'
+    # Values: 0-90000 milliseconds. Recommended: 15000. Keep this at or above the minimum.
+    # Purpose: Maximum stable-party preparation time before PQ entry.
+    # Technical: A deterministic value is sampled from the engagement seed and roster revision.
+    server.agents.capabilities.partyquest.lobby.AgentPartyQuestReadyGate.READY_MAXIMUM_MS: '15000'
+    # Values: 1000-600000 milliseconds. Recommended: 90000. Production Agents remain owned but inactive at the PQ exit before returning to the Director.
+    # Purpose: Creates a human-like cooldown window after a run and avoids instant activity switching.
+    # Technical: Production, background, and observation engagements all recover when this timer expires; test operators may still trigger a rerun or switch during the hold.
+    server.agents.capabilities.partyquest.AgentPartyQuestLifecycleRuntime.POST_RUN_HOLD_MS: '90000'
+    # Values: 1000-300000 milliseconds. Recommended: 30000. This delay starts only after the outgoing fixture has safely left the party and engagement.
+    # Purpose: Makes test roster turnover reproduce the arrival gap expected from deployed Agents.
+    # Technical: Replacement fixtures re-enter through the same unpartied queue rather than being inserted directly into a party.
+    server.agents.capabilities.partyquest.lobby.AgentPartyQuestTestQueueRuntime.REPLACEMENT_DELAY_MS: '30000'
     # Values: 1000-10000 milliseconds. Recommended: 2500 to prevent duplicate replies to the same human coupon question.
     # Purpose: Claims one bounded KPQ dialogue response window before scheduling an Agent answer to a human party member.
     # Technical: AgentKpqSession scopes the claim by human character and task key, independently of ordinary coordinator combat and coupon collection ticks.

@@ -81,6 +81,11 @@ public final class AgentDirectorActionCatalog {
             addTownLife(result, operatorEnabled);
             addCommerce(result, context, operatorEnabled);
         }
+        if (victoriaReached && context.level() >= 10) {
+            addPartyQuest(result, operatorEnabled, "hpq", "Henesys Party Quest", 3,
+                    "the shared lobby accepts three to six members and gives human leaders first priority",
+                    630);
+        }
         if (victoriaReached && context.level() >= 21 && context.level() <= 30) {
             result.add(new AgentDirectorAction(
                     "party-quest:kpq", "Enter Kerning Party Quest lobby",
@@ -110,6 +115,35 @@ public final class AgentDirectorActionCatalog {
                     Map.of("scenarioId", "epq", "partySize", "5", "maximumRuns", "1"),
                     AgentWorldInterruptionPolicy.WAIT_FOR_SAFE_BOUNDARY,
                     AgentWorldCompletionPolicy.REQUEST_NEXT_DECISION, 640, false));
+        }
+        if (victoriaReached && context.level() >= 35 && context.level() <= 50) {
+            addPartyQuest(result, operatorEnabled, "lpq", "Ludibrium Party Quest", 6,
+                    "the shared lobby assembles six members with Teleport, Dark Sight, ranged, and physical coverage",
+                    648);
+        }
+        if (victoriaReached && context.level() >= 51 && context.level() <= 70) {
+            result.add(new AgentDirectorAction(
+                    "party-quest:lmpq", "Enter Ludibrium Maze Party Quest lobby",
+                    operatorEnabled ? AgentDirectorActionAvailability.RECOMMENDED
+                            : AgentDirectorActionAvailability.UNAVAILABLE,
+                    operatorEnabled
+                            ? "normal travel to LMPQ; the lobby accepts three to six members"
+                            : "Director is not in an operator-controlled mode",
+                    AgentWorldDirectiveType.START_ACTIVITY, AgentActivityKind.PARTY_QUEST,
+                    AgentWorldActivityRequestType.PARTY_QUEST_VISIT, "lmpq",
+                    Map.of("scenarioId", "lmpq", "partySize", "4", "maximumRuns", "1"),
+                    AgentWorldInterruptionPolicy.WAIT_FOR_SAFE_BOUNDARY,
+                    AgentWorldCompletionPolicy.REQUEST_NEXT_DECISION, 645, false));
+        }
+        if (victoriaReached && context.level() >= 51 && context.level() <= 70) {
+            addPartyQuest(result, operatorEnabled, "opq", "Orbis Party Quest", 6,
+                    "the shared lobby assembles six members with all five Explorer job families",
+                    642);
+        }
+        if (victoriaReached && context.level() >= 55 && context.level() <= 100) {
+            addPartyQuest(result, operatorEnabled, "ppq", "Pirate Party Quest", 6,
+                    "the shared lobby assembles the six-member Pirate PQ roster",
+                    638);
         }
         boolean active = context.currentActivityKind() != null
                 && !context.currentSessionId().isEmpty();
@@ -149,6 +183,25 @@ public final class AgentDirectorActionCatalog {
                         : "no critical NPC-shop procurement request is ready",
                 null, false));
         return List.copyOf(result);
+    }
+
+    private static void addPartyQuest(
+            List<AgentDirectorAction> result, boolean operatorEnabled,
+            String questKey, String displayName, int partySize,
+            String availableReason, int priority) {
+        result.add(new AgentDirectorAction(
+                "party-quest:" + questKey, "Enter " + displayName + " lobby",
+                operatorEnabled ? AgentDirectorActionAvailability.RECOMMENDED
+                        : AgentDirectorActionAvailability.UNAVAILABLE,
+                operatorEnabled ? availableReason
+                        : "Director is not in an operator-controlled mode",
+                AgentWorldDirectiveType.START_ACTIVITY, AgentActivityKind.PARTY_QUEST,
+                AgentWorldActivityRequestType.PARTY_QUEST_VISIT, questKey,
+                Map.of("scenarioId", questKey, "partySize", Integer.toString(partySize),
+                        "maximumRuns", "1"),
+                AgentWorldInterruptionPolicy.WAIT_FOR_SAFE_BOUNDARY,
+                AgentWorldCompletionPolicy.REQUEST_NEXT_DECISION,
+                priority, false));
     }
 
     private static void addTrainingMaps(

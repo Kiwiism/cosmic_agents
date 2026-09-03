@@ -8,6 +8,7 @@ import server.agents.capabilities.partyquest.lobby.AgentPartyQuestLobbyReconcile
 import server.agents.capabilities.partyquest.lobby.AgentPartyQuestLobbyRegistry;
 import server.agents.capabilities.partyquest.lobby.AgentPartyQuestLobbyRuntime;
 import server.agents.capabilities.partyquest.lobby.AgentPartyQuestLobbySession;
+import server.agents.capabilities.partyquest.lobby.AgentPartyQuestReadyGate;
 import server.agents.integration.AgentCharacterGatewayRuntime;
 import server.agents.integration.AgentClientGatewayRuntime;
 import server.agents.integration.AgentPartyGatewayRuntime;
@@ -94,6 +95,8 @@ public final class AgentEpqLobbyAdmissionRuntime {
                 .filter(java.util.Objects::nonNull).toList();
         if (operator == null || leader == null || members.size() != party.memberIds().size()) return true;
 
+        if (!AgentPartyQuestReadyGate.ready(
+                lobby.lobbyId(), lobby.rosterRevision(), engagement.seed(), nowMs)) return true;
         lobby.markReady(nowMs);
         engagement.lobbyReady(nowMs);
         AgentEpqAdmissionService.AdmissionResult result = AgentEpqAdmissionService.admitFromLobby(
@@ -101,7 +104,10 @@ public final class AgentEpqLobbyAdmissionRuntime {
                 AgentRuntimeRegistry.findByAgentCharacterId(leader.getId()) != null
                         ? AgentEpqSession.Mode.AUTONOMOUS
                         : AgentEpqSession.Mode.HUMAN_ASSISTED);
-        if (result.success()) DIRECTED.remove(engagement.engagementId(), directed);
+        if (result.success()) {
+            AgentPartyQuestReadyGate.release(lobby.lobbyId());
+            DIRECTED.remove(engagement.engagementId(), directed);
+        }
         else engagement.addDiagnostic("EPQ lobby handoff deferred: " + result.message(), nowMs);
         return true;
     }

@@ -23,7 +23,14 @@ public final class AgentCombatHitboxIntersection {
             return false;
         }
         if (mobBounds != null) {
-            return hitBox.intersects(mobBounds) || hitBox.contains(monsterPosition);
+            if (hitBox.intersects(mobBounds)) {
+                return true;
+            }
+            // Preserve the legacy origin fallback for ordinary mobs whose authored body
+            // straddles that origin. Fixed multipart mobs can publish an origin in empty space
+            // between parts; treating it as hittable would permit attacks on an invisible point.
+            return !AgentCombatTargetPositionPolicy.isHorizontallyDetached(
+                    monsterPosition, mobBounds) && hitBox.contains(monsterPosition);
         }
 
         return monsterPosition != null && hitBox.contains(monsterPosition);

@@ -40,11 +40,17 @@ public final class AgentPartyQuestCatalog {
                 "lpq", "LudiPQ", 221_024_500, 922_010_100, 922_011_000,
                 922_010_000, 221_024_500, 35, 50, 5, 6));
         add(definitions, new AgentPartyQuestDefinition(
+                "lmpq", "LudiMazePQ", 220_000_000, 809_050_000, 809_050_016,
+                809_050_017, 220_000_000, 51, 70, 3, 6));
+        add(definitions, new AgentPartyQuestDefinition(
                 "opq", "OrbisPQ", 200_080_101, 920_010_000, 920_011_300,
                 920_011_200, 200_080_101, 51, 70, 5, 6));
         add(definitions, new AgentPartyQuestDefinition(
                 "epq", "EllinPQ", 300_030_100, 930_000_000, 930_000_800,
                 930_000_800, 300_030_100, 44, 55, 4, 6));
+        add(definitions, new AgentPartyQuestDefinition(
+                "ppq", "PiratePQ", 251_010_404, 925_100_000, 925_100_600,
+                925_100_700, 251_010_404, 55, 100, 3, 6));
         return Collections.unmodifiableMap(definitions);
     }
 

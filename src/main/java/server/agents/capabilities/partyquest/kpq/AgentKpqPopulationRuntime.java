@@ -14,6 +14,7 @@ import server.agents.runtime.activity.AgentActivityBootstrap;
 import server.agents.capabilities.partyquest.AgentPartyQuestEngagement;
 import server.agents.capabilities.partyquest.AgentPartyQuestEngagementRegistry;
 import server.agents.capabilities.partyquest.AgentPartyQuestLifecycleRuntime;
+import server.agents.capabilities.partyquest.AgentPartyQuestRuntime;
 import server.agents.capabilities.partyquest.lobby.AgentPartyQuestCandidateScope;
 import server.agents.capabilities.partyquest.lobby.AgentPartyQuestLobbyRuntime;
 import server.agents.capabilities.partyquest.lobby.AgentPartyQuestLobbySession;
@@ -114,14 +115,14 @@ public final class AgentKpqPopulationRuntime {
     }
 
     private static boolean admitParty(ChannelKey channel, List<Character> members, long nowMs) {
-        Character leader = members.getFirst();
-        long seed = nowMs ^ leader.getId();
-        AgentPartyQuestEngagement engagement = new AgentPartyQuestEngagement(
-                "kpq", AgentPartyQuestEngagement.Mode.BACKGROUND_POPULATION,
-                seed, leader.getId(), members.size(), nowMs);
-        AgentPartyQuestLobbySession lobby = null;
+        List<Integer> queued = new ArrayList<>();
         try {
-            AgentPartyQuestEngagementRegistry.register(engagement);
+            MapleMap kerning = AgentMapGatewayRuntime.map().resolveMap(
+                    channel.world(), channel.channel(), AgentKpqDefinition.RECRUIT_MAP);
+            if (kerning == null) throw new IllegalStateException("KPQ recruitment map is unavailable");
+            var portal = kerning.getRandomPlayerSpawnpoint();
+            Point spawn = portal == null ? new Point(0, 0) : portal.getPosition();
+            int index = 0;
             for (Character member : members) {
                 AgentRuntimeEntry entry = AgentRuntimeRegistry.findByAgentCharacterId(member.getId());
                 if (entry == null || !AgentActivityBootstrap.admission().prepare(
@@ -130,62 +131,25 @@ public final class AgentKpqPopulationRuntime {
                     throw new IllegalStateException(member.getName()
                             + " could not release its current activity");
                 }
-                AgentPartyQuestEngagementRegistry.addAndIndexMember(
-                        engagement, member.getId(),
-                        AgentPartyQuestEngagement.MemberType.AGENT, nowMs);
-            }
-            if (!AgentPartyGatewayRuntime.party().createAgentParty(leader)) {
-                throw new IllegalStateException("could not create background KPQ party");
-            }
-            var party = AgentPartyGatewayRuntime.party().snapshot(leader);
-            if (party == null) throw new IllegalStateException("created KPQ party has no snapshot");
-            for (Character member : members.subList(1, members.size())) {
-                if (!AgentPartyGatewayRuntime.party().joinAgentParty(member, party.id())) {
-                    throw new IllegalStateException(member.getName() + " could not join background KPQ party");
-                }
-                AgentPartyGatewayRuntime.party().publishAgentOnline(member, party.id());
-            }
-            MapleMap kerning = AgentMapGatewayRuntime.map().resolveMap(
-                    channel.world(), channel.channel(), AgentKpqDefinition.RECRUIT_MAP);
-            var portal = kerning == null ? null : kerning.getRandomPlayerSpawnpoint();
-            Point spawn = portal == null ? new Point(0, 0) : portal.getPosition();
-            for (int index = 0; index < members.size(); index++) {
                 Point staggered = new Point(spawn.x + index * 18, spawn.y);
-                AgentMapGatewayRuntime.map().changeMapNear(members.get(index), kerning, staggered);
+                AgentMapGatewayRuntime.map().changeMapNear(member, kerning, staggered);
+                var result = AgentPartyQuestRuntime.requireSystem("kpq").requestEntry(
+                        entry, member, "kpq", members.size(), 1, nowMs);
+                if (result.status()
+                        != server.agents.runtime.activity.session.AgentActivityAdmissionResult.Status.ACCEPTED) {
+                    throw new IllegalStateException(member.getName() + " could not queue: " + result.reason());
+                }
+                queued.add(member.getId());
+                index++;
             }
-            lobby = new AgentPartyQuestLobbySession(
-                    engagement.engagementId(), AgentKpqLobbyProfile.profile(), seed,
-                    leader.getId(), members.size(), AgentPartyQuestCandidateScope.ANY_ELIGIBLE_HUMAN, nowMs);
-            for (Character member : members) {
-                lobby.addMember(member.getId(), AgentPartyQuestLobbySession.MemberType.AGENT,
-                        member == leader
-                                ? AgentPartyQuestLobbySession.MemberRole.RECRUITING_LEADER
-                                : AgentPartyQuestLobbySession.MemberRole.JOINED_MEMBER, nowMs);
-            }
-            lobby.setCoordinatorAgentId(leader.getId());
-            lobby.reconcileParty(party.id(), leader.getId(),
-                    members.stream().map(Character::getId).collect(java.util.stream.Collectors.toSet()), nowMs);
-            lobby.markReady(nowMs);
-            engagement.beginLobby(lobby.lobbyId(), nowMs);
-            engagement.lobbyReady(nowMs);
-            AgentPartyQuestLobbyRuntime.register(lobby, nowMs);
-            AgentKpqAdmissionService.AdmissionResult result = AgentKpqAdmissionService.admitFromLobby(
-                    engagement, lobby, leader, leader, members, seed, nowMs,
-                    AgentKpqSession.Mode.BACKGROUND_POPULATION,
-                    AgentKpqSession.PartyOwnership.KPQ_OWNED);
-            if (!result.success()) throw new IllegalStateException(result.message());
-            log.info("Background KPQ admitted: session={} world={} channel={} members={}",
-                    result.session().sessionId(), channel.world(), channel.channel(),
+            log.info("Background KPQ queued: world={} channel={} members={}",
+                    channel.world(), channel.channel(),
                     members.stream().map(Character::getName).toList());
             return true;
         } catch (RuntimeException failure) {
-            if (lobby != null) AgentPartyQuestLobbyRuntime.unregister(lobby.lobbyId(), nowMs);
-            if (AgentPartyQuestEngagementRegistry.byId(engagement.engagementId()) == engagement) {
-                engagement.beginRecovery(failure.getMessage(), nowMs);
-                AgentPartyQuestLifecycleRuntime.recover(engagement, nowMs);
-            }
-            cleanupParty(members, leader);
-            log.warn("Background KPQ admission rolled back for members {}",
+            queued.forEach(id -> AgentPartyQuestRuntime.forceStop(
+                    id, "background KPQ queue rolled back", nowMs));
+            log.warn("Background KPQ queue rolled back for members {}",
                     members.stream().map(Character::getName).toList(), failure);
             return false;
         }

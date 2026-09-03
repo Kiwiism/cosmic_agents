@@ -9,28 +9,39 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentEasyBalrogCombatPolicyTest {
     @Test
-    void clawFormationStaysInTheAuthoredCenterGap() {
-        for (int ordinal = 0; ordinal < AgentBalrogDefinition.ROSTER_SIZE; ordinal++) {
-            Point anchor = AgentEasyBalrogCombatPolicy.clawAnchor(ordinal);
-            assertTrue(anchor.x >= 360 && anchor.x <= 580);
-            assertTrue(anchor.y == 258);
-        }
-    }
-
-    @Test
     void bodyFormationUsesOnlyTheUpperLeftPlatform() {
         for (int ordinal = 0; ordinal < AgentBalrogDefinition.ROSTER_SIZE; ordinal++) {
-            Point anchor = AgentEasyBalrogCombatPolicy.headAnchor(ordinal);
-            assertTrue(anchor.x >= 10 && anchor.x <= 220);
-            assertTrue(anchor.y < 0);
+            for (boolean ranged : new boolean[]{false, true}) {
+                Point anchor = AgentEasyBalrogCombatPolicy.headAnchor(ordinal, ranged);
+                assertTrue(anchor.x >= -100 && anchor.x <= 220);
+                assertTrue(anchor.y < 0);
+            }
         }
     }
 
     @Test
-    void formationRequiresAgentsToReturnAfterKnockback() {
-        Point anchor = AgentEasyBalrogCombatPolicy.clawAnchor(0);
+    void headFormationRequiresAgentsToReturnAfterKnockback() {
+        Point anchor = AgentEasyBalrogCombatPolicy.headAnchor(0, false);
 
         assertTrue(AgentEasyBalrogCombatPolicy.atAnchor(new Point(anchor.x + 10, anchor.y), anchor));
         assertFalse(AgentEasyBalrogCombatPolicy.atAnchor(new Point(anchor.x - 80, anchor.y), anchor));
+    }
+
+    @Test
+    void rangedHeadStationsStayFartherLeftThanMeleeStations() {
+        for (int ordinal = 0; ordinal < AgentBalrogDefinition.ROSTER_SIZE; ordinal++) {
+            Point ranged = AgentEasyBalrogCombatPolicy.headAnchor(ordinal, true);
+            Point melee = AgentEasyBalrogCombatPolicy.headAnchor(ordinal, false);
+            assertTrue(ranged.x < melee.x);
+        }
+    }
+
+    @Test
+    void meleeHeadStationsRemainInOrdinaryCloseRangeOfTheWzBody() {
+        int visibleHeadLeftX = 274;
+        for (int ordinal = 0; ordinal < AgentBalrogDefinition.ROSTER_SIZE; ordinal++) {
+            Point melee = AgentEasyBalrogCombatPolicy.headAnchor(ordinal, false);
+            assertTrue(visibleHeadLeftX - melee.x <= 80);
+        }
     }
 }

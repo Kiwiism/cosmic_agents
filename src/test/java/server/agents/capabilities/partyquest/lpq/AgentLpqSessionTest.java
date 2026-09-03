@@ -246,7 +246,7 @@ class AgentLpqSessionTest {
 
     @Test
     void everyPostClearTransitionUsesTheStageLocalAbsoluteCap() {
-        for (int stage = 2; stage <= 9; stage++) {
+        for (int stage = 1; stage <= 9; stage++) {
             assertFalse(AgentLpqCoordinator.postClearTransitionRecoveryDue(stage, 14_999L));
             assertTrue(AgentLpqCoordinator.postClearTransitionRecoveryDue(stage, 15_000L));
         }

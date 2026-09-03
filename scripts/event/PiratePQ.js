@@ -242,7 +242,9 @@ function changedMapInside(eim, mapid) {
 
     if (stage == 1) {
         if (mapid == 925100100) {
-            eim.restartEventTimer(6 * 60 * 1000);
+            // Three probabilistic 20-medal waves must remain viable for legal level-55-69
+            // parties; each wave receives the same eight-minute collection budget.
+            eim.restartEventTimer(8 * 60 * 1000);
             eim.setIntProperty("curStage", 2);
         }
     } else if (stage == 2) {
@@ -277,6 +279,11 @@ function changedMap(eim, player, mapid) {
             eim.unregisterPlayer(player);
         }
     } else {
+        if (mapid == 925100201 || mapid == 925100301) {
+            // Optional chest rooms are full combat stages. Give the party a fresh budget
+            // instead of consuming whatever remains from the already-cleared main deck.
+            eim.restartEventTimer(8 * 60 * 1000);
+        }
         changedMapInside(eim, mapid);
     }
 }

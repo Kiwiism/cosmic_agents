@@ -29,6 +29,25 @@ public interface AgentExpeditionScenario {
         return true;
     }
 
+    /** Whether cleared observers should remain in the reward room after Agents leave. */
+    default boolean preserveNonAgentParticipantsAfterClear() {
+        return false;
+    }
+
+    /** Optional longer timeout for an authored post-clear reward flow. */
+    default long postClearTimeoutMs() {
+        return 0L;
+    }
+
+    /** Whether returned fixtures remain available until the next run or an explicit stop. */
+    default boolean retainReturnedMembersUntilNextRun() {
+        return false;
+    }
+
+    /** Releases scenario-owned state when a run stops, fails, or is replaced. */
+    default void endRun(EventInstanceManager event) {
+    }
+
     List<String> battleStatus(Character leader);
 
     default List<String> rosterSummary() {

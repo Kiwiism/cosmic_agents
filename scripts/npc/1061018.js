@@ -29,7 +29,11 @@ function action(mode, type, selection) {
             }
         } else if (status == 1) {
             if (cm.getEventInstance().isEventCleared()) {
-                cm.warp(cm.getMapId() == 105100300 ? 105100301 : 105100401, 0);
+                if (cm.getMapId() == 105100400) {
+                    cm.getEventInstance().warpEventTeamToMapSpawnPoint(105100400, 105100401, 0);
+                } else {
+                    cm.warp(105100301, 0);
+                }
             } else {
                 cm.warp(105100100);
             }

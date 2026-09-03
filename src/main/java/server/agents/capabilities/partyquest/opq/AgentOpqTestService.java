@@ -7,8 +7,11 @@ import server.agents.auth.AgentAuthorityService;
 import server.agents.capabilities.partyquest.AgentPartyQuestEngagement;
 import server.agents.capabilities.partyquest.AgentPartyQuestEngagementRegistry;
 import server.agents.capabilities.partyquest.AgentPartyQuestLifecycleRuntime;
+import server.agents.capabilities.partyquest.lobby.AgentPartyQuestTestQueueRuntime;
+import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.commands.AgentSpawnCommandExecutor;
 import server.agents.field.AgentOpqTestFixtureService;
+import server.agents.perception.AgentMapPerception;
 import server.agents.integration.AgentCharacterGatewayRuntime;
 import server.agents.integration.AgentClientGatewayRuntime;
 import server.agents.integration.AgentMapGatewayRuntime;
@@ -22,8 +25,10 @@ import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentSchedulerRuntime;
 import server.agents.runtime.activity.AgentActivityBootstrap;
 import server.maps.MapleMap;
+import server.maps.Reactor;
 
 import java.awt.Point;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -96,10 +101,20 @@ public final class AgentOpqTestService {
                 launched = result.agent();
                 AgentRuntimeEntry entry = AgentRuntimeRegistry.findByAgentCharacterId(launched.getId());
                 if (entry == null) throw new IllegalStateException("spawned OPQ runtime unavailable");
-                AgentOpqTestFixtureService.PreparationResult prepared = AgentOpqTestFixtureService.prepare(
-                        entry, ordinal, run.seed + ordinal * 10_007L, System.currentTimeMillis());
+                AgentOpqTestFixtureService.PreparationResult prepared = prepareFixture(
+                        entry, name, ordinal, run.seed + ordinal * 10_007L);
+                // The reusable career fixture resets through a Victoria checkpoint and therefore
+                // changes maps while it builds the character. Return the fully prepared fixture to
+                // the recruitment map before OPQ owns it; after registerComplete, every transition
+                // is authored navigation/portal travel in AgentOpqCoordinator.
                 if (launched.getMapId() != AgentOpqDefinition.RECRUIT_MAP) {
-                    throw new IllegalStateException(name + " left the OPQ recruit map during fixture preparation");
+                    Point returnPoint = AgentPrimitiveCapabilityGatewayRuntime.gateway()
+                            .groundPoint(recruit, spawn);
+                    AgentMapGatewayRuntime.map().changeMapNear(
+                            launched, recruit, returnPoint == null ? spawn : returnPoint);
+                }
+                if (launched.getMapId() != AgentOpqDefinition.RECRUIT_MAP) {
+                    throw new IllegalStateException(name + " could not return to the OPQ recruit map after fixture preparation");
                 }
                 if (!AgentActivityBootstrap.admission().prepare(
                         AgentActivityBootstrap.PARTY_QUEST_CONTROLLER_ID, entry, launched,
@@ -107,17 +122,32 @@ public final class AgentOpqTestService {
                     throw new IllegalStateException(name + " could not release its previous activity");
                 }
                 long now = System.currentTimeMillis();
-                AgentPartyQuestEngagementRegistry.addAndIndexMember(run.engagement, launched.getId(),
-                        AgentPartyQuestEngagement.MemberType.AGENT, now);
-                joinParty(run, launched);
-                run.agents.add(launched.getId());
                 log.info("OPQ fixture launched: name={} job={} level={} weapon={} watk={}",
                         name, prepared.job(), prepared.level(), prepared.weaponItemId(), prepared.weaponAttack());
-                if (run.agents.size() == AgentOpqDefinition.PARTY_SIZE) activate(run, now);
+                var queued = AgentPartyQuestTestQueueRuntime.enqueue(
+                        AgentOpqLobbyProfile.profile(), entry, launched,
+                        AgentOpqDefinition.PARTY_SIZE, now,
+                        (candidate, admittedAtMs) -> admitQueued(run, candidate, admittedAtMs));
+                if (queued.status() != server.agents.runtime.activity.session.AgentActivityAdmissionResult.Status.ACCEPTED) {
+                    throw new IllegalStateException(queued.reason());
+                }
             } catch (Exception failure) {
                 if (launched != null) disconnect(launched.getId());
                 fail(run, "Could not launch " + name + ": " + failure.getMessage());
             }
+        }
+    }
+
+    private static void admitQueued(Run run, Character agent, long nowMs) {
+        synchronized (run.lock) {
+            if (RUNS.get(run.operator.getId()) != run) {
+                throw new IllegalStateException("OPQ test is no longer active");
+            }
+            AgentPartyQuestEngagementRegistry.addAndIndexMember(
+                    run.engagement, agent.getId(), AgentPartyQuestEngagement.MemberType.AGENT, nowMs);
+            joinParty(run, agent);
+            run.agents.add(agent.getId());
+            if (run.agents.size() == AgentOpqDefinition.PARTY_SIZE) activate(run, nowMs);
         }
     }
 
@@ -133,6 +163,26 @@ public final class AgentOpqTestService {
             throw new IllegalStateException(agent.getName() + " could not join OPQ party");
         }
         AgentPartyGatewayRuntime.party().publishAgentOnline(agent, party.id());
+    }
+
+    private static AgentOpqTestFixtureService.PreparationResult prepareFixture(
+            AgentRuntimeEntry entry, String name, int ordinal, long seed) throws Exception {
+        Exception firstFailure;
+        try {
+            return AgentOpqTestFixtureService.prepare(
+                    entry, ordinal, seed, System.currentTimeMillis());
+        } catch (Exception failure) {
+            firstFailure = failure;
+            log.warn("OPQ fixture {} needed a second preparation pass: {}",
+                    name, failure.getMessage());
+        }
+        try {
+            return AgentOpqTestFixtureService.prepare(
+                    entry, ordinal, seed, System.currentTimeMillis());
+        } catch (Exception secondFailure) {
+            secondFailure.addSuppressed(firstFailure);
+            throw secondFailure;
+        }
     }
 
     private static void activate(Run run, long nowMs) {
@@ -151,9 +201,54 @@ public final class AgentOpqTestService {
         Run run = RUNS.get(operator.getId());
         if (run == null) return List.of("No OPQ test is active.");
         if (run.session == null) return List.of("OPQ Agents prepared: " + run.agents.size() + "/6");
-        return List.of("OPQ phase: " + run.session.phase(),
-                "rooms: " + run.session.rooms().snapshot(),
-                "loot: " + run.session.loot().snapshot());
+        ArrayList<String> lines = new ArrayList<>();
+        lines.add("OPQ phase: " + run.session.phase());
+        lines.add("rooms: " + run.session.rooms().snapshot());
+        lines.add("loot: " + run.session.loot().snapshot());
+        if (run.session.phase() == AgentOpqSession.Phase.ENTRANCE) {
+            lines.add(entranceStatus(run.session));
+        }
+        run.session.members().stream()
+                .filter(member -> member.memberType() == AgentOpqMemberState.MemberType.AGENT)
+                .sorted(java.util.Comparator.comparingInt(AgentOpqMemberState::characterId))
+                .forEach(member -> lines.add(memberStatus(member)));
+        return List.copyOf(lines);
+    }
+
+    private static String entranceStatus(AgentOpqSession session) {
+        Character leader = online(session.eventLeaderId());
+        if (leader == null || leader.getMapId() != AgentOpqDefinition.ENTRANCE_MAP) {
+            return "entrance: leader unavailable";
+        }
+        List<String> clouds = leader.getMap().getAllReactors().stream()
+                .filter(reactor -> reactor.getId() == 2_002_001 && reactor.isAlive() && reactor.isActive())
+                .map(Reactor::getPosition)
+                .map(Point::toString)
+                .sorted()
+                .toList();
+        List<String> drops = AgentMapPerception.items(leader.getMap()).stream()
+                .filter(drop -> !drop.isPickedUp() && drop.getItemId() == AgentOpqDefinition.CLOUD_PIECE)
+                .map(drop -> drop.getPosition() + "x" + (drop.getItem() == null
+                        ? 1 : Math.max(1, drop.getItem().getQuantity())))
+                .sorted()
+                .toList();
+        int held = session.members().stream()
+                .map(member -> online(member.characterId()))
+                .filter(java.util.Objects::nonNull)
+                .mapToInt(agent -> agent.getItemQuantity(AgentOpqDefinition.CLOUD_PIECE, false))
+                .sum();
+        return "entrance: activeClouds=" + clouds + " cloudDrops=" + drops + " partyHeld=" + held;
+    }
+
+    private static String memberStatus(AgentOpqMemberState member) {
+        Character agent = online(member.characterId());
+        AgentRuntimeEntry entry = AgentRuntimeRegistry.findByAgentCharacterId(member.characterId());
+        if (agent == null) return "agent " + member.characterId() + ": offline role=" + member.role();
+        return "agent " + agent.getName() + ": map=" + agent.getMapId()
+                + " pos=" + agent.getPosition() + " stance=" + agent.getStance()
+                + " role=" + member.role() + " room=" + member.assignedRoom()
+                + " inAir=" + (entry != null && AgentMovementStateRuntime.inAir(entry))
+                + " climbing=" + (entry != null && AgentMovementStateRuntime.climbing(entry));
     }
 
     private static List<String> pause(Character operator, boolean paused) {

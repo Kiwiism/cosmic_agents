@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
 import server.agents.capabilities.partyquest.lobby.AgentPartyQuestLobbyRuntime;
+import server.agents.capabilities.partyquest.lobby.AgentPartyQuestTestDeploymentRuntime;
 import server.agents.capabilities.townlife.AgentTownLifeAdmissionMode;
 import server.agents.capabilities.townlife.AgentTownLifeRuntime;
 import server.agents.capabilities.townlife.AgentTownLifeVisitRequest;
@@ -25,6 +26,8 @@ public final class AgentPartyQuestLifecycleRuntime {
             "server.agents.capabilities.partyquest.AgentPartyQuestLifecycleRuntime.RECOVERY_RETRY_MS");
     private static final long RECOVERY_WARN_MS = config.AgentTuning.longValue(
             "server.agents.capabilities.partyquest.AgentPartyQuestLifecycleRuntime.RECOVERY_WARN_MS");
+    private static final long POST_RUN_HOLD_MS = config.AgentTuning.longValue(
+            "server.agents.capabilities.partyquest.AgentPartyQuestLifecycleRuntime.POST_RUN_HOLD_MS");
 
     private AgentPartyQuestLifecycleRuntime() {
     }
@@ -36,6 +39,14 @@ public final class AgentPartyQuestLifecycleRuntime {
     public static boolean tick(int characterId, long nowMs) {
         AgentPartyQuestEngagement engagement = AgentPartyQuestEngagementRegistry.forMember(characterId);
         if (engagement == null || !engagement.ownsAgent(characterId)) return false;
+        if (engagement.state() == AgentPartyQuestEngagement.State.POST_RUN_HOLD
+                && nowMs - engagement.stateEnteredAtMs() >= Math.max(1_000L, POST_RUN_HOLD_MS)) {
+            if (engagement.mode() == AgentPartyQuestEngagement.Mode.TEST_OBSERVATION
+                    && AgentPartyQuestTestDeploymentRuntime.transition(engagement, nowMs)) {
+                return true;
+            }
+            engagement.beginRecovery("post-run lobby hold completed", nowMs);
+        }
         if (engagement.claimRecoveryAttempt(nowMs, Math.max(1_000L, RECOVERY_RETRY_MS))) {
             recover(engagement, nowMs);
         }

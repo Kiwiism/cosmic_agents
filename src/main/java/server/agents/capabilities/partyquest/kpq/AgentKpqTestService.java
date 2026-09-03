@@ -23,6 +23,7 @@ import server.agents.capabilities.partyquest.lobby.AgentPartyQuestLobbyReconcile
 import server.agents.capabilities.partyquest.lobby.AgentPartyQuestLobbyRegistry;
 import server.agents.capabilities.partyquest.lobby.AgentPartyQuestLobbyRuntime;
 import server.agents.capabilities.partyquest.lobby.AgentPartyQuestLobbySession;
+import server.agents.capabilities.partyquest.lobby.AgentPartyQuestTestQueueRuntime;
 import server.agents.capabilities.partyquest.AgentPartyQuestEngagement;
 import server.agents.capabilities.partyquest.AgentPartyQuestEngagementRegistry;
 import server.agents.capabilities.partyquest.AgentPartyQuestLifecycleRuntime;
@@ -343,38 +344,49 @@ public final class AgentKpqTestService {
                     throw new IllegalStateException("Agent activity did not release for KPQ: " + name);
                 }
                 long memberNowMs = System.currentTimeMillis();
-                AgentPartyQuestEngagementRegistry.addAndIndexMember(
-                        run.engagement, agent.getId(),
-                        AgentPartyQuestEngagement.MemberType.AGENT, memberNowMs);
-                if (run.flow != MixedFlow.HUMAN_INVITES_AGENTS) {
-                    joinSessionParty(run, agent);
+                int cohortSize = replacement ? 1
+                        : run.flow == MixedFlow.HUMAN_INVITES_AGENTS
+                        ? run.engagement.requestedPartySize() : run.usedNames.size();
+                var queued = AgentPartyQuestTestQueueRuntime.enqueue(
+                        AgentKpqLobbyProfile.profile(), entry, agent, cohortSize, memberNowMs,
+                        (candidateAgent, admittedAtMs) ->
+                                admitQueued(run, candidateAgent, replacement, admittedAtMs));
+                if (queued.status() != server.agents.runtime.activity.session.AgentActivityAdmissionResult.Status.ACCEPTED) {
+                    throw new IllegalStateException(queued.reason());
                 }
-                AgentPartyQuestLobbySession lobby = run.lobby;
-                if (lobby != null && lobby.active()) {
-                    AgentPartyQuestLobbySession.MemberRole role = run.flow == MixedFlow.HUMAN_INVITES_AGENTS
-                            ? AgentPartyQuestLobbySession.MemberRole.LOOKING_FOR_PARTY
-                            : agent.getId() == run.eventLeaderId
-                            ? AgentPartyQuestLobbySession.MemberRole.RECRUITING_LEADER
-                            : AgentPartyQuestLobbySession.MemberRole.JOINED_MEMBER;
-                    AgentPartyQuestLobbyRegistry.addAndIndexMember(
-                            lobby, agent.getId(), AgentPartyQuestLobbySession.MemberType.AGENT,
-                            role, memberNowMs);
-                    if (lobby.coordinatorAgentId() == 0) lobby.setCoordinatorAgentId(agent.getId());
-                }
-                if (run.flow == MixedFlow.HUMAN_INVITES_AGENTS) {
-                    AgentKpqDialogue.sayMapNow(agent, "Looking for a KPQ party.");
-                } else if (agent.getId() == run.eventLeaderId) {
-                    AgentKpqDialogue.sayMapNow(agent, "Recruiting for KPQ.");
-                } else {
-                    AgentKpqDialogue.sayMapNow(agent, "Joining KPQ.");
-                }
-                if (!replacement) rosterLaunchProgress(run);
             } catch (Exception failure) {
                 if (launched != null) disconnect(launched.getId());
                 log.warn("Could not launch KPQ fixture {}", name, failure);
                 failRun(run, "Could not launch " + name + ": " + failure.getMessage(),
                         System.currentTimeMillis());
             }
+        }
+    }
+
+    private static void admitQueued(
+            Run run, Character agent, boolean replacement, long nowMs) {
+        synchronized (run.launchLock) {
+            if (RUNS.get(run.operator.getId()) != run) {
+                throw new IllegalStateException("KPQ test is no longer active");
+            }
+            AgentPartyQuestEngagementRegistry.addAndIndexMember(
+                    run.engagement, agent.getId(), AgentPartyQuestEngagement.MemberType.AGENT, nowMs);
+            if (AgentPartyGatewayRuntime.party().snapshot(agent) == null) joinSessionParty(run, agent);
+            AgentPartyQuestLobbySession lobby = run.lobby;
+            if (lobby != null && lobby.active()) {
+                AgentPartyQuestLobbyRegistry.addAndIndexMember(
+                        lobby, agent.getId(), AgentPartyQuestLobbySession.MemberType.AGENT,
+                        agent.getId() == run.eventLeaderId
+                                ? AgentPartyQuestLobbySession.MemberRole.RECRUITING_LEADER
+                                : AgentPartyQuestLobbySession.MemberRole.JOINED_MEMBER, nowMs);
+                if (lobby.coordinatorAgentId() == 0) lobby.setCoordinatorAgentId(agent.getId());
+            }
+            if (agent.getId() == run.eventLeaderId) {
+                AgentKpqDialogue.sayMapNow(agent, "Recruiting for KPQ.");
+            } else {
+                AgentKpqDialogue.sayMapNow(agent, "Joining KPQ.");
+            }
+            if (!replacement) rosterLaunchProgress(run);
         }
     }
 
@@ -979,10 +991,11 @@ public final class AgentKpqTestService {
                 run.requestedCareerByName.put(name, vacatedCareers.get(i));
             }
             int ordinal = run.usedNames.size();
-            AgentSchedulerRuntime.schedule(() -> launch(run, name, ordinal, true), SPAWN_STAGGER_MS * i);
+            AgentSchedulerRuntime.schedule(() -> launch(run, name, ordinal, true),
+                    AgentPartyQuestTestQueueRuntime.replacementDelayMs() + SPAWN_STAGGER_MS * i);
         }
         return List.of("Switching out " + removed + " for " + available + ".",
-                "Use !kpqtest run after all replacements appear in !kpqtest status.");
+                "Replacements enter the lobby after 30 seconds; use !kpqtest run after they appear in status.");
     }
 
     private static List<String> stop(Character operator) {

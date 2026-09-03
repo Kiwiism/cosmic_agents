@@ -8,6 +8,7 @@ import client.inventory.Item;
 import client.inventory.WeaponType;
 import server.ScrollTransactionService;
 import server.agents.capabilities.equipment.AgentEquipmentService;
+import server.agents.integration.AgentClientGatewayRuntime;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -66,18 +67,13 @@ public final class AgentPepeEquipmentCatalog {
 
     public static ScrollTransactionService.Result applyOwnedScroll(Character agent) {
         AgentPepeEquipmentSnapshot facts = capture(agent);
-        if (!facts.scrollable() || agent.getClient() == null) return null;
+        if (!facts.scrollable() || !AgentClientGatewayRuntime.clients().hasClient(agent)) return null;
         Item scroll = inventory(agent, InventoryType.USE) == null ? null
                 : inventory(agent, InventoryType.USE).findById(facts.scrollItemId());
         if (scroll == null || !AgentEquipmentService.equipPreferredWeapon(
                 agent, facts.desiredWeaponItemId())) return null;
-        if (!agent.getClient().tryacquireClient()) return null;
-        try {
-            return ScrollTransactionService.apply(
-                    agent.getClient(), scroll.getPosition(), (short) -11, (byte) 0);
-        } finally {
-            agent.getClient().releaseClient();
-        }
+        return AgentClientGatewayRuntime.clients().applyScroll(
+                agent, scroll.getPosition(), (short) -11, (byte) 0);
     }
 
     private static Equip find(Character agent, int itemId) {

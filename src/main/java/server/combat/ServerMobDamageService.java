@@ -51,7 +51,9 @@ public final class ServerMobDamageService {
             return 0;
         }
         MapleMap map = attacker.getMap();
-        if (map == null || target.getMap() != map || target.isChangingMaps() || target.isHidden()) {
+        if (map == null || target.getMap() != map
+                || (target.isChangingMaps() && !(target.getClient() instanceof BotClient))
+                || target.isHidden()) {
             return 0;
         }
 

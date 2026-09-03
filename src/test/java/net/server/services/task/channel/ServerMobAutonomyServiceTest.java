@@ -80,6 +80,16 @@ class ServerMobAutonomyServiceTest {
     }
 
     @Test
+    void stickyServerPapaPixieKeepsRoamingPhysicsAvailable() {
+        Fixture fixture = fixture(PapaPixieActorBehavior.MOB_ID, 0);
+
+        assertTrue(service.acquire(fixture.monster, fixture.agent));
+
+        assertFalse(service.blocksAgentPhysics(fixture.monster));
+        assertTrue(ServerMobAutonomyService.requiresServerPhysicsInstance(fixture.monster));
+    }
+
+    @Test
     void schedulesWzAttackImpactAndBroadcastsTelegraph() {
         Fixture fixture = fixture(0);
         when(fixture.monster.canUseSkill(org.mockito.ArgumentMatchers.any(),
@@ -103,6 +113,22 @@ class ServerMobAutonomyServiceTest {
     }
 
     @Test
+    void changingHeadlessAgentStillTriggersBalrogAction() {
+        Fixture fixture = fixture(EasyBalrogInitialClawBehavior.MOB_ID, 0);
+        when(fixture.target.getClient()).thenReturn(mock(BotClient.class));
+        when(fixture.target.isLoggedinWorld()).thenReturn(false);
+        when(fixture.target.isChangingMaps()).thenReturn(true);
+
+        assertTrue(service.acquire(fixture.monster, fixture.agent));
+        service.tickForTest(System.nanoTime());
+
+        verify(fixture.physics).beginServerCombatAction(
+                org.mockito.ArgumentMatchers.eq(fixture.monster),
+                org.mockito.ArgumentMatchers.anyLong());
+        verify(fixture.map).broadcastMessage(org.mockito.ArgumentMatchers.any(Packet.class));
+    }
+
+    @Test
     void ordinarySummonStaysOnNormalClientControlUntilAnAgentHitsIt() {
         Fixture fixture = fixture(0);
         Monster summon = mock(Monster.class);
@@ -120,7 +146,7 @@ class ServerMobAutonomyServiceTest {
 
         assertTrue(service.acquire(summon, fixture.agent));
         assertTrue(service.isActive(summon));
-        verify(summon).clearBossControllerPin();
+        verify(summon).pinServerBossController();
     }
 
     @Test
@@ -354,6 +380,28 @@ class ServerMobAutonomyServiceTest {
     }
 
     @Test
+    void papaPixieServerCombatTargetsOnlyTheActivatingParty() {
+        Fixture fixture = fixture(PapaPixieActorBehavior.MOB_ID, 0);
+        EventInstanceManager event = mock(EventInstanceManager.class);
+        Character observer = mock(Character.class);
+        when(fixture.agent.getPartyId()).thenReturn(777);
+        when(fixture.target.getPartyId()).thenReturn(777);
+        when(fixture.target.getEventInstance()).thenReturn(event);
+        when(observer.getPartyId()).thenReturn(778);
+        when(observer.getEventInstance()).thenReturn(event);
+        when(observer.getMap()).thenReturn(fixture.map);
+        when(observer.getPosition()).thenReturn(new Point(-100, 0));
+        when(observer.isAlive()).thenReturn(true);
+        when(observer.isLoggedinWorld()).thenReturn(true);
+        when(fixture.map.getEventInstance()).thenReturn(event);
+        when(fixture.map.getAllPlayers()).thenReturn(List.of(observer, fixture.target));
+
+        assertTrue(service.acquire(fixture.monster, fixture.agent));
+
+        assertEquals(List.of(fixture.target), service.combatTargetsForTest(fixture.monster));
+    }
+
+    @Test
     void capableHumanLpqParticipantKeepsStickyNativeAuthority() {
         NativeFixture fixture = nativeFixture(91_101, 91_102);
         ServerMobAutonomyService guardedService =
@@ -548,11 +596,14 @@ class ServerMobAutonomyServiceTest {
     }
 
     @Test
-    void stickyBalrogTargetsRegisteredBotAgentAndExcludesWarpedObserver() {
+    void stickyBalrogTargetsRegisteredAgentAndRenderOnlyHumanButExcludesObserver() {
         MapleMap map = mock(MapleMap.class);
         EventInstanceManager event = mock(EventInstanceManager.class);
         Expedition expedition = mock(Expedition.class);
         Character agent = mock(Character.class);
+        Character secondPartyAgent = mock(Character.class);
+        Character participant = mock(Character.class);
+        Client participantClient = mock(Client.class);
         Character observer = nativeHuman(92_402, map, event);
         Monster claw = encounterMonster(
                 EasyBalrogInitialClawBehavior.MOB_ID, 802, map);
@@ -563,11 +614,36 @@ class ServerMobAutonomyServiceTest {
         when(agent.getMap()).thenReturn(map);
         when(agent.getEventInstance()).thenReturn(event);
         when(agent.getPosition()).thenReturn(new Point(412, 258));
+        when(agent.isChangingMaps()).thenReturn(true);
+        when(agent.getPartyId()).thenReturn(100);
+        when(secondPartyAgent.getId()).thenReturn(92_403);
+        when(secondPartyAgent.getClient()).thenReturn(mock(BotClient.class));
+        when(secondPartyAgent.isAlive()).thenReturn(true);
+        when(secondPartyAgent.isLoggedinWorld()).thenReturn(false);
+        when(secondPartyAgent.getMap()).thenReturn(map);
+        when(secondPartyAgent.getEventInstance()).thenReturn(event);
+        when(secondPartyAgent.getPosition()).thenReturn(new Point(430, 258));
+        when(secondPartyAgent.isChangingMaps()).thenReturn(true);
+        when(secondPartyAgent.getPartyId()).thenReturn(200);
+        when(participant.getId()).thenReturn(92_404);
+        when(participant.getClient()).thenReturn(participantClient);
+        when(participantClient.getBossSimulationCapability())
+                .thenReturn(BossClientSimulationCapability.RENDER_ONLY);
+        when(participant.isAlive()).thenReturn(true);
+        when(participant.isLoggedinWorld()).thenReturn(true);
+        when(participant.getMap()).thenReturn(map);
+        when(participant.getEventInstance()).thenReturn(event);
+        when(participant.getPosition()).thenReturn(new Point(450, 258));
+        when(participant.getPartyId()).thenReturn(100);
         when(map.getEventInstance()).thenReturn(event);
-        when(map.getAllPlayers()).thenReturn(List.of(observer, agent));
-        when(event.getPlayers()).thenReturn(List.of(observer, agent));
+        when(map.getAllPlayers()).thenReturn(
+                List.of(observer, agent, secondPartyAgent, participant));
+        when(event.getPlayers()).thenReturn(
+                List.of(observer, agent, secondPartyAgent, participant));
         when(event.getExpedition()).thenReturn(expedition);
         when(expedition.contains(agent)).thenReturn(true);
+        when(expedition.contains(secondPartyAgent)).thenReturn(true);
+        when(expedition.contains(participant)).thenReturn(true);
         when(expedition.contains(observer)).thenReturn(false);
         when(map.getMonsterByOid(802)).thenReturn(claw);
 
@@ -575,7 +651,8 @@ class ServerMobAutonomyServiceTest {
 
         assertTrue(service.isActive(claw));
         assertTrue(service.blocksAgentPhysics(claw));
-        assertEquals(List.of(agent), service.combatTargetsForTest(claw));
+        assertEquals(List.of(agent, secondPartyAgent, participant),
+                service.combatTargetsForTest(claw));
     }
 
     @Test
@@ -638,7 +715,7 @@ class ServerMobAutonomyServiceTest {
         when(map.getMonsterByOid(77)).thenReturn(monster);
         when(random.nextInt(org.mockito.ArgumentMatchers.anyInt()))
                 .thenReturn(selectedIndex);
-        return new Fixture(map, monster, agent, physics, overall);
+        return new Fixture(map, monster, agent, target, physics, overall);
     }
 
     private NativeFixture nativeFixture(int agentId, int humanId) {
@@ -712,7 +789,7 @@ class ServerMobAutonomyServiceTest {
         return monster;
     }
 
-    private record Fixture(MapleMap map, Monster monster, Character agent,
+    private record Fixture(MapleMap map, Monster monster, Character agent, Character target,
                            MobPhysicsService physics, OverallService overall) {
     }
 

@@ -10,8 +10,13 @@ import org.mockito.MockedStatic;
 import server.agents.runtime.AgentSessionLifecycleRuntime;
 import server.maps.MapItem;
 import server.maps.MapleMap;
+import scripting.event.EventInstanceManager;
+import server.agents.capabilities.expedition.balrog.AgentBalrogDefinition;
+import server.agents.capabilities.expedition.balrog.AgentEasyBalrogRewardGracePolicy;
+import server.agents.capabilities.expedition.balrog.AgentEasyBalrogRewardClaimRegistry;
 
 import java.awt.*;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -22,6 +27,80 @@ import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
 class AgentLootEligibilityTest {
+    @Test
+    void easyBalrogRewardDropsRemainHumanOnlyForSevenSecondsAfterTheSpray() {
+        long openedAt = 10_000L;
+        Character bot = mock(Character.class);
+        EventInstanceManager event = mock(EventInstanceManager.class);
+        when(bot.getMapId()).thenReturn(AgentBalrogDefinition.CLEAR_MAP);
+        when(bot.getEventInstance()).thenReturn(event);
+        when(event.getProperty(AgentEasyBalrogRewardGracePolicy.REWARD_OPENED_AT_PROPERTY))
+                .thenReturn(Long.toString(openedAt));
+
+        assertTrue(AgentEasyBalrogRewardGracePolicy.blocksAgentLoot(bot, openedAt + 6_999L));
+        assertFalse(AgentEasyBalrogRewardGracePolicy.blocksAgentLoot(bot, openedAt + 7_000L));
+    }
+
+    @Test
+    void easyBalrogAgentsCannotLootBeforeTheRewardReactorSpraysItems() {
+        Character bot = mock(Character.class);
+        EventInstanceManager event = mock(EventInstanceManager.class);
+        when(bot.getMapId()).thenReturn(AgentBalrogDefinition.CLEAR_MAP);
+        when(bot.getEventInstance()).thenReturn(event);
+
+        assertTrue(AgentEasyBalrogRewardGracePolicy.blocksAgentLoot(bot, 10_000L));
+    }
+
+    @Test
+    void easyBalrogRewardClaimsPreventOneAgentFromTakingAnotherAgentsShare() {
+        long openedAt = 10_000L;
+        MapleMap map = mock(MapleMap.class);
+        Character assigned = mock(Character.class);
+        Character other = mock(Character.class);
+        EventInstanceManager event = mock(EventInstanceManager.class);
+        MapItem drop = mockLoot(77, 0, false, openedAt);
+        when(assigned.getId()).thenReturn(10);
+        when(other.getId()).thenReturn(20);
+        for (Character bot : List.of(assigned, other)) {
+            when(bot.getMapId()).thenReturn(AgentBalrogDefinition.CLEAR_MAP);
+            when(bot.getMap()).thenReturn(map);
+            when(bot.getEventInstance()).thenReturn(event);
+            when(bot.getPosition()).thenReturn(new Point(100, 100));
+        }
+        when(event.getProperty(AgentEasyBalrogRewardGracePolicy.REWARD_OPENED_AT_PROPERTY))
+                .thenReturn(Long.toString(openedAt));
+        AgentEasyBalrogRewardClaimRegistry.replace(map, java.util.Map.of(77, 10));
+
+        assertTrue(AgentEasyBalrogRewardGracePolicy.permitsAgentLoot(
+                assigned, drop, openedAt + 7_000L));
+        assertFalse(AgentEasyBalrogRewardGracePolicy.permitsAgentLoot(
+                other, drop, openedAt + 7_000L));
+        AgentEasyBalrogRewardClaimRegistry.clear(map);
+    }
+
+    @Test
+    void easyBalrogAssignedAgentMustStillWalkIntoPhysicalPickupRange() {
+        long openedAt = 10_000L;
+        MapleMap map = mock(MapleMap.class);
+        Character assigned = mock(Character.class);
+        EventInstanceManager event = mock(EventInstanceManager.class);
+        MapItem drop = mockLoot(77, 0, false, openedAt);
+        when(assigned.getId()).thenReturn(10);
+        when(assigned.getMapId()).thenReturn(AgentBalrogDefinition.CLEAR_MAP);
+        when(assigned.getMap()).thenReturn(map);
+        when(assigned.getEventInstance()).thenReturn(event);
+        when(assigned.getPosition()).thenReturn(new Point(60, 100));
+        when(event.getProperty(AgentEasyBalrogRewardGracePolicy.REWARD_OPENED_AT_PROPERTY))
+                .thenReturn(Long.toString(openedAt));
+        AgentEasyBalrogRewardClaimRegistry.replace(map, java.util.Map.of(77, 10));
+
+        assertFalse(AgentEasyBalrogRewardGracePolicy.permitsAgentLoot(
+                assigned, drop, openedAt + 7_000L));
+        when(assigned.getPosition()).thenReturn(new Point(68, 100));
+        assertTrue(AgentEasyBalrogRewardGracePolicy.permitsAgentLoot(
+                assigned, drop, openedAt + 7_000L));
+        AgentEasyBalrogRewardClaimRegistry.clear(map);
+    }
     @Test
     void shouldDelayTargetingBotInventoryDropsForFifteenSeconds() {
         MapleMap map = mock(MapleMap.class);

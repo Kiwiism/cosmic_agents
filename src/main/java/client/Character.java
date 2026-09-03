@@ -1957,6 +1957,12 @@ public class Character extends AbstractCharacterObject {
             // if this map has obstacle components moving, make it do so for this client
             sendPacket(PacketCreator.environmentMoveList(map.getEnvironment().entrySet()));
         }
+
+        // Headless Agents have no socket that can send PLAYER_MAP_TRANSFER. Their
+        // placement above is already authoritative, so complete the transition here.
+        if (client instanceof BotClient) {
+            setMapTransitionComplete();
+        }
     }
 
     public boolean isChangingMaps() {

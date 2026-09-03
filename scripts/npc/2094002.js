@@ -53,6 +53,7 @@ function action(mode, type, selection) {
                         cm.gainItem(4001120, -20);
                         cm.getMap().killAllMonsters();
                         eim.setProperty("stage2", "1");
+                        eim.restartEventTimer(8 * 60 * 1000);
                     } else {
                         cm.sendNext("We are heading into the Pirate Ship now! To get in, we must qualify ourselves as noble pirates. Hunt me 20 Rookie Medals.");
                     }
@@ -62,6 +63,7 @@ function action(mode, type, selection) {
                         cm.gainItem(4001121, -20);
                         cm.getMap().killAllMonsters();
                         eim.setProperty("stage2", "2");
+                        eim.restartEventTimer(8 * 60 * 1000);
                     } else {
                         cm.sendNext("We are heading into the Pirate Ship now! To get in, we must qualify ourselves as noble pirates. Hunt me 20 Rising Medals.");
                     }

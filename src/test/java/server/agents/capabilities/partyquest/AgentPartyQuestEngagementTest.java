@@ -89,6 +89,36 @@ class AgentPartyQuestEngagementTest {
         assertEquals(AgentPartyQuestEngagement.State.RECOVERING, engagement.state());
     }
 
+    @Test
+    void successfulProductionRunWaitsOutsideBeforeRecovery() {
+        AgentPartyQuestEngagement engagement = new AgentPartyQuestEngagement(
+                "kpq", AgentPartyQuestEngagement.Mode.PRODUCTION,
+                7L, 100, 4, 1_000L);
+        engagement.addMember(101, AgentPartyQuestEngagement.MemberType.AGENT, 1_001L);
+        engagement.beginLobby("lobby", 1_100L);
+        engagement.reserveEntry(1_200L);
+        engagement.activateSession("session", 1_300L);
+
+        engagement.finishRun(true, "completed", 2_000L);
+
+        assertEquals(AgentPartyQuestEngagement.State.POST_RUN_HOLD, engagement.state());
+        assertTrue(engagement.ownsAgent(101));
+    }
+
+    @Test
+    void failedProductionRunRecoversWithoutHoldingTheBrokenParty() {
+        AgentPartyQuestEngagement engagement = new AgentPartyQuestEngagement(
+                "kpq", AgentPartyQuestEngagement.Mode.PRODUCTION,
+                7L, 100, 4, 1_000L);
+        engagement.beginLobby("lobby", 1_100L);
+        engagement.reserveEntry(1_200L);
+        engagement.activateSession("session", 1_300L);
+
+        engagement.finishRun(false, "failed", 2_000L);
+
+        assertEquals(AgentPartyQuestEngagement.State.RECOVERING, engagement.state());
+    }
+
     private static AgentPartyQuestEngagement engagement(int operatorId, long nowMs) {
         return new AgentPartyQuestEngagement(
                 "kpq", AgentPartyQuestEngagement.Mode.TEST_OBSERVATION,

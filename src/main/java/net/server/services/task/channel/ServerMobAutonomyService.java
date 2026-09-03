@@ -558,7 +558,8 @@ public final class ServerMobAutonomyService extends BaseService {
                 .filter(Character::isAlive)
                 .filter(target -> target.isLoggedinWorld()
                         || target.getClient() instanceof BotClient)
-                .filter(target -> !target.isChangingMaps() && !target.isHidden())
+                .filter(target -> (!target.isChangingMaps()
+                        || target.getClient() instanceof BotClient) && !target.isHidden())
                 .filter(target -> target.getMap() == actor.map && target.getPosition() != null)
                 .filter(target -> isCombatTarget(actor, target))
                 .toList();
@@ -567,6 +568,10 @@ public final class ServerMobAutonomyService extends BaseService {
     private static boolean isCombatTarget(ActorRuntime actor, Character target) {
         EventInstanceManager event = actor.map.getEventInstance();
         if (event != null && target.getEventInstance() != event) {
+            return false;
+        }
+        if (!actor.authority.ordinaryMob && actor.authority.eligiblePartyId > 0
+                && target.getPartyId() != actor.authority.eligiblePartyId) {
             return false;
         }
         Expedition expedition = event == null ? null : event.getExpedition();
@@ -645,7 +650,7 @@ public final class ServerMobAutonomyService extends BaseService {
             MobPhysicsService.releaseMonsterInstances(
                     monster, MobPhysicsService.ReleaseReason.SERVER_COMBAT_OWNERSHIP);
         }
-        monster.clearBossControllerPin();
+        monster.pinServerBossController();
         monster.aggroRemoveController();
         ActorRuntime created = new ActorRuntime(
                 monster, map, behavior, ServerMobActionCatalog.forMob(monster.getId()), authority);
