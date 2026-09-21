@@ -4,6 +4,7 @@ import client.Character;
 import constants.skills.Crossbowman;
 import constants.skills.Hermit;
 import constants.skills.Hunter;
+import constants.skills.Brawler;
 import constants.skills.NightWalker;
 import server.StatEffect;
 import server.life.Monster;
@@ -28,6 +29,16 @@ public final class AgentCombatSkillHitboxPolicy {
             Hunter.ARROW_BOMB
     );
 
+    /** WZ box lies behind the caster (lt.x >= 0): the Agent must face away from the target to land it. */
+    private static final Set<Integer> REVERSE_FACING_SKILL_IDS = Set.of(
+            Brawler.BACK_SPIN_BLOW,
+            15101002  // Thunder Breaker Backspin Blow (no constant in ThunderBreaker)
+    );
+
+    public static boolean isReverseFacingSkill(int skillId) {
+        return REVERSE_FACING_SKILL_IDS.contains(skillId);
+    }
+
     private AgentCombatSkillHitboxPolicy() {
     }
 
@@ -35,6 +46,9 @@ public final class AgentCombatSkillHitboxPolicy {
                                                  AgentAttackRoute route, int skillId, String action) {
         Point aimPoint = AgentCombatAimPointPolicy.aimPoint(agent, primaryTarget);
         boolean facingLeft = aimPoint.x < agent.getPosition().x;
+        if (isReverseFacingSkill(skillId)) {
+            facingLeft = !facingLeft;
+        }
         if (effect.hasBoundingBox()) {
             Point anchor = isStrikePointAnchoredAoeSkill(skillId)
                     ? aimPoint

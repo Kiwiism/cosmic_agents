@@ -197,6 +197,7 @@ import client.command.commands.gm6.AgentPopCommand;
 import client.command.commands.gm6.AgentSchedulerCommand;
 import client.command.commands.gm6.AgentWorldCommand;
 import client.command.commands.gm6.KpqTestCommand;
+import client.command.commands.gm6.SkillProbeCommand;
 import client.command.commands.gm6.HpqTestCommand;
 import client.command.commands.gm6.LpqTestCommand;
 import client.command.commands.gm6.LmpqTestCommand;
@@ -619,6 +620,7 @@ public class CommandsExecutor {
         addCommand("agentscheduler", 6, AgentSchedulerCommand.class);
         addCommand("agentworld", 6, AgentWorldCommand.class);
         addCommand("kpqtest", 6, KpqTestCommand.class);
+        addCommand("skillprobe", 6, SkillProbeCommand.class);
         addCommand("hpqtest", 6, HpqTestCommand.class);
         addCommand("lpqtest", 6, LpqTestCommand.class);
         addCommand("lmpqtest", 6, LmpqTestCommand.class);

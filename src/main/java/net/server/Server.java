@@ -2239,7 +2239,23 @@ public class Server {
     }
 
     public final Runnable shutdown(final boolean restart) {//no player should be online when trying to shutdown!
-        return () -> shutdownInternal(restart);
+        return () -> {
+            try {
+                shutdownInternal(restart);
+            } catch (Throwable t) {
+                // Runs on a TimerManager pool, which swallows task exceptions; without this the
+                // server silently stays half-up (worlds online, no exit) and nothing is logged.
+                log.error("Shutdown aborted by an unexpected failure", t);
+            }
+        };
+    }
+
+    private static void stopQuietly(String stage, Runnable stop) {
+        try {
+            stop.run();
+        } catch (Throwable t) {
+            log.error("Shutdown stage '{}' failed; continuing", stage, t);
+        }
     }
 
     private synchronized void shutdownInternal(boolean restart) {
@@ -2250,9 +2266,9 @@ public class Server {
         List<World> shuttingWorlds = new ArrayList<>(getWorlds());
         List<Channel> allChannels = getAllChannels();
         AgentRuntimeShutdownCoordinator.beginShutdown();
-        AgentPopulationRuntime.stop();
-        AgentDecisionCatalogRuntime.stop();
-        AgentNavigationGraphService.shutdownAsyncWarmups();
+        stopQuietly("population", AgentPopulationRuntime::stop);
+        stopQuietly("decisioncatalog", AgentDecisionCatalogRuntime::stop);
+        stopQuietly("navigationgraph", AgentNavigationGraphService::shutdownAsyncWarmups);
         AgentRuntimeShutdownCoordinator.Report agentShutdown = AgentRuntimeShutdownCoordinator.shutdown();
         log.info("Agent runtime shutdown: sessions={} cancellations={} pendingAsync={} remaining={} "
                         + "asyncExecutors={} queuedCancelled={} unterminated={} elapsedMs={} timedOut={}",

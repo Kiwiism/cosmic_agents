@@ -17,6 +17,28 @@ public final class AgentCombatAmmoCounter {
                 || weaponType == WeaponType.CLAW || weaponType == WeaponType.GUN;
     }
 
+    /** Largest single stack of the weapon's ammo; Shadow Stars consumes its cost from one stack. */
+    public static int largestAmmoStack(Character agent, WeaponType weaponType) {
+        if (weaponType == null || !isRangedAmmoWeapon(weaponType)) {
+            return Integer.MAX_VALUE;
+        }
+        int largest = 0;
+        for (Item item : agent.getInventory(InventoryType.USE).list()) {
+            int id = item.getItemId();
+            boolean match = switch (weaponType) {
+                case BOW -> ItemConstants.isArrowForBow(id);
+                case CROSSBOW -> ItemConstants.isArrowForCrossBow(id);
+                case CLAW -> ItemConstants.isThrowingStar(id);
+                case GUN -> ItemConstants.isBullet(id);
+                default -> false;
+            };
+            if (match) {
+                largest = Math.max(largest, item.getQuantity());
+            }
+        }
+        return largest;
+    }
+
     public static int countAmmo(Character agent, WeaponType weaponType) {
         if (weaponType == null || !isRangedAmmoWeapon(weaponType)) {
             return Integer.MAX_VALUE;

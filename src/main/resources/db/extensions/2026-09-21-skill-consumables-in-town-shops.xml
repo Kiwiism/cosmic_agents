@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Summoning Rock (4006000) and Magic Rock (4006001) are consumed by Shadow Partner and Mystic
+         Door but v83 sells them nowhere Agents can reach. Stock the five Victoria town potion shops
+         the Agent supply planner routes to (shopid == npcid there) so AgentShopService can restock. -->
+    <changeSet id="2026-09-21-skill-consumables-in-town-shops" author="skill-probe">
+        <sql>
+            INSERT INTO shopitems (shopid, itemid, price, pitch, position)
+            SELECT s.shopid, r.itemid, r.price, 0, 200 + r.slot
+            FROM (SELECT 1011100 AS shopid UNION ALL SELECT 1021100 UNION ALL SELECT 1031100
+                  UNION ALL SELECT 1051002 UNION ALL SELECT 1091002) s
+            CROSS JOIN (SELECT 4006000 AS itemid, 800 AS price, 0 AS slot
+                        UNION ALL SELECT 4006001, 800, 1) r
+            WHERE NOT EXISTS (SELECT 1 FROM shopitems i WHERE i.shopid = s.shopid AND i.itemid = r.itemid);
+        </sql>
+        <rollback>
+            <sql>
+                DELETE FROM shopitems WHERE itemid IN (4006000, 4006001)
+                  AND shopid IN (1011100, 1021100, 1031100, 1051002, 1091002) AND position IN (200, 201);
+            </sql>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

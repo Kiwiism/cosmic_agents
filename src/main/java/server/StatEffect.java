@@ -1185,7 +1185,10 @@ public class StatEffect {
     }
 
     private void applyMonsterBuff(Character applyfrom) {
-        Rectangle bounds = calculateBoundingBox(applyfrom.getPosition(), applyfrom.isFacingLeft());
+        // Hypnotize has no lt/rb in the v83 WZ; use a box around the caster instead of NPE-ing.
+        Rectangle bounds = lt == null || rb == null
+                ? new Rectangle(applyfrom.getPosition().x - 200, applyfrom.getPosition().y - 100, 400, 200)
+                : calculateBoundingBox(applyfrom.getPosition(), applyfrom.isFacingLeft());
         List<MapObject> affected = applyfrom.getMap().getMapObjectsInRect(bounds, Arrays.asList(MapObjectType.MONSTER));
         Skill skill_ = SkillFactory.getSkill(sourceid);
         int i = 0;
@@ -1551,6 +1554,7 @@ public class StatEffect {
             case WhiteKnight.MAGIC_CRASH:
             case Priest.DISPEL:
             case SuperGM.HEAL_PLUS_DISPEL:
+            case Corsair.HYPNOTIZE:  // v83: cast as a special move; nothing applied the status before
                 return true;
         }
         return false;
@@ -1895,6 +1899,20 @@ public class StatEffect {
 
     public short getHpCon() {
         return hpCon;
+    }
+
+    /** Item id a cast consumes (e.g. Summoning Rock for Shadow Partner), 0 when none. */
+    public int getItemCon() {
+        return itemCon;
+    }
+
+    public int getItemConNo() {
+        return itemConNo;
+    }
+
+    /** Whether {@code chr} holds the consumable this effect burns on cast (true when it needs none). */
+    public boolean hasItemCon(Character chr) {
+        return itemConNo == 0 || chr.getAbstractPlayerInteraction().hasItem(itemCon, itemConNo);
     }
 
     public short getMpCon() {

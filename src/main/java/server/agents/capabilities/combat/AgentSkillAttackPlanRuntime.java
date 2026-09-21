@@ -18,6 +18,21 @@ public final class AgentSkillAttackPlanRuntime {
     private AgentSkillAttackPlanRuntime() {
     }
 
+    /** Why the last {@link #planSkillAttack} on this thread returned null; diagnostics only. */
+    private static final ThreadLocal<String> LAST_REJECTION = new ThreadLocal<>();
+
+    public static String lastRejection() {
+        return LAST_REJECTION.get();
+    }
+
+    /** Character.handleEnergyChargeGain parks the bar at 15000 while the charge is full. */
+    private static final int ENERGY_BAR_FULL = config.AgentTuning.intValue("server.agents.capabilities.combat.AgentSkillAttackPlanRuntime.ENERGY_BAR_FULL");
+
+    private static AgentAttackPlan reject(String gate) {
+        LAST_REJECTION.set(gate);
+        return null;
+    }
+
     public static AgentAttackPlan planSkillAttack(Character bot, Monster primaryTarget, int skillId,
                                                   AgentCombatConfig.Config config) {
         return planSkillAttack(bot, primaryTarget, skillId, config,
@@ -45,11 +60,15 @@ public final class AgentSkillAttackPlanRuntime {
             Character bot, Monster primaryTarget, int skillId,
             AgentCombatConfig.Config config, SkillGateway skills,
             Rectangle objectivePoint) {
+        LAST_REJECTION.remove();
         Skill skill = skills.getSkill(skillId);
         int skillLevel = skill == null ? 0 : bot.getSkillLevel(skill);
         StatEffect effect = skill == null || skillLevel <= 0 ? null : skill.getEffect(skillLevel);
         if (!AgentComboFinisherPolicy.canPlan(skillId, bot.getBuffedValue(BuffStat.COMBO))) {
-            return null;
+            return reject("combo-orbs");
+        }
+        if (AgentCombatSkillClassifier.isEnergyAttackSkill(skillId) && bot.getEnergyBar() < ENERGY_BAR_FULL) {
+            return reject("energy-charge-not-full");
         }
         AgentSkillAttackPlanner.SkillAttackReadiness readiness = AgentSkillAttackPlanner.skillAttackReadiness(
                 skillId,
@@ -60,7 +79,7 @@ public final class AgentSkillAttackPlanRuntime {
                 () -> AgentCombatWeaponPolicy.canUseAttackSkillWithWeapon(
                         skillId, AgentAttackExecutionProvider.getEquippedWeaponType(bot)));
         if (readiness != AgentSkillAttackPlanner.SkillAttackReadiness.READY) {
-            return null;
+            return reject("readiness:" + readiness);
         }
 
         WeaponType weaponType = AgentAttackExecutionProvider.getEquippedWeaponType(bot);
@@ -72,7 +91,7 @@ public final class AgentSkillAttackPlanRuntime {
                 route,
                 () -> AgentCombatAmmoCounter.countAmmo(bot, weaponType))
                 != AgentSkillAttackPlanner.SkillAmmoReadiness.READY) {
-            return null;
+            return reject("ammo");
         }
 
         String action = AgentAttackExecutionProvider.resolveSkillAttackAction(bot, skill, skillLevel, weaponType);
@@ -90,7 +109,7 @@ public final class AgentSkillAttackPlanRuntime {
         Rectangle hitBox = AgentCombatSkillHitboxPolicy.calculateSkillHitBox(
                 effect, bot, primaryTarget, route, skillId, action);
         if (hitBox == null) {
-            return null;
+            return reject("hitbox");
         }
         if (objectivePoint != null) {
             hitBox = hitBox.union(objectivePoint);
@@ -109,16 +128,17 @@ public final class AgentSkillAttackPlanRuntime {
                                 bot.getPosition(), candidate, candidateHitBox, server.agents.perception.AgentMapPerception.monsters(bot.getMap())),
                         AgentCombatHitboxIntersection::intersectsMonster);
         if (targetSelection == null) {
-            return null;
+            return reject("target-selection");
         }
         primaryTarget = targetSelection.target();
 
         int attackCount = AgentCombatHitCounter.packetSafeHitCount(
                 bot, route, AgentCombatHitCounter.effectiveHitCount(effect));
         java.awt.Point aimPoint = AgentCombatAimPointPolicy.aimPoint(bot, primaryTarget);
-        if (!AgentAttackExecutionProvider.canUseRangedAttackRoute(
+        if (!AgentAttackExecutionProvider.isShortRangeProjectileSkill(skillId)
+                && !AgentAttackExecutionProvider.canUseRangedAttackRoute(
                 route, weaponType, bot.getPosition(), aimPoint)) {
-            return null;
+            return reject("ranged-route-degenerate");
         }
 
         AgentAttackExecutionProvider.BasicAttackData fallbackAttackData =
@@ -138,7 +158,7 @@ public final class AgentSkillAttackPlanRuntime {
                 bot, targets.size(),
                 AgentCombatSupportPolicy.hasNearbyHealSkillAlly(
                         bot, config.SUPPORT_RANGE, config.SUPPORT_VERTICAL_RANGE))) {
-            return null;
+            return reject("dragon-roar-ally-rule");
         }
 
         return new AgentAttackPlan(skillId, skillLevel, attackCount, hitBox, targets,

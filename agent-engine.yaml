@@ -4400,3 +4400,71 @@ tuning:
     # Purpose: Provides the matching Agent-only virtual right wall so high-velocity knockback cannot launch expedition Agents beyond the continuous floor.
     # Technical: Both grounded displacement and airborne integration clamp against this bound only while the Balrog scenario has explicitly enabled it.
     server.agents.capabilities.expedition.balrog.AgentEasyBalrogCombatPolicy.BATTLE_MAX_X: '1068'
+    # Values: a positive integer; unit: attempts. Recommended: 4-12; 8 covers a deferred attack window without stalling the probe.
+    # Purpose: Number of times the skill probe re-issues an attack that the combat transaction deferred (cooldown, ungrounded).
+    # Technical: The probe calls AgentCombatAttackRuntime.attackMonster up to this many times, clearing the attack cooldown and sleeping EXEC_RETRY_SLEEP_MS between attempts, before recording EXEC_DEFERRED.
+    server.agents.diagnostics.skillprobe.AgentSkillProbeService.EXEC_RETRIES: '8'
+    # Values: a non-negative integer; unit: milliseconds. Recommended: 100-300; 150 lets the movement physics settle between attack retries.
+    # Purpose: Pause between retries of a deferred probe attack so the Agent physics can land or clear its cooldown.
+    # Technical: Thread.sleep on the probe worker thread only; the Agent runtime keeps ticking on its own scheduler, so a longer pause simply slows the report and does not change any decision.
+    server.agents.diagnostics.skillprobe.AgentSkillProbeService.EXEC_RETRY_SLEEP_MS: '150'
+    # Values: a non-negative integer; unit: milliseconds. Recommended: 80-250; 120 is enough for a synthetic packet to be applied before the probe reads state.
+    # Purpose: Base wait after a probe spawns a dummy, casts a buff or commits an attack before it inspects the result.
+    # Technical: Multiplied (x2, x4) for buffs, summons and mob debuffs whose server-side application has been observed to land later than the dispatch returns; too small a value reports false BUFF_NOT_APPLIED.
+    server.agents.diagnostics.skillprobe.AgentSkillProbeService.SETTLE_MS: '120'
+    # Values: a positive integer; unit: map pixels. Recommended: 40-80; 60 sits inside melee reach for every weapon type.
+    # Purpose: Horizontal distance from the Agent at which the probe spawns the first dummy monster for a skill.
+    # Technical: Used by the mirrored spawn helper; the attack probe itself walks MOB_OFFSETS_X (30..260 px) so ranged skills clear the ranged degenerate distance and melee skills stay in reach.
+    server.agents.diagnostics.skillprobe.AgentSkillProbeService.MOB_OFFSET_X: '60'
+    # Values: a positive integer; unit: skill index within a job (skill id = job id * 10000 + index). Recommended: 1999; v83 skill indexes stop well below it.
+    # Purpose: Highest skill index the probe scans under each job id when learning the full tree of a shaped Agent.
+    # Technical: The probe asks SkillFactory for job * 10000 + index for every index up to this bound; misses are cheap hash lookups, so the bound only needs to exceed the largest v83 index (about 1010).
+    server.agents.diagnostics.skillprobe.AgentSkillProbeService.MAX_SKILL_INDEX: '1999'
+    # Values: a positive integer; unit: hits. Recommended: 1-3; the server grants one combo orb per close-range hit and finishers need one.
+    # Purpose: Close-range hits the probe lands with Combo Attack up before it retries Panic or Coma.
+    # Technical: CloseRangeDamageHandler.applyCloseRangeEffects adds an orb per hit while BuffStat.COMBO is active; AgentComboFinisherPolicy refuses finishers below one orb, so the warm-up makes the finisher plannable.
+    server.agents.diagnostics.skillprobe.AgentSkillProbeService.COMBO_WARMUP_HITS: '2'
+    # Values: a positive integer; unit: meso drops. Recommended: 3-10; Meso Explosion produces one damage line per exploded drop.
+    # Purpose: Number of meso drops the probe places around the dummy before it fires Meso Explosion.
+    # Technical: Each drop is spawned through MapleMap.spawnMesoDrop with the Agent as owner; AgentCombatAttackRuntime lists the drops inside the blast as explodedMesos and sizes the damage lines by that count.
+    server.agents.diagnostics.skillprobe.AgentSkillProbeService.MESO_DROP_COUNT: '5'
+    # Values: a positive integer; unit: mesos per drop. Recommended: 100-5000; the amount only changes the displayed damage, not whether the cast is accepted.
+    # Purpose: Mesos in each drop the probe places for the Meso Explosion precondition.
+    # Technical: The probe grants the Agent MESO_DROP_COUNT times this amount when it is short, then debits it per drop; the server removes the drops on the cast regardless of the amount.
+    server.agents.diagnostics.skillprobe.AgentSkillProbeService.MESO_DROP_AMOUNT: '1000'
+    # Values: a non-negative integer; unit: chat lines. Recommended: 8-20; the full list is always in the report file.
+    # Purpose: How many failed skills the in-game chat summary lists before pointing at the report file.
+    # Technical: The summary is delivered as yellow chat lines to the operator and captured by the headless gm-command endpoint; a long list is noisy in the client, so the tail is cut and the count of the remainder is shown.
+    server.agents.diagnostics.skillprobe.SkillProbeReport.CHAT_FAILURE_LINES: '12'
+    # Values: a positive integer; unit: map pixels. Recommended: 200-400; the client lists monsters roughly this far away for Monster Magnet.
+    # Purpose: Horizontal reach used to collect the monsters a Monster Magnet cast lists in its packet.
+    # Technical: The special move carries the object ids of the pulled monsters; the runtime takes hostile, non-boss monsters within this horizontal and MAGNET_RANGE_Y vertical distance of the Agent, up to the skill mob count.
+    server.agents.capabilities.combat.AgentCombatDebuffRuntime.MAGNET_RANGE_X: '300'
+    # Values: a positive integer; unit: map pixels. Recommended: 60-150; keeps pulls to monsters on the same platform band.
+    # Purpose: Vertical reach used to collect the monsters a Monster Magnet cast lists in its packet.
+    # Technical: Paired with MAGNET_RANGE_X; monsters farther above or below the Agent than this are left out of the packet so the pull does not drag mobs from other platforms into the fight.
+    server.agents.capabilities.combat.AgentCombatDebuffRuntime.MAGNET_RANGE_Y: '100'
+    # Values: a non-negative integer; unit: milliseconds. Recommended: 2000-8000; 4000 keeps a missed status roll from being recast every window.
+    # Purpose: Minimum time between two automatic mob debuff casts by the same Agent.
+    # Technical: Mob statuses are chance based (Doom about 90 percent, Slow lower), so a cast can leave the target without the status; this pacing bounds how often the combat loop spends a window retrying rather than attacking.
+    server.agents.capabilities.combat.AgentCombatSpecialMoveTickRuntime.DEBUFF_INTERVAL_MS: '4000'
+    # Values: a positive integer; unit: map pixels. Recommended: 120-300; must stay inside the smallest debuff box the Agent may hold (Slow, Seal).
+    # Purpose: Horizontal distance within which a hostile counts as an opening target for an automatic debuff.
+    # Technical: The tick takes the grind target or the nearest hostile; beyond this horizontal or DEBUFF_REACH_Y vertical distance no debuff is attempted, because StatEffect.applyMonsterBuff would find nothing in the skill box.
+    server.agents.capabilities.combat.AgentCombatSpecialMoveTickRuntime.DEBUFF_REACH_X: '200'
+    # Values: a positive integer; unit: map pixels. Recommended: 50-120; roughly one platform of vertical tolerance.
+    # Purpose: Vertical distance within which a hostile counts as an opening target for an automatic debuff.
+    # Technical: Paired with DEBUFF_REACH_X; the server applies the debuff box relative to the caster position, so a target on another platform would be outside it and the cast would only burn MP and a cooldown window.
+    server.agents.capabilities.combat.AgentCombatSpecialMoveTickRuntime.DEBUFF_REACH_Y: '80'
+    # Values: a non-negative integer; unit: committed attacks. Recommended: 1-4; 0 lets special moves take every cooldown window and was measured to stop a Hero attacking.
+    # Purpose: Attacks the Agent must land between two automatic special moves (summon, debuff) so attacks keep priority.
+    # Technical: The special-move hook runs in the common tick before the attack decision and would otherwise consume every attack cooldown window; the loop smoke showed 0 attacks in 30 s without this rule and 3 attacks plus 2 special moves with it.
+    server.agents.capabilities.combat.AgentCombatSpecialMoveTickRuntime.ATTACKS_BETWEEN_SPECIAL_MOVES: '2'
+    # Values: a positive integer; unit: divisor of the stock target. Recommended: 2-4; 3 restocks at a third of the target (10 casts of 30).
+    # Purpose: Fraction of the skill consumable target below which a shop that sells the item is worth a visit.
+    # Technical: AgentShopService compares the carried quantity with target divided by this value when deciding whether a nearby shop has anything the Agent needs; Summoning Rocks and Magic Rocks are the items in v83.
+    server.agents.capabilities.supplies.AgentSkillConsumablePolicy.RESTOCK_TRIGGER_DIVISOR: '3'
+    # Values: a positive integer; unit: energy bar units. Recommended: 15000; this is the value Character.handleEnergyChargeGain parks the bar at while the charge is full.
+    # Purpose: Energy bar value at which the planner considers Energy Charge full and allows Energy Blast, Drain and Orb.
+    # Technical: Mirrors the client rule that energy attacks need a full bar: each close-range hit adds 102 up to 10000, then the server sets 15000 until the charge expires; below this value the planner rejects with energy-charge-not-full.
+    server.agents.capabilities.combat.AgentSkillAttackPlanRuntime.ENERGY_BAR_FULL: '15000'

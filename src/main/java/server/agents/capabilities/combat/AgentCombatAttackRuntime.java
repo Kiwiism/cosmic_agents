@@ -5,6 +5,11 @@ import server.agents.capabilities.supplies.AgentAmmoStateRuntime;
 import client.Character;
 import client.Disease;
 import net.server.channel.handlers.AbstractDealDamageHandler;
+import java.util.ArrayList;
+import java.awt.Rectangle;
+import server.maps.MapItem;
+import server.agents.perception.AgentMapPerception;
+import constants.skills.ChiefBandit;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.operations.events.AgentAttackResolvedEvent;
 import server.agents.integration.CombatAttackApplicationResult;
@@ -77,7 +82,21 @@ public final class AgentCombatAttackRuntime {
         }
         int numAttacked = authoritativeTargets.size();
         int numDamage = AgentAttackPacketPolicy.damageLineCount(attackPlan.numDamage);
+        List<Integer> explodedMesos = List.of();
+        if (attackPlan.skillId == ChiefBandit.MESO_EXPLOSION) {
+            // The server removes the listed meso drops and NPEs on a null list; one damage line per meso.
+            explodedMesos = explodableMesos(attackMap, attackPlan.hitBox);
+            if (explodedMesos.isEmpty()) {
+                return AgentAttackTransactionResult.rejected(
+                        AgentAttackTransactionResult.Reason.CANNOT_USE_SKILL, bot.getMapId(), attackPlan.skillId);
+            }
+            numDamage = Math.max(1, Math.min(numDamage, explodedMesos.size()));
+        }
         AbstractDealDamageHandler.AttackInfo attack = new AbstractDealDamageHandler.AttackInfo();
+        if (!explodedMesos.isEmpty()) {
+            attack.explodedMesos = new ArrayList<>(explodedMesos);
+            attack.attackDelay = (short) Math.max(0, Math.min(Short.MAX_VALUE, attackPlan.hitDelayMs));
+        }
         attack.skill = attackPlan.skillId;
         attack.skilllevel = attackPlan.skillLevel;
         attack.numDamage = numDamage;
@@ -132,6 +151,7 @@ public final class AgentCombatAttackRuntime {
                 bot.getId(), committedAtMs, bot.getMapId(), attack.targets.size(),
                 hitLines, totalLines - hitLines));
         AgentCombatCooldownStateRuntime.maxAttackCooldown(entry, attackPlan.cooldownMs);
+        entry.capabilityStates().require(AgentCombatSpecialMoveState.STATE_KEY).countAttack();
         AgentCombatFacingRuntime.rememberAttackFacing(entry, attackPlan.stance);
         AgentCombatAlertRuntime.markAlerted(entry);
         return AgentAttackTransactionResult.committed(
@@ -141,6 +161,21 @@ public final class AgentCombatAttackRuntime {
                 hitLines,
                 totalLines - hitLines,
                 committedAtMs);
+    }
+
+    /** Object ids of unclaimed meso drops inside the blast, as the client would list them. */
+    static List<Integer> explodableMesos(MapleMap map, Rectangle hitBox) {
+        if (map == null || hitBox == null) {
+            return List.of();
+        }
+        List<Integer> oids = new ArrayList<>();
+        for (MapItem item : AgentMapPerception.items(map)) {
+            if (item.getMeso() > 0 && !item.isPickedUp() && item.getPosition() != null
+                    && hitBox.contains(item.getPosition())) {
+                oids.add(item.getObjectId());
+            }
+        }
+        return oids;
     }
 
     private static List<Monster> authoritativeTargets(List<Monster> candidates, int limit, MapleMap attackMap) {

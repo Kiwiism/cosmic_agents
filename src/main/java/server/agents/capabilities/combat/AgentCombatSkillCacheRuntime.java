@@ -20,6 +20,8 @@ public final class AgentCombatSkillCacheRuntime {
         }
 
         AgentCombatSkillCacheStateRuntime.reset(entry, bot.getJob().getId(), bot.getLevel(), skillSignature);
+        AgentCombatSpecialMoveState specialMoves = entry.capabilityStates().require(AgentCombatSpecialMoveState.STATE_KEY);
+        specialMoves.resetDebuffSkillIds();
 
         int bestAtkHits = 0;
         int bestAtkPriority = Integer.MIN_VALUE;
@@ -43,11 +45,19 @@ public final class AgentCombatSkillCacheRuntime {
                 continue;  // not an attack skill; offensive use against undead handled in tickSupportHealing
             }
 
+            if (cacheBucket == AgentCombatSkillClassifier.SkillCacheBucket.DEBUFF) {
+                specialMoves.addDebuffSkillId(skill.getId());  // cast by AgentCombatSpecialMoveTickRuntime
+                continue;
+            }
+            if (cacheBucket == AgentCombatSkillClassifier.SkillCacheBucket.UTILITY) {
+                continue;  // Time Leap / Smokescreen / Chakra have no automatic trigger yet
+            }
             if (cacheBucket == AgentCombatSkillClassifier.SkillCacheBucket.ACTIVE_ATTACK) {
                 // Weapon-incompatible learned skills are intentionally absent from every attack
                 // cache slot. Target scoring and navigation consume these slots before a plan is
                 // built, so filtering only in the planner is too late for hybrid builds.
-                if (!AgentCombatWeaponPolicy.canUseSkillWithWeapon(skill.getId(), weaponType)) {
+                if (!AgentCombatWeaponPolicy.canUseSkillWithWeapon(skill.getId(), weaponType)
+                        || AgentCombatSkillClassifier.requiresPreAction(skill.getId())) {
                     continue;
                 }
                 AgentCombatSkillCacheStateRuntime.addAttackSkillId(entry, skill.getId());

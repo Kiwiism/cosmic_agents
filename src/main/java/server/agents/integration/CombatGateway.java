@@ -14,6 +14,12 @@ public interface CombatGateway {
 
     boolean dispatchSupportSpecialMove(Character agent, int skillId, int skillLevel, int packetTimestamp);
 
+    /** Casts a summon skill at the Agent's position (special move with a position payload). */
+    boolean dispatchSummonSpecialMove(Character agent, int skillId, int skillLevel, int packetTimestamp);
+
+    /** Monster Magnet: the special move carries the pulled monsters' object ids. */
+    boolean dispatchMonsterMagnet(Character agent, int skillId, int skillLevel, int packetTimestamp, java.util.List<Integer> monsterOids);
+
     CombatAttackApplicationResult applyAttackEffects(
             AgentAttackRoute route,
             AbstractDealDamageHandler.AttackInfo attack,

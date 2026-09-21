@@ -26,4 +26,37 @@ public final class CosmicSupportSpecialMovePacketBuilder {
         }
         return packet.getBytes();
     }
+
+    /** Monster Magnet: count, then (object id, success byte) per monster, then the caster's direction. */
+    public static byte[] buildMonsterMagnet(Character agent, int skillId, int skillLevel, int packetTimestamp,
+                                            java.util.List<Integer> monsterOids) {
+        ByteBufOutPacket packet = new ByteBufOutPacket();
+        packet.writeShort(RecvOpcode.SPECIAL_MOVE.getValue());
+        packet.writeInt(packetTimestamp);
+        packet.writeInt(skillId);
+        packet.writeByte(skillLevel);
+        packet.writeInt(monsterOids.size());
+        for (int oid : monsterOids) {
+            packet.writeInt(oid);
+            packet.writeByte(1);
+        }
+        packet.writeByte(agent.isFacingLeft() ? 1 : 0);
+        return packet.getBytes();
+    }
+
+    /**
+     * Summons: SpecialMoveHandler reads a position only when exactly five bytes remain after the
+     * skill level (x, y, and one trailing byte), and StatEffect spawns the summon at that point.
+     */
+    public static byte[] buildWithPosition(Character agent, int skillId, int skillLevel, int packetTimestamp) {
+        ByteBufOutPacket packet = new ByteBufOutPacket();
+        packet.writeShort(RecvOpcode.SPECIAL_MOVE.getValue());
+        packet.writeInt(packetTimestamp);
+        packet.writeInt(skillId);
+        packet.writeByte(skillLevel);
+        Point position = agent.getPosition();
+        packet.writePos(position != null ? position : new Point(0, 0));
+        packet.writeByte(0);
+        return packet.getBytes();
+    }
 }

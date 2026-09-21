@@ -9,6 +9,9 @@ import client.inventory.Item;
 import client.inventory.WeaponType;
 import constants.skills.Crossbowman;
 import constants.skills.Hunter;
+import constants.skills.Gunslinger;
+import constants.skills.ThunderBreaker;
+import constants.skills.Pirate;
 import net.server.channel.handlers.AbstractDealDamageHandler;
 import server.agents.capabilities.combat.data.AgentAttackDataProvider;
 import server.agents.capabilities.combat.data.AgentAttackTiming;
@@ -270,8 +273,21 @@ public final class AgentAttackExecutionProvider {
     // the v83 client.
     private static final Set<Integer> FORCED_CLOSE_RANGE_SKILL_IDS = Set.of(
             Hunter.POWER_KNOCKBACK,
-            Crossbowman.POWER_KNOCKBACK
+            Crossbowman.POWER_KNOCKBACK,
+            // Melee kicks the client sends as close-range attacks whatever the pirate holds; routing
+            // them by the equipped gun made the ranged degenerate-distance rule reject them.
+            Pirate.SOMERSAULT_KICK,
+            ThunderBreaker.SOMERSAULT_KICK
     );
+
+    /** Lobbed projectiles whose WZ box surrounds the caster; the ranged degenerate-distance rule does not apply. */
+    private static final Set<Integer> SHORT_RANGE_PROJECTILE_SKILL_IDS = Set.of(
+            Gunslinger.GRENADE
+    );
+
+    public static boolean isShortRangeProjectileSkill(int skillId) {
+        return SHORT_RANGE_PROJECTILE_SKILL_IDS.contains(skillId);
+    }
 
     public static AgentAttackRoute determineSkillRoute(Character bot, int skillId) {
         if (FORCED_CLOSE_RANGE_SKILL_IDS.contains(skillId)) {

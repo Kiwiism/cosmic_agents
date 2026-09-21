@@ -56,6 +56,19 @@ public enum CosmicCombatGateway implements CombatGateway {
     }
 
     @Override
+    public boolean dispatchMonsterMagnet(Character agent, int skillId, int skillLevel, int packetTimestamp,
+                                         java.util.List<Integer> monsterOids) {
+        return dispatchSyntheticPacket(agent,
+                CosmicSupportSpecialMovePacketBuilder.buildMonsterMagnet(agent, skillId, skillLevel, packetTimestamp, monsterOids));
+    }
+
+    @Override
+    public boolean dispatchSummonSpecialMove(Character agent, int skillId, int skillLevel, int packetTimestamp) {
+        return dispatchSyntheticPacket(agent,
+                CosmicSupportSpecialMovePacketBuilder.buildWithPosition(agent, skillId, skillLevel, packetTimestamp));
+    }
+
+    @Override
     public CombatAttackApplicationResult applyAttackEffects(
             AgentAttackRoute route,
             AbstractDealDamageHandler.AttackInfo attack,

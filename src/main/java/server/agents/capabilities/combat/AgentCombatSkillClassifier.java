@@ -8,7 +8,24 @@ import constants.skills.Assassin;
 import constants.skills.Bandit;
 import constants.skills.Bowmaster;
 import constants.skills.Buccaneer;
+import constants.skills.ChiefBandit;
+import constants.skills.Brawler;
 import constants.skills.Cleric;
+import constants.skills.Beginner;
+import constants.skills.Marauder;
+import constants.skills.DarkKnight;
+import constants.skills.Paladin;
+import constants.skills.ILMage;
+import constants.skills.FPMage;
+import constants.skills.ILWizard;
+import constants.skills.FPWizard;
+import constants.skills.Page;
+import constants.skills.Hero;
+import constants.skills.NightLord;
+import constants.skills.Shadower;
+import constants.skills.Bishop;
+import constants.skills.ILArchMage;
+import constants.skills.FPArchMage;
 import constants.skills.Corsair;
 import constants.skills.Crusader;
 import constants.skills.DawnWarrior;
@@ -37,6 +54,19 @@ public final class AgentCombatSkillClassifier {
             WhiteKnight.MAGIC_CRASH,
             DragonKnight.POWER_CRASH
     );
+
+    /**
+     * Attack skills the server only accepts after a world precondition the Agent has to set up
+     * itself (Meso Explosion: meso drops in the blast). Kept out of the automatic attack cache
+     * until the AI performs the pre-action; explicit plans still execute.
+     */
+    private static final Set<Integer> PRE_ACTION_ATTACK_SKILL_IDS = Set.of(
+            ChiefBandit.MESO_EXPLOSION
+    );
+
+    public static boolean requiresPreAction(int skillId) {
+        return PRE_ACTION_ATTACK_SKILL_IDS.contains(skillId);
+    }
 
     private static final Set<Integer> BUFF_BLACKLIST_SKILL_IDS = Set.of(
             Rogue.DARK_SIGHT,
@@ -74,7 +104,66 @@ public final class AgentCombatSkillClassifier {
         ACTIVE_ATTACK,
         SUMMON,
         SUPPORT_BUFF,
+        /** Mob debuffs cast as special moves (Slow, Seal, Doom, Ninja Ambush, Crashes, Dispel, Monster Magnet). */
+        DEBUFF,
+        /** Self/party utility special moves with no buff stat to verify (Time Leap, Smokescreen, Chakra). */
+        UTILITY,
         IGNORE
+    }
+
+    /** Attacks the generic offense test misses: fixed-damage Snipe and the cost-free energy attacks. */
+    private static final Set<Integer> SPECIAL_ATTACK_SKILL_IDS = Set.of(
+            Marksman.SNIPE, Marauder.ENERGY_BLAST, Marauder.ENERGY_DRAIN, Buccaneer.ENERGY_ORB,
+            Beginner.THREE_SNAILS
+    );
+
+    /** Energy attacks: the client only allows them with a full Energy Charge bar. */
+    private static final Set<Integer> ENERGY_ATTACK_SKILL_IDS = Set.of(
+            Marauder.ENERGY_BLAST, Marauder.ENERGY_DRAIN, Buccaneer.ENERGY_ORB
+    );
+
+    public static boolean isEnergyAttackSkill(int skillId) {
+        return ENERGY_ATTACK_SKILL_IDS.contains(skillId);
+    }
+
+    private static final Set<Integer> UTILITY_SPECIAL_MOVE_SKILL_IDS = Set.of(
+            Buccaneer.TIME_LEAP, Shadower.SMOKE_SCREEN, ChiefBandit.CHAKRA, Brawler.MP_RECOVERY
+    );
+
+    public static boolean isUtilitySpecialMove(int skillId) {
+        return UTILITY_SPECIAL_MOVE_SKILL_IDS.contains(skillId);
+    }
+
+    /** Keydown charge attacks whose WZ shape reads as an over-time buff; the server ignores the charge value. */
+    private static final Set<Integer> CHARGE_ATTACK_SKILL_IDS = Set.of(
+            FPArchMage.BIG_BANG, ILArchMage.BIG_BANG, Bishop.BIG_BANG
+    );
+
+    /** Attack packets that carry no damage of their own but apply a status to the targets. */
+    private static final Set<Integer> STATUS_ATTACK_SKILL_IDS = Set.of(
+            Shadower.TAUNT, NightLord.TAUNT, Rogue.DISORDER
+    );
+
+    /** Castable buffs with no WZ action node (the generic support test needs one). */
+    private static final Set<Integer> EXPLICIT_SUPPORT_SKILL_IDS = Set.of(
+            Hero.ENRAGE, NightLord.SHADOW_STARS, Marauder.TRANSFORMATION, Buccaneer.SUPER_TRANSFORMATION
+    );
+
+    /** Mirrors StatEffect.isMonsterBuff plus Monster Magnet: cast as a special move, applied to mobs in the skill box. */
+    private static final Set<Integer> MOB_DEBUFF_SKILL_IDS = Set.of(
+            Page.THREATEN, FPWizard.SLOW, ILWizard.SLOW, FPMage.SEAL, ILMage.SEAL, Priest.DOOM,
+            NightLord.NINJA_AMBUSH, Shadower.NINJA_AMBUSH,
+            Crusader.ARMOR_CRASH, DragonKnight.POWER_CRASH, WhiteKnight.MAGIC_CRASH,
+            Priest.DISPEL, Hero.MONSTER_MAGNET, Paladin.MONSTER_MAGNET, DarkKnight.MONSTER_MAGNET,
+            Corsair.HYPNOTIZE
+    );
+
+    public static boolean isMobDebuffSkill(int skillId) {
+        return MOB_DEBUFF_SKILL_IDS.contains(skillId);
+    }
+
+    public static boolean isMonsterMagnet(int skillId) {
+        return skillId == Hero.MONSTER_MAGNET || skillId == Paladin.MONSTER_MAGNET || skillId == DarkKnight.MONSTER_MAGNET;
     }
 
     public static SkillCacheBucket classifySkillCacheBucket(Skill skill, StatEffect effect) {
@@ -93,6 +182,12 @@ public final class AgentCombatSkillClassifier {
         if (isActiveSupportSkill(skill, effect) && !isBuffBlacklisted(skill.getId())) {
             return SkillCacheBucket.SUPPORT_BUFF;
         }
+        if (isMobDebuffSkill(skill.getId())) {
+            return SkillCacheBucket.DEBUFF;
+        }
+        if (isUtilitySpecialMove(skill.getId())) {
+            return SkillCacheBucket.UTILITY;
+        }
         return SkillCacheBucket.IGNORE;
     }
 
@@ -104,12 +199,37 @@ public final class AgentCombatSkillClassifier {
         return BUFF_BLACKLIST_SKILL_IDS.contains(skillId);
     }
 
+    /** Diagnostic: why {@link #classifySkillCacheBucket} returns IGNORE for this skill. */
+    public static String ignoreReason(Skill skill, StatEffect effect) {
+        if (skill == null || effect == null) {
+            return "no skill/effect";
+        }
+        List<String> reasons = new ArrayList<>();
+        if (NON_DAMAGE_ACTIVE_SKILL_IDS.contains(skill.getId())) reasons.add("listed non-damage active");
+        if (effect.isOverTime()) reasons.add("overTime");
+        if (!declaresOffense(effect)) reasons.add("no offense (damage=" + effect.hasDamage() + " matk=" + effect.hasMatk()
+                + " mobCount=" + effect.getMobCount() + " box=" + effect.hasBoundingBox() + ")");
+        if (skill.getSkillType() == 1 || skill.getSkillType() == 3) reasons.add("skillType=" + skill.getSkillType());
+        if (effect.getMpCon() <= 0 && effect.getHpCon() <= 0 && !skill.isBeginnerSkill()) reasons.add("no cost");
+        if (isSummonSkill(effect)) reasons.add("summon");
+        if (isBuffBlacklisted(skill.getId())) reasons.add("buff blacklisted");
+        if (effect.isOverTime() && (effect.getDuration() <= 0 || effect.getStatups().isEmpty())) {
+            reasons.add("buff without duration/statups (duration=" + effect.getDuration() + " statups=" + effect.getStatups().size() + ")");
+        }
+        if (effect.isOverTime() && !skill.getAction() && skill.getSkillType() != 2) reasons.add("no action and skillType=" + skill.getSkillType());
+        return String.join("; ", reasons);
+    }
+
     public static boolean isActiveAttackSkill(Skill skill, StatEffect effect) {
         if (skill == null || effect == null) {
             return false;
         }
         if (NON_DAMAGE_ACTIVE_SKILL_IDS.contains(skill.getId())) {
             return false;
+        }
+        if (CHARGE_ATTACK_SKILL_IDS.contains(skill.getId()) || STATUS_ATTACK_SKILL_IDS.contains(skill.getId())
+                || SPECIAL_ATTACK_SKILL_IDS.contains(skill.getId())) {
+            return true;
         }
         if (effect.isOverTime() || !declaresOffense(effect)) {
             return false;
@@ -140,7 +260,7 @@ public final class AgentCombatSkillClassifier {
         if (isSummonSkill(effect)) {
             return false;
         }
-        return skill.getAction() || skill.getSkillType() == 2;
+        return skill.getAction() || skill.getSkillType() == 2 || EXPLICIT_SUPPORT_SKILL_IDS.contains(skill.getId());
     }
 
     public static boolean isCacheableSupportBuffSkill(Skill skill, StatEffect effect) {

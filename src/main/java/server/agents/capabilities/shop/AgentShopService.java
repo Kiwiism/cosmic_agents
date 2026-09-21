@@ -12,6 +12,7 @@ import server.agents.capabilities.shop.AgentShopPotionPolicy;
 import server.agents.capabilities.supplies.AgentPotionInventoryPolicy;
 import server.agents.capabilities.supplies.AgentPotionRecoveryPolicy;
 import server.agents.capabilities.supplies.AgentPotionService;
+import server.agents.capabilities.supplies.AgentSkillConsumablePolicy;
 import server.agents.capabilities.supplies.AgentSupplyConfig;
 
 import client.Character;
@@ -53,6 +54,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public final class AgentShopService {
@@ -301,7 +303,34 @@ public final class AgentShopService {
         if (needsPotionStock(bot, shop, false)) {
             return true;
         }
+        return needsSkillConsumables(bot, shop);
+    }
+
+    /** Summoning/Magic Rocks for Shadow Partner, Mystic Door and friends, when this shop stocks them. */
+    private static boolean needsSkillConsumables(Character bot, Shop shop) {
+        for (Map.Entry<Integer, Integer> target : AgentSkillConsumablePolicy.targets(bot).entrySet()) {
+            if (AgentSkillConsumablePolicy.needsRestock(bot, target.getKey(), target.getValue())
+                    && findShopItem(shop, target.getKey()) != null) {
+                return true;
+            }
+        }
         return false;
+    }
+
+    private static AgentShopPurchaseSequence<AgentRuntimeEntry> buySkillConsumables(
+            AgentShopPurchaseSequence<AgentRuntimeEntry> sequence, Shop shop, int minimumMesoReserve) {
+        Character bot = sequence.bot();
+        for (Map.Entry<Integer, Integer> target : AgentSkillConsumablePolicy.targets(bot).entrySet()) {
+            int missing = AgentSkillConsumablePolicy.shortfall(bot, target.getKey(), target.getValue());
+            ShopSlotItem item = findShopItem(shop, target.getKey());
+            if (missing <= 0 || item == null) {
+                continue;
+            }
+            sequence = appendBuyReport(sequence,
+                    buyFixedCostItem(bot, shop, item, missing, Math.max(1, missing), minimumMesoReserve),
+                    "skill consumable");
+        }
+        return sequence;
     }
 
     private static void executePurchases(AgentRuntimeEntry entry, Character bot, InventoryGateway inventory, Point npcPos) {
@@ -371,6 +400,8 @@ public final class AgentShopService {
         if (!itemOnlyVisit) {
             actions.add((sequence, shop) ->
                     buyPotionStock(sequence, shop, minimumMesoReserve));
+            actions.add((sequence, shop) ->
+                    buySkillConsumables(sequence, shop, minimumMesoReserve));
         }
 
         runPurchaseStep(new AgentShopPurchaseSequence<>(entry, bot, inventory, npcPos, actions, new ArrayList<>(), null), 0);

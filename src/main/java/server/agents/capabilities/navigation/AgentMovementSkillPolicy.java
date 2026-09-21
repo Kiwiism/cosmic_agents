@@ -38,6 +38,23 @@ public final class AgentMovementSkillPolicy {
     private AgentMovementSkillPolicy() {
     }
 
+    /** Diagnostic: how the movement stack treats this skill for {@code agent}, or null when it is not a movement skill it knows. */
+    public static String movementSkillSupport(Character agent, int skillId) {
+        AgentNavigationGraph.EdgeType type = null;
+        for (int id : TELEPORT_SKILL_IDS) {
+            if (id == skillId) type = AgentNavigationGraph.EdgeType.TELEPORT;
+        }
+        for (int id : FLASH_JUMP_SKILL_IDS) {
+            if (id == skillId) type = AgentNavigationGraph.EdgeType.FLASH_JUMP;
+        }
+        if (type == null) {
+            return null;
+        }
+        boolean eligible = baseEligibility(agent, type);
+        return (eligible ? "eligible" : "not eligible (map limit or skill missing)")
+                + "; mode=" + mode(type) + (activeModeAllowed(agent, type) ? " (active routing)" : " (not routed actively)");
+    }
+
     public static boolean isSkillEdge(AgentNavigationGraph.Edge edge) {
         return edge != null && (edge.type == AgentNavigationGraph.EdgeType.TELEPORT
                 || edge.type == AgentNavigationGraph.EdgeType.FLASH_JUMP);
