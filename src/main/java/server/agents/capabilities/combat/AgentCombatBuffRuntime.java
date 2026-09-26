@@ -12,6 +12,7 @@ import server.agents.integration.AgentSkillGatewayRuntime;
 import server.agents.integration.SkillGateway;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
+import server.agents.runtime.AgentPartyGatherRegistry;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
 
@@ -28,11 +29,14 @@ public final class AgentCombatBuffRuntime {
 
     public static void tickBuffs(AgentRuntimeEntry entry, Character bot, AgentCombatConfig.Config config,
                                  SkillGateway skills) {
+        long now = System.currentTimeMillis();
+        // A party gathered for buffs: the Agent buffs while it stands and waits, even in town.
+        AgentPartyGatherRegistry.Gathering gathering = gathering(entry, bot, now);
         AgentCombatSupportPolicy.SkillBuffTickDecision tickDecision =
                 AgentCombatSupportPolicy.skillBuffTickDecision(
                         AgentCombatCooldownStateRuntime.hasAttackCooldown(entry),
                         AgentCombatBuffStateRuntime.skillBuffsEnabled(entry),
-                        AgentModeStateRuntime.following(entry),
+                        AgentModeStateRuntime.following(entry) || gathering != null,
                         AgentModeStateRuntime.grinding(entry),
                         AgentCombatSkillCacheStateRuntime.hasBuffSkillIds(entry));
         if (tickDecision != AgentCombatSupportPolicy.SkillBuffTickDecision.READY) {
@@ -43,12 +47,15 @@ public final class AgentCombatBuffRuntime {
             return;
         }
         boolean hasLivingMobs = server.agents.perception.AgentMapPerception.monsters(bot.getMap()).stream().anyMatch(Monster::isAlive);
-        if (AgentCombatSupportPolicy.shouldSkipSkillBuffsWithoutLivingMobs(hasLivingMobs)) return;
+        if (gathering == null && AgentCombatSupportPolicy.shouldSkipSkillBuffsWithoutLivingMobs(hasLivingMobs)) return;
 
-        long now = System.currentTimeMillis();
-        if (trySupportBuff(entry, bot, config, now, skills)) {
+        if (gathering != null && gathering.stillWalking(bot.getId(), bot.getPosition(), now)) {
             return;
         }
+        if (trySupportBuff(entry, bot, config, now, skills, gathering)) {
+            return;
+        }
+        boolean heldForParty = false;
 
         for (int skillId : AgentCombatSkillCacheStateRuntime.buffSkillIds(entry)) {
             if (now < AgentCombatBuffStateRuntime.nextBuffAt(entry, skillId)) continue;
@@ -63,12 +70,37 @@ public final class AgentCombatBuffRuntime {
                     || AgentCombatSkillClassifier.isBuffBlacklisted(skill.getId())) {
                 continue;
             }
+            // While the party waits, only party buffs go up; the Agent's own buffs follow once it is released.
+            if (gathering != null && !AgentCombatSupportPolicy.isPartyBuff(skillId, fx)) {
+                continue;
+            }
+            if (holdForParty(gathering, skillId, fx, bot, now)) {
+                heldForParty = true;
+                continue;
+            }
             if (castSupportSkill(entry, bot, skill, fx, now)) {
                 return;
             }
         }
+        if (gathering != null && !heldForParty) {
+            gathering.bufferFinished(bot.getId());
+        }
         AgentSkillBuffDebugStateRuntime.rememberAction(
                 entry, System.currentTimeMillis(), AgentCombatSupportPolicy.allSkillBuffsActiveOrOnCooldownSummary());
+    }
+
+    private static AgentPartyGatherRegistry.Gathering gathering(AgentRuntimeEntry entry, Character bot, long now) {
+        Character owner = entry.owner();
+        return owner == null ? null : AgentPartyGatherRegistry.active(owner.getId(), bot.getMapId(), now);
+    }
+
+    /** During a gathering a party buff waits for the whole party to stand in its box, until the wait runs out. */
+    static boolean holdForParty(AgentPartyGatherRegistry.Gathering gathering, int skillId, StatEffect effect,
+                                Character bot, long now) {
+        return gathering != null
+                && gathering.waitingForParty(now)
+                && AgentCombatSupportPolicy.isPartyBuff(skillId, effect)
+                && !AgentCombatSupportPolicy.wholePartyInBox(bot, effect);
     }
 
     public static boolean tryCastCriticalSurvivalBuff(AgentRuntimeEntry entry, Character bot) {
@@ -137,7 +169,8 @@ public final class AgentCombatBuffRuntime {
     }
 
     private static boolean trySupportBuff(AgentRuntimeEntry entry, Character bot, AgentCombatConfig.Config config,
-                                          long now, SkillGateway skills) {
+                                          long now, SkillGateway skills,
+                                          AgentPartyGatherRegistry.Gathering gathering) {
         for (int skillId : AgentCombatSkillCacheStateRuntime.buffSkillIds(entry)) {
             if (!AgentCombatSupportPolicy.shouldConsiderSupportBuff(
                     AgentCombatSkillClassifier.isPartySupportSkill(skillId),
@@ -153,8 +186,13 @@ public final class AgentCombatBuffRuntime {
             }
 
             StatEffect fx = skill.getEffect(lvl);
-            if (!AgentCombatSupportPolicy.hasNearbyPartyMemberMissingBuff(
-                    bot, fx, config.SUPPORT_RANGE, config.SUPPORT_VERTICAL_RANGE)) {
+            // The server hands a party buff to members inside its box, not a radius; a member just
+            // outside it never gets the buff, so counting them kept the Agent recasting every few seconds.
+            boolean someoneNeedsIt = fx.hasBoundingBox()
+                    ? AgentCombatSupportPolicy.hasPartyMemberInBoxMissingBuff(bot, fx)
+                    : AgentCombatSupportPolicy.hasNearbyPartyMemberMissingBuff(
+                            bot, fx, config.SUPPORT_RANGE, config.SUPPORT_VERTICAL_RANGE);
+            if (!someoneNeedsIt || holdForParty(gathering, skillId, fx, bot, now)) {
                 continue;
             }
 

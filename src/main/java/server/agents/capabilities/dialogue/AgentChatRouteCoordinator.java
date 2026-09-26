@@ -28,6 +28,7 @@ import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentMailboxRuntime;
+import server.agents.capabilities.movement.AgentPartyGatherService;
 import server.agents.auth.AgentAuthorityService;
 import server.agents.integration.AgentRelationshipRuntime;
 
@@ -110,6 +111,11 @@ public final class AgentChatRouteCoordinator {
                         commandLeader,
                         text,
                         transferAction),
+                (commandLeader, text) -> {
+                    List<E> leaderAgents = entriesByLeader.get(commandLeader.getId());
+                    return leaderAgents != null
+                            && AgentPartyGatherService.assembleOnCommand(commandLeader, text, leaderAgents);
+                },
                 (commandLeader, text) -> dispatchFormationCommand(
                         commandLeader,
                         text,

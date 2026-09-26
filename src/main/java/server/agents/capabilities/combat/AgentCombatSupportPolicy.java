@@ -1,5 +1,6 @@
 package server.agents.capabilities.combat;
 
+import client.BuffStat;
 import client.Character;
 import client.Disease;
 import constants.skills.Cleric;
@@ -270,5 +271,59 @@ public final class AgentCombatSupportPolicy {
             nearby.add(member);
         }
         return nearby;
+    }
+
+    /**
+     * Whether a buff reaches party members: it has a box (StatEffect.applyBuff hands it to every
+     * party member inside it) and is not a weapon charge, which carries a box but stays on the caster.
+     */
+    public static boolean isPartyBuff(int skillId, StatEffect effect) {
+        return effect != null && effect.hasBoundingBox() && !effect.getStatups().isEmpty()
+                && effect.getStatups().stream().noneMatch(statup -> statup.getLeft() == BuffStat.WK_CHARGE);
+    }
+
+    /** The rectangle the server hands this buff out in around the Agent, as StatEffect.applyBuff builds it. */
+    public static Rectangle partyBuffBox(Character bot, StatEffect effect) {
+        if (effect == null || !effect.hasBoundingBox() || bot == null || bot.getPosition() == null) {
+            return null;
+        }
+        return effect.calculateBoundingBox(bot.getPosition(), bot.isFacingLeft());
+    }
+
+    /** A living party member inside the buff's box who lacks one of its stats. */
+    public static boolean hasPartyMemberInBoxMissingBuff(Character bot, StatEffect effect) {
+        Rectangle box = partyBuffBox(bot, effect);
+        if (box == null || effect.getStatups().isEmpty()) {
+            return false;
+        }
+        for (Character member : bot.getPartyMembersOnSameMap()) {
+            if (member == null || member.getId() == bot.getId() || !member.isAlive()
+                    || member.getPosition() == null || !box.contains(member.getPosition())) {
+                continue;
+            }
+            for (var statup : effect.getStatups()) {
+                if (member.getBuffedValue(statup.getLeft()) == null) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /** Whether every living party member on the Agent's map stands inside the buff's box. */
+    public static boolean wholePartyInBox(Character bot, StatEffect effect) {
+        Rectangle box = partyBuffBox(bot, effect);
+        if (box == null) {
+            return true;
+        }
+        for (Character member : bot.getPartyMembersOnSameMap()) {
+            if (member == null || member.getId() == bot.getId() || !member.isAlive()) {
+                continue;
+            }
+            if (member.getPosition() == null || !box.contains(member.getPosition())) {
+                return false;
+            }
+        }
+        return true;
     }
 }

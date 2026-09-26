@@ -13,6 +13,7 @@ public final class AgentChatIngressService {
     public record Hooks<E extends AgentRuntimeHandle>(PendingOfferRoute pendingOfferRoute,
                         RecruitRoute recruitRoute,
                         TransferRoute transferRoute,
+                        AssembleRoute assembleRoute,
                         FormationRoute formationRoute,
                         EntriesForLeader<E> entriesForLeader,
                         DismissRoute dismissRoute,
@@ -32,6 +33,12 @@ public final class AgentChatIngressService {
 
     @FunctionalInterface
     public interface TransferRoute {
+        boolean handle(Character leader, String message);
+    }
+
+    /** "gather up" / "everyone come here": the leader's Agents gather around the leader. */
+    @FunctionalInterface
+    public interface AssembleRoute {
         boolean handle(Character leader, String message);
     }
 
@@ -72,6 +79,9 @@ public final class AgentChatIngressService {
             return;
         }
         if (hooks.transferRoute().handle(leader, message)) {
+            return;
+        }
+        if (hooks.assembleRoute().handle(leader, message)) {
             return;
         }
         if (hooks.formationRoute().handle(leader, message)) {

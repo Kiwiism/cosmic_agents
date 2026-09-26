@@ -1536,6 +1536,26 @@ tuning:
     # Purpose: Controls the distance or margin used for platform edge inset. Higher values allow action from farther away or leave more space; lower values require closer, more precise positioning.
     # Technical: the "movement target runtime" component consumes this as an integer. Unit: MapleStory map pixels; horizontal and vertical values use the server map coordinate system.
     server.agents.capabilities.movement.AgentMovementTargetRuntime.PLATFORM_EDGE_INSET_PX: '12'
+    # Values: a finite positive integer; unit: map pixels. Recommended: 40-90 around the tested baseline 60; benchmark or observe behavior before moving outside this band.
+    # Purpose: Controls how far apart Agents stand when the party gathers around its owner. Wider spots look less crowded; narrower spots keep a bigger party inside the smallest party-buff box.
+    # Technical: the "party gather service" component consumes this as an integer. Spots alternate left and right of the owner at multiples of this distance, buffers innermost; a spot is pulled inward by half this distance until it stands on ground within half this distance of the owner's height.
+    server.agents.capabilities.movement.AgentPartyGatherService.SLOT_SPACING_PX: '60'
+    # Values: a finite non-negative integer; unit: milliseconds. Recommended: 6000-20000 around the tested baseline 12000; benchmark or observe behavior before moving outside this band.
+    # Purpose: Controls how long buffers hold their party buffs for party members who are still walking over. Longer waits catch slow walkers; shorter waits buff sooner and leave stragglers out.
+    # Technical: the "party gather service" component consumes this as an integer. During a gathering a party buff is held while any living party member on the map is outside its box, until this long after the gathering opened; then it is cast regardless.
+    server.agents.capabilities.movement.AgentPartyGatherService.WAIT_FOR_PARTY_MS: '12000'
+    # Values: a finite positive integer; unit: milliseconds. Recommended: 15000-40000 around the tested baseline 25000; keep it above WAIT_FOR_PARTY_MS so buffers can finish casting.
+    # Purpose: Controls the latest time a gathering ends, after which the Agents it moved go back to what they were doing even if a buffer never reported finishing.
+    # Technical: the "party gather service" component consumes this as an integer. A gathering normally closes as soon as every buffer has cast its due buffs; this bounds it so a buffer that died, ran out of MP or left the map cannot keep the party standing still.
+    server.agents.capabilities.movement.AgentPartyGatherService.CLOSE_AFTER_MS: '25000'
+    # Values: a finite positive integer; unit: milliseconds. Recommended: 250-1000 around the tested baseline 500; benchmark or observe behavior before moving outside this band.
+    # Purpose: Controls how often an open gathering checks whether its buffers have finished, which sets how quickly the party goes back to its activity after the last buff.
+    # Technical: the "party gather service" component consumes this as an integer. One watcher per gathering reschedules itself on the opening Agent's scheduler at this interval until the gathering closes or expires.
+    server.agents.capabilities.movement.AgentPartyGatherService.POLL_MS: '500'
+    # Values: a finite non-negative integer; unit: milliseconds. Recommended: 1500-6000 around the tested baseline 3000; benchmark or observe behavior before moving outside this band.
+    # Purpose: Controls how long after one "gather up" a second one for the same owner is treated as the same command, so several Agents reading one message call the party together once.
+    # Technical: the "party gather service" component consumes this as an integer. Untargeted chat and the chat-intent judge run once per Agent; the first assemble inside this window for an owner moves the party and the rest report the command as handled without acting.
+    server.agents.capabilities.movement.AgentPartyGatherService.ASSEMBLE_DEDUPE_MS: '3000'
     # Values: a finite non-negative integer; unit: milliseconds. Recommended: 250-1000 around the tested baseline 500; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls how long Agents remain in or wait for grounded stuck threshold. Higher values make that pause or state last longer; lower values make them continue sooner.
     # Technical: the "stuck detection service" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled.
