@@ -1114,7 +1114,8 @@ public class Character extends AbstractCharacterObject {
     }
 
     public static boolean canCreateChar(String name) {
-        return isValidCharacterNameSyntax(name) && getIdByName(name) < 0;
+        return isValidCharacterNameSyntax(name) && getIdByName(name) < 0
+                && server.security.typesafe.JevNameScreen.allows(name);
     }
 
     /** Pure character-name policy check, separated from the database uniqueness lookup. */

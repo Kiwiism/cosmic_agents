@@ -1,7 +1,13 @@
 package server.agents.capabilities.partyquest.kpq;
 
 import client.Character;
+import config.AgentYamlConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import server.agents.capabilities.partyquest.dialogue.AgentPartyQuestDialogueJudge;
 import server.agents.integration.AgentPartyQuestGatewayRuntime;
+import server.agents.integration.typesafe.JevClient;
+import server.agents.integration.typesafe.JevJudgmentMode;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
@@ -9,9 +15,12 @@ import server.agents.runtime.AgentSchedulerRuntime;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
 /** Mixed-party KPQ guidance driven by authoritative session and NPC state. */
 public final class AgentKpqHumanDialogueRuntime {
+    private static final Logger log = LoggerFactory.getLogger(AgentKpqHumanDialogueRuntime.class);
+    private static final String ASKS_COUPON_COUNT = "asks_coupon_count";
     private static final long CHAT_RESPONSE_COOLDOWN_MS = config.AgentTuning.longValue(
             "server.agents.capabilities.partyquest.kpq.AgentKpqHumanDialogueRuntime.CHAT_RESPONSE_COOLDOWN_MS");
     private static final long RESPONSE_MINIMUM_MS = config.AgentTuning.longValue(
@@ -27,14 +36,44 @@ public final class AgentKpqHumanDialogueRuntime {
     }
 
     public static void observeChat(Character speaker, String message, long nowMs) {
-        if (speaker == null || !AgentKpqHumanDialoguePolicy.asksForCouponCount(message)) return;
+        if (speaker == null || message == null || message.isBlank()) return;
         AgentKpqSession session = AgentKpqSessionRegistry.forMember(speaker.getId());
         AgentKpqMemberState member = session == null ? null : session.member(speaker.getId());
         if (session == null || session.phase() != AgentKpqSession.Phase.STAGE_1
                 || member == null || member.memberType() != AgentKpqMemberState.MemberType.HUMAN
-                || speaker.getMapId() != AgentKpqDefinition.STAGE_1_MAP
-                || !session.claimDialogue("coupon-help-" + speaker.getId(), nowMs,
-                        CHAT_RESPONSE_COOLDOWN_MS)) {
+                || speaker.getMapId() != AgentKpqDefinition.STAGE_1_MAP) {
+            return;
+        }
+        if (AgentKpqHumanDialoguePolicy.asksForCouponCount(message)) {
+            scheduleCouponAnswer(speaker, session, nowMs);
+            return;
+        }
+        // Deterministic policy missed: optionally let TypeSafe judge the same question.
+        JevJudgmentMode mode = JevJudgmentMode.parse(
+                AgentYamlConfig.config.agent.AGENT_TYPESAFE_PARTY_QUEST_DIALOGUE_MODE);
+        if (!mode.asks()) return;
+        Map<String, Object> state = AgentPartyQuestDialogueJudge.state(
+                speaker.getName(), message, "Kerning City Party Quest", "Stage 1",
+                "each member asks Cloto for a question and reports how many coupons it needs",
+                speaker.getId() == session.eventLeaderId() ? "party leader" : "party member");
+        String sessionId = session.sessionId();
+        AgentPartyQuestDialogueJudge.judge(JevClient.runtime(), state, List.of(
+                new AgentPartyQuestDialogueJudge.Question(ASKS_COUPON_COUNT,
+                        "Is the speaker asking how many coupons or tickets they need, or asking for the answer to their stage question?")))
+                .thenAccept(verdict -> {
+                    if (verdict.isEmpty()) return;
+                    boolean yes = verdict.get().yes(ASKS_COUPON_COUNT);
+                    log.info("[typesafe-kpq] mode={} speaker={} message=\"{}\" {} -> {}",
+                            mode, speaker.getName(), message, verdict.get().summary(), yes ? "coupon question" : "not a coupon question");
+                    if (!yes || !mode.acts()) return;
+                    AgentKpqSession current = AgentKpqSessionRegistry.forMember(speaker.getId());
+                    if (current == null || !current.sessionId().equals(sessionId)) return;
+                    scheduleCouponAnswer(speaker, current, System.currentTimeMillis());
+                });
+    }
+
+    private static void scheduleCouponAnswer(Character speaker, AgentKpqSession session, long nowMs) {
+        if (!session.claimDialogue("coupon-help-" + speaker.getId(), nowMs, CHAT_RESPONSE_COOLDOWN_MS)) {
             return;
         }
         long delayMs = responseDelayMs(session.seed(), speaker.getId(),

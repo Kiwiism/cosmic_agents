@@ -35,6 +35,27 @@ class AgentChatMovementFlowTest {
     }
 
     @Test
+    void gatheringThePartyComesBeforeFollow() {
+        TestCallbacks gathers = new TestCallbacks(true) {
+            @Override
+            public boolean assemble(String message) {
+                events += "assemble;";
+                return true;
+            }
+        };
+        assertTrue(AgentChatMovementFlow.handle("everyone come here", gathers));
+        assertTrue(AgentChatMovementFlow.handle("gather up", gathers));
+        assertTrue(AgentChatMovementFlow.handle("come here", gathers));
+        assertEquals("assemble;assemble;follow;", gathers.events);
+
+        // No Agent of the owner on the map to gather: nothing deterministic claims the message, so it
+        // goes on to the intent judge like any other unrecognised phrase.
+        TestCallbacks alone = new TestCallbacks(true);
+        assertFalse(AgentChatMovementFlow.handle("everyone come here", alone));
+        assertEquals("", alone.events);
+    }
+
+    @Test
     void shouldIgnoreNonMovementCommands() {
         TestCallbacks callbacks = new TestCallbacks(true);
 
@@ -51,9 +72,9 @@ class AgentChatMovementFlowTest {
         assertTrue(AgentDialogueCatalog.greetingReplies().contains(AgentChatMovementFlow.greetingReply()));
     }
 
-    private static final class TestCallbacks implements AgentChatMovementFlow.MovementCallbacks {
+    private static class TestCallbacks implements AgentChatMovementFlow.MovementCallbacks {
         private final boolean acceptPositionCommand;
-        private String events = "";
+        String events = "";
 
         private TestCallbacks(boolean acceptPositionCommand) {
             this.acceptPositionCommand = acceptPositionCommand;

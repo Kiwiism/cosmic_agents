@@ -1,6 +1,7 @@
 package server.agents.capabilities.movement;
 
 
+import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentSchedulerRuntime;
 import client.Character;
 import server.agents.capabilities.dialogue.AgentActiveModeRuntime;
@@ -28,6 +29,13 @@ public final class AgentMovementRuntime {
 
     public static AgentChatMovementFlow.MovementCallbacks movementCallbacks(AgentRuntimeEntry entry) {
         return new AgentChatMovementFlow.MovementCallbacks() {
+            @Override
+            public boolean assemble(String message) {
+                Character owner = AgentRelationshipRuntime.interactionTarget(entry);
+                return owner != null && AgentPartyGatherService.assembleOnCommand(
+                        owner, message, AgentRuntimeRegistry.entriesForLeader(owner.getId()));
+            }
+
             @Override
             public boolean farmHere() {
                 Character owner = AgentRelationshipRuntime.interactionTarget(entry);

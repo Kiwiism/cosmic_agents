@@ -530,3 +530,5 @@ server:
     GODLY_STATS_HPMP_SCALING: 1.0                           # 1 -> lv 100 gear gain up to 100 bonus max HP/MP (even if equip had no hp/mp bonus)
     GODLY_STATS_MIN_HPMP_BONUS: 30                          # Minimum max HP/MP bonus
     ALLOW_DROPS_ON_DROP_LIMIT_MAPS: false                   # Independent map-rule override; not coupled to item tradeability.
+    USE_TYPESAFE_NAME_SCREEN: false                         # TypeSafe (Jev) second opinion on new character names: staff impersonation and disguised slurs. Needs TYPESAFE_API_KEY.
+    USE_TYPESAFE_REPORT_TRIAGE: false                       # TypeSafe (Jev) severity/category triage of player reports, posted to GMs and recorded as a security event. Needs TYPESAFE_API_KEY.

@@ -1,5 +1,7 @@
 package server.agents.capabilities.dialogue;
 
+import server.agents.capabilities.movement.AgentPartyGatherService;
+
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -8,6 +10,10 @@ public final class AgentChatMovementFlow {
     }
 
     public static boolean handle(String message, MovementCallbacks callbacks) {
+        // Before follow: "everyone come here" calls the party together, a bare "come here" follows.
+        if (AgentPartyGatherService.matchesAssemble(message) && callbacks.assemble(message)) {
+            return true;
+        }
         if (AgentChatCommandClassifier.isFarmHereCommand(message)) {
             return callbacks.farmHere();
         }
@@ -61,6 +67,11 @@ public final class AgentChatMovementFlow {
     }
 
     public interface MovementCallbacks {
+        /** Gather the owner's party around the owner ("gather up"); false when there is no one to gather. */
+        default boolean assemble(String message) {
+            return false;
+        }
+
         boolean farmHere();
 
         boolean patrol();

@@ -188,6 +188,7 @@ import client.command.commands.gm5.ClimbCaptureCommand;
 import client.command.commands.gm5.IpListCommand;
 import client.command.commands.gm5.MobCaptureCommand;
 import client.command.commands.gm5.SetCommand;
+import client.command.commands.gm5.TypeSafeUsageCommand;
 import client.command.commands.gm5.ShowMoveLifeCommand;
 import client.command.commands.gm5.ShowPacketsCommand;
 import client.command.commands.gm5.ShowSessionsCommand;
@@ -588,6 +589,7 @@ public class CommandsExecutor {
         addCommand("clearquest", 5, ClearQuestCommand.class);
         addCommand("supplyratecoupon", 5, SupplyRateCouponCommand.class);
         addCommand("serverhealth", 5, ServerHealthCommand.class);
+        addCommand("typesafe", 5, TypeSafeUsageCommand.class);
         addCommand("heapdump", 5, HeapDumpCommand.class);
         addCommand("spawnallpnpcs", 5, SpawnAllPNpcsCommand.class);
         addCommand("devtest", 5, DevtestCommand.class);

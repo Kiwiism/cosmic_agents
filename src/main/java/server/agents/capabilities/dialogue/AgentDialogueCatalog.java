@@ -310,6 +310,9 @@ public final class AgentDialogueCatalog {
             "ok! saving and logging off~", "cya!!", "ok bye!!");
     private static final String SUPPORT_OFF_REPLY = "ok, skill buffs off";
     private static final String SUPPORT_ON_REPLY = "ok, skill buffs on";
+    private static final List<String> ASSEMBLE_REPLIES = List.of("omw", "coming", "on my way", "k coming");
+    private static final List<String> CALL_FOR_BUFFS_REPLIES = List.of(
+            "gather up, buffs", "come here for buffs", "buffs, everyone over here");
     private static final String HEALS_OFF_REPLY = "ok, no heals";
     private static final String HEALS_ON_REPLY = "ok, ill heal when needed";
     private static final String BUFF_CONSUMABLES_OFF_REPLY = "ok, no buff pots";
@@ -775,6 +778,16 @@ public final class AgentDialogueCatalog {
 
     public static String supportOnReply() {
         return SUPPORT_ON_REPLY;
+    }
+
+    /** An Agent answering "gather up". */
+    public static List<String> assembleReplies() {
+        return ASSEMBLE_REPLIES;
+    }
+
+    /** A buffer calling the spread-out party over before it rebuffs. */
+    public static List<String> callForBuffsReplies() {
+        return CALL_FOR_BUFFS_REPLIES;
     }
 
     public static String healsOffReply() {

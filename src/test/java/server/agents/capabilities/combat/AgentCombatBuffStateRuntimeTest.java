@@ -31,4 +31,20 @@ class AgentCombatBuffStateRuntimeTest {
         assertFalse(AgentCombatBuffStateRuntime.supportBuffOnCooldown(entry, 200, 3_000L));
         assertEquals(3_000L, AgentCombatBuffStateRuntime.nextSupportBuffAt(entry, 200));
     }
+
+    @Test
+    void aRebuffRequestMakesEveryBuffDueNow() {
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
+        AgentCombatSkillCacheStateRuntime.addBuffSkillId(entry, 2301004);  // Bless
+        AgentCombatSkillCacheStateRuntime.addBuffSkillId(entry, 2311003);  // Holy Symbol
+        AgentCombatBuffStateRuntime.setNextBuffAt(entry, 2301004, 90_000L);
+        AgentCombatBuffStateRuntime.setNextBuffAt(entry, 2311003, 120_000L);
+        AgentCombatBuffStateRuntime.setNextSupportBuffAt(entry, 2311003, 60_000L);
+
+        AgentCombatBuffStateRuntime.requestRebuff(entry);
+
+        assertEquals(0L, AgentCombatBuffStateRuntime.nextBuffAt(entry, 2301004));
+        assertEquals(0L, AgentCombatBuffStateRuntime.nextBuffAt(entry, 2311003));
+        assertFalse(AgentCombatBuffStateRuntime.supportBuffOnCooldown(entry, 2311003, 1L));
+    }
 }

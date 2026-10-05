@@ -1007,6 +1007,7 @@ public class Server {
         }
 
         AgentPopulationRuntime.start();
+        server.agents.integration.typesafe.JevUsageReporter.start();
         startDatabaseConsoleBridge();
         startAgentDirectorBridge();
         startAgentMapGraphViewer();
@@ -1250,6 +1251,7 @@ public class Server {
         lines.add("JVM guardrails: " + JvmGuardrailVerifier.currentStatus().compact());
         lines.add("EXP logs: " + ExpLogger.diagnostics());
         lines.add("Runtime failure keys: " + monitoring.RuntimeFailureLogger.trackedFailureKeyCount());
+        lines.add("TypeSafe: " + server.agents.integration.typesafe.JevClient.runtime().diagnostics());
         lines.add("Timers: " + TimerManager.getInstance().diagnostics());
         lines.add("Slow operations: " + SlowOperationLogger.diagnostics());
         lines.add("Load level: " + ServerLoadMonitor.currentLevel());

@@ -20,7 +20,11 @@ public enum AgentAsyncWorkKind {
     CATALOG_REBUILD("catalog", "agent-catalog", 1, 32, Thread.MIN_PRIORITY,
             "agents.async.catalog.threads", "agents.async.catalog.queueCapacity"),
     ECONOMY_ANALYSIS("trade", "bot-trade-command", 2, 128, Thread.NORM_PRIORITY,
-            "agents.async.trade.threads", "agents.async.trade.queueCapacity");
+            "agents.async.trade.threads", "agents.async.trade.queueCapacity"),
+    // TypeSafe System One judgments: ~100 ms HTTP round trips kept off the LLM lane so a
+    // slow local model never delays a typed decision, and vice versa.
+    SYSTEM_ONE_NETWORK("systemone", "bot-systemone", 2, 128, Thread.NORM_PRIORITY,
+            "agents.async.systemone.threads", "agents.async.systemone.queueCapacity");
 
     private final String metricName;
     private final String threadName;

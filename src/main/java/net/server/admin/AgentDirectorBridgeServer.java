@@ -17,7 +17,9 @@ import server.agents.integration.cosmic.CosmicAgentWorldDirectorApplicationFacto
 import server.agents.integration.cosmic.CosmicAgentCleanSlateResetFactory;
 import server.agents.administration.AgentCleanSlateResetService;
 import server.agents.integration.ollama.DirectorLlmSettings;
+import config.AgentYamlConfig;
 import server.agents.integration.ollama.OllamaDirectorProposalProvider;
+import server.agents.integration.typesafe.TypeSafeDirectorProposalProvider;
 import server.agents.presentation.director.AgentDirectorApiView;
 import server.agents.presentation.director.AgentCleanSlateApiView;
 import server.agents.runtime.activity.control.AgentWorldDirectorApplication;
@@ -65,7 +67,11 @@ public final class AgentDirectorBridgeServer {
                 AgentFileDirectorProposalStore.runtimeDefault());
         this.llmSettings = DirectorLlmSettings.runtime();
         this.llm = new OllamaDirectorProposalProvider(llmSettings);
-        this.chat = new AgentDirectorChatService(llm, proposals);
+        // TypeSafe answers first when enabled and configured; the Ollama provider remains the fallback.
+        this.chat = new AgentDirectorChatService(
+                TypeSafeDirectorProposalProvider.wrap(
+                        llm, AgentYamlConfig.config.agent.AGENT_TYPESAFE_DIRECTOR_RANKING_ENABLED),
+                proposals);
         this.resets = CosmicAgentCleanSlateResetFactory.create();
         this.server = HttpServer.create(new InetSocketAddress("127.0.0.1", port), 0);
         this.server.setExecutor(new ThreadPoolExecutor(2, 4, 30L, TimeUnit.SECONDS,

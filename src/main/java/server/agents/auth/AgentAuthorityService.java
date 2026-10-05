@@ -17,7 +17,23 @@ import java.util.stream.Collectors;
  * the stable character and account IDs.</p>
  */
 public final class AgentAuthorityService {
+    /** An external grant of operator authority: true when the actor may command its own companions. */
+    @FunctionalInterface
+    public interface OperatorGrant {
+        boolean permitsOperate(Character actor);
+    }
+
+    private static volatile OperatorGrant operatorGrant;
+
     private AgentAuthorityService() {
+    }
+
+    /**
+     * Installs a grant consulted after the name allowlists, e.g. a player who has recruited a
+     * companion through a contract. Command routing still only reaches the actor's own Agents.
+     */
+    public static void installOperatorGrant(OperatorGrant grant) {
+        operatorGrant = grant;
     }
 
     public static boolean mayObserve(Character actor) {
@@ -25,7 +41,11 @@ public final class AgentAuthorityService {
     }
 
     public static boolean mayOperate(Character actor) {
-        return hasRole(actor, AgentAuthorityRole.OPERATOR);
+        if (hasRole(actor, AgentAuthorityRole.OPERATOR)) {
+            return true;
+        }
+        OperatorGrant grant = operatorGrant;
+        return grant != null && actor != null && grant.permitsOperate(actor);
     }
 
     public static boolean mayAdminister(Character actor) {

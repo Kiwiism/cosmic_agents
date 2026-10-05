@@ -18,6 +18,7 @@ class AgentChatIngressServiceTest {
         assertEarlyRoute("pending");
         assertEarlyRoute("recruit");
         assertEarlyRoute("transfer");
+        assertEarlyRoute("assemble");
         assertEarlyRoute("formation");
     }
 
@@ -31,7 +32,7 @@ class AgentChatIngressServiceTest {
                 AgentReplyChannel.MAP,
                 hooks("none", null, calls));
 
-        assertEquals(List.of("pending", "recruit", "transfer", "formation", "entries:1"), calls);
+        assertEquals(List.of("pending", "recruit", "transfer", "assemble", "formation", "entries:1"), calls);
     }
 
     @Test
@@ -44,7 +45,7 @@ class AgentChatIngressServiceTest {
                 AgentReplyChannel.MAP,
                 hooks("dismiss", entries(), calls));
 
-        assertEquals(List.of("pending", "recruit", "transfer", "formation", "entries:1", "dismiss"), calls);
+        assertEquals(List.of("pending", "recruit", "transfer", "assemble", "formation", "entries:1", "dismiss"), calls);
     }
 
     @Test
@@ -61,6 +62,7 @@ class AgentChatIngressServiceTest {
                 "pending",
                 "recruit",
                 "transfer",
+                "assemble",
                 "formation",
                 "entries:1",
                 "dismiss",
@@ -81,6 +83,7 @@ class AgentChatIngressServiceTest {
                 "pending",
                 "recruit",
                 "transfer",
+                "assemble",
                 "formation",
                 "entries:1",
                 "dismiss",
@@ -101,7 +104,7 @@ class AgentChatIngressServiceTest {
     }
 
     private static List<String> expectedEarlyCalls(String route) {
-        List<String> order = List.of("pending", "recruit", "transfer", "formation");
+        List<String> order = List.of("pending", "recruit", "transfer", "assemble", "formation");
         return order.subList(0, order.indexOf(route) + 1);
     }
 
@@ -112,6 +115,7 @@ class AgentChatIngressServiceTest {
                 (leader, message) -> route("pending", handledRoute, calls),
                 (leader, message) -> route("recruit", handledRoute, calls),
                 (leader, message) -> route("transfer", handledRoute, calls),
+                (leader, message) -> route("assemble", handledRoute, calls),
                 (leader, message) -> route("formation", handledRoute, calls),
                 leaderCharId -> {
                     calls.add("entries:" + leaderCharId);

@@ -32,6 +32,25 @@ class AgentAuthorityServiceTest {
         }
     }
 
+    @Test
+    void installedGrantExtendsOperatorAuthorityWithoutTouchingAdministration() {
+        String oldOperators = config.AgentYamlConfig.config.agent.AGENT_AUTHORITY_OPERATOR_NAMES;
+        try {
+            config.AgentYamlConfig.config.agent.AGENT_AUTHORITY_OPERATOR_NAMES = "";
+            Character recruiter = named("recruiter");
+            Character stranger = named("stranger");
+            assertFalse(AgentAuthorityService.mayOperate(recruiter));
+
+            AgentAuthorityService.installOperatorGrant(actor -> "recruiter".equals(actor.getName()));
+            assertTrue(AgentAuthorityService.mayOperate(recruiter));
+            assertFalse(AgentAuthorityService.mayOperate(stranger));
+            assertFalse(AgentAuthorityService.mayAdminister(recruiter));
+        } finally {
+            AgentAuthorityService.installOperatorGrant(null);
+            config.AgentYamlConfig.config.agent.AGENT_AUTHORITY_OPERATOR_NAMES = oldOperators;
+        }
+    }
+
     private static Character named(String name) {
         Character character = mock(Character.class);
         when(character.getName()).thenReturn(name);

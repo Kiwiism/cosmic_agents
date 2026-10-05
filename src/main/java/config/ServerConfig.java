@@ -85,6 +85,8 @@ public class ServerConfig {
     public boolean USE_STARTING_AP_4;
     public boolean USE_AUTOBAN;
     public boolean USE_AUTOBAN_LOG;
+    public boolean USE_TYPESAFE_NAME_SCREEN;
+    public boolean USE_TYPESAFE_REPORT_TRIAGE;
     public int PACKET_MAX_FRAME_BYTES;
     public int PACKET_GLOBAL_RATE_PER_SECOND;
     public int PACKET_GLOBAL_BURST;

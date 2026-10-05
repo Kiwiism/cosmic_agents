@@ -347,6 +347,22 @@ agent:
     # Purpose: Requires exact source-session recovery so rejected travel or destination admission cannot discard the Agent's previous work.
     # Technical: The source facade must report rollback support before the persistent handoff state machine is allowed to release execution.
     AGENT_WORLD_DIRECTOR_AUTONOMOUS_REQUIRE_ROLLBACK: true
+    # Values: OFF, SHADOW or LIVE. Recommended: SHADOW for the first week so the model's intent and confidence are logged next to the regex result without changing behaviour; LIVE only after thresholds were tuned on that log.
+    # Purpose: Controls whether TypeSafe System One (Jev) judges companion chat that none of the deterministic command classifiers matched, and whether that judgment may act.
+    # Technical: OFF skips the request entirely; SHADOW asks and logs but always returns unhandled; LIVE re-dispatches the canonical command when confidence reaches the judge's ACT threshold and asks the player when it reaches the ASK threshold. Requires TYPESAFE_API_KEY in the environment.
+    AGENT_TYPESAFE_CHAT_INTENT_MODE: OFF
+    # Values: true or false. Recommended: false until TYPESAFE_API_KEY is configured and the Director panel has been exercised with the fallback still available.
+    # Purpose: Lets the Director panel rank operator requests against executable actions and training-map candidates with typed TypeSafe judgments instead of parsing local LLM text.
+    # Technical: When true and the client is configured, the TypeSafe provider answers first and the configured Ollama provider only runs when TypeSafe is unavailable, unconfident, or returns no usable selection.
+    AGENT_TYPESAFE_DIRECTOR_RANKING_ENABLED: false
+    # Values: OFF, SHADOW or LIVE. Recommended: SHADOW first, then LIVE once shadow logs show the yes-probability threshold separates real questions from banter.
+    # Purpose: Lets party-quest Agents understand human questions (for example how many coupons are needed) that the deterministic word-set policy did not match.
+    # Technical: Runs only after the deterministic policy returned false; LIVE answers through the existing stage dialogue path, SHADOW logs the probabilities, and the cooldown and phase gates of the stage runtime still apply.
+    AGENT_TYPESAFE_PARTY_QUEST_DIALOGUE_MODE: OFF
+    # Values: OFF, SHADOW or LIVE. Recommended: SHADOW first; LIVE once accept and decline classifications match the regex outcomes on logged replies.
+    # Purpose: Lets an Agent with a pending item offer understand free-form accept or decline replies that the yes/no regexes did not match.
+    # Technical: Runs only when the speaker is the pending offer recipient and the regexes missed; LIVE re-dispatches the canonical yes or no reply through the existing offer service, SHADOW logs only.
+    AGENT_TYPESAFE_TRADE_REPLY_MODE: OFF
 # Strict runtime/algorithm tuning. Keys mirror declaring classes for traceability.
 tuning:
     # Values: a positive integer; unit: milliseconds. Recommended: 15000-60000; 30000 allows one bounded plan step to settle without making ownership replacement unbounded.
@@ -1536,6 +1552,26 @@ tuning:
     # Purpose: Controls the distance or margin used for platform edge inset. Higher values allow action from farther away or leave more space; lower values require closer, more precise positioning.
     # Technical: the "movement target runtime" component consumes this as an integer. Unit: MapleStory map pixels; horizontal and vertical values use the server map coordinate system.
     server.agents.capabilities.movement.AgentMovementTargetRuntime.PLATFORM_EDGE_INSET_PX: '12'
+    # Values: a finite positive integer; unit: map pixels. Recommended: 40-90 around the tested baseline 60; benchmark or observe behavior before moving outside this band.
+    # Purpose: Controls how far apart Agents stand when the party gathers around its owner. Wider spots look less crowded; narrower spots keep a bigger party inside the smallest party-buff box.
+    # Technical: the "party gather service" component consumes this as an integer. Spots alternate left and right of the owner at multiples of this distance, buffers innermost; a spot is pulled inward by half this distance until it stands on ground within half this distance of the owner's height.
+    server.agents.capabilities.movement.AgentPartyGatherService.SLOT_SPACING_PX: '60'
+    # Values: a finite non-negative integer; unit: milliseconds. Recommended: 6000-20000 around the tested baseline 12000; benchmark or observe behavior before moving outside this band.
+    # Purpose: Controls how long buffers hold their party buffs for party members who are still walking over. Longer waits catch slow walkers; shorter waits buff sooner and leave stragglers out.
+    # Technical: the "party gather service" component consumes this as an integer. During a gathering a party buff is held while any living party member on the map is outside its box, until this long after the gathering opened; then it is cast regardless.
+    server.agents.capabilities.movement.AgentPartyGatherService.WAIT_FOR_PARTY_MS: '12000'
+    # Values: a finite positive integer; unit: milliseconds. Recommended: 15000-40000 around the tested baseline 25000; keep it above WAIT_FOR_PARTY_MS so buffers can finish casting.
+    # Purpose: Controls the latest time a gathering ends, after which the Agents it moved go back to what they were doing even if a buffer never reported finishing.
+    # Technical: the "party gather service" component consumes this as an integer. A gathering normally closes as soon as every buffer has cast its due buffs; this bounds it so a buffer that died, ran out of MP or left the map cannot keep the party standing still.
+    server.agents.capabilities.movement.AgentPartyGatherService.CLOSE_AFTER_MS: '25000'
+    # Values: a finite positive integer; unit: milliseconds. Recommended: 250-1000 around the tested baseline 500; benchmark or observe behavior before moving outside this band.
+    # Purpose: Controls how often an open gathering checks whether its buffers have finished, which sets how quickly the party goes back to its activity after the last buff.
+    # Technical: the "party gather service" component consumes this as an integer. One watcher per gathering reschedules itself on the opening Agent's scheduler at this interval until the gathering closes or expires.
+    server.agents.capabilities.movement.AgentPartyGatherService.POLL_MS: '500'
+    # Values: a finite non-negative integer; unit: milliseconds. Recommended: 1500-6000 around the tested baseline 3000; benchmark or observe behavior before moving outside this band.
+    # Purpose: Controls how long after one "gather up" a second one for the same owner is treated as the same command, so several Agents reading one message call the party together once.
+    # Technical: the "party gather service" component consumes this as an integer. Untargeted chat and the chat-intent judge run once per Agent; the first assemble inside this window for an owner moves the party and the rest report the command as handled without acting.
+    server.agents.capabilities.movement.AgentPartyGatherService.ASSEMBLE_DEDUPE_MS: '3000'
     # Values: a finite non-negative integer; unit: milliseconds. Recommended: 250-1000 around the tested baseline 500; benchmark or observe behavior before moving outside this band.
     # Purpose: Controls how long Agents remain in or wait for grounded stuck threshold. Higher values make that pause or state last longer; lower values make them continue sooner.
     # Technical: the "stuck detection service" component consumes this as an integer. Unit: milliseconds; use 0 only where the owning policy explicitly treats it as immediate or disabled.
@@ -4400,3 +4436,59 @@ tuning:
     # Purpose: Provides the matching Agent-only virtual right wall so high-velocity knockback cannot launch expedition Agents beyond the continuous floor.
     # Technical: Both grounded displacement and airborne integration clamp against this bound only while the Balrog scenario has explicitly enabled it.
     server.agents.capabilities.expedition.balrog.AgentEasyBalrogCombatPolicy.BATTLE_MAX_X: '1068'
+    # Values: a positive integer. Recommended: 3-10; 5 tolerates a brief blip without letting a dead endpoint absorb a request per judgment.
+    # Purpose: Number of consecutive failed System One requests after which the circuit breaker opens and requests are refused locally.
+    # Technical: Any success resets the count; while the breaker is open every ask returns empty immediately so callers fall back to deterministic behaviour without network latency.
+    server.agents.integration.typesafe.JevCircuitBreaker.FAILURE_THRESHOLD: '5'
+    # Values: a non-negative integer; unit: milliseconds. Recommended: 15000-120000; 30000 keeps fallback behaviour stable during an outage without hiding recovery for long.
+    # Purpose: How long the System One circuit breaker stays open before the next request is allowed to probe the API again.
+    # Technical: The breaker is time-based rather than half-open; the first request after the window either resets the failure count on success or reopens the breaker on failure.
+    server.agents.integration.typesafe.JevCircuitBreaker.OPEN_MS: '30000'
+    # Values: a positive integer. Recommended: 1-4; 2 covers name screening and report triage bursts without competing with Agent async lanes.
+    # Purpose: Thread count of the small dedicated pool used for System One requests issued outside the Agent async gateway.
+    # Technical: Agent runtime callers use the SYSTEM_ONE_NETWORK async lane instead; this pool only serves core-server callers such as character-name screening and report triage.
+    server.agents.integration.typesafe.JevClient.ASYNC_THREADS: '2'
+    # Values: a positive integer. Recommended: 32-256; 64 absorbs a report burst while keeping memory bounded.
+    # Purpose: Queue capacity of the dedicated System One pool; requests beyond it are refused and resolve as unavailable.
+    # Technical: Refused submissions complete immediately with an empty result so the caller keeps its deterministic path; nothing blocks waiting for queue space.
+    server.agents.integration.typesafe.JevClient.ASYNC_QUEUE_CAPACITY: '64'
+    # Values: a positive integer; unit: characters per token. Recommended: 3-5; 4 matches typical English JSON and errs on the safe side for budgeting.
+    # Purpose: Characters-per-token ratio used to estimate how many tokens a state block will cost before the request is sent.
+    # Technical: Only drives the pre-send budget that drops low-priority state blocks; the API's returned usage counts are the authoritative token figures.
+    server.agents.integration.typesafe.state.JevTokenEstimator.CHARS_PER_TOKEN: '4'
+    # Values: a probability between 0 and 1. Recommended: 0.7-0.9; 0.75 acted correctly on the regex golden phrases in shadow runs, raise if wrong commands are executed.
+    # Purpose: Minimum Choice confidence at which the chat intent judge re-dispatches the canonical companion command instead of asking or ignoring.
+    # Technical: Confidence summarises distribution concentration over the intent options; the chat_not_a_command option is never acted on regardless of confidence.
+    server.agents.capabilities.dialogue.jev.AgentChatIntentJudge.ACT_CONFIDENCE: '0.75'
+    # Values: a probability between 0 and 1 below ACT_CONFIDENCE. Recommended: 0.4-0.6; 0.45 asks a clarifying question rather than silently ignoring plausible commands.
+    # Purpose: Minimum Choice confidence at which the chat intent judge replies with a did-you-mean prompt instead of treating the message as chat.
+    # Technical: Between ASK_CONFIDENCE and ACT_CONFIDENCE the judge queues a reply on the Agent's dialogue transport; below it the message continues to the social dialogue fallback.
+    server.agents.capabilities.dialogue.jev.AgentChatIntentJudge.ASK_CONFIDENCE: '0.45'
+    # Values: a positive integer; unit: estimated tokens. Recommended: 1500-4000; 3000 keeps a command judgment near a fraction of a cent while leaving room for recent turns.
+    # Purpose: Token budget for the state object of a chat intent judgment; lowest-priority blocks are dropped first when the estimate exceeds it.
+    # Technical: The budget covers state only; question criteria are fixed per catalog revision, and dropped block keys are logged so shadow runs reveal which context was sacrificed.
+    server.agents.capabilities.dialogue.jev.AgentChatIntentJudge.STATE_BUDGET_TOKENS: '3000'
+    # Values: a positive integer; unit: milliseconds. Recommended: 2000-6000; 4000 exceeds the transport timeout plus one retry so the gateway rarely times out first.
+    # Purpose: Async gateway deadline for a chat intent judgment before the Agent gives up and treats the message as unhandled.
+    # Technical: Enforced by the Agent async gateway on the SYSTEM_ONE_NETWORK lane; a timeout counts as unhandled and never re-dispatches a late answer.
+    server.agents.capabilities.dialogue.jev.AgentChatIntentRuntime.TIMEOUT_MS: '4000'
+    # Values: a probability between 0 and 1. Recommended: 0.5-0.8; 0.6 accepts a clear operator request while sending ambiguous prompts to the fallback provider.
+    # Purpose: Minimum Choice confidence for the TypeSafe Director provider to return an action selection instead of deferring to the fallback provider.
+    # Technical: Applies to action selection only; training-map ranking always returns when at least one candidate scored, ordered by score then catalog rank.
+    server.agents.integration.typesafe.TypeSafeDirectorProposalProvider.MIN_SELECT_CONFIDENCE: '0.6'
+    # Values: a probability between 0 and 1. Recommended: 0.6-0.85; 0.7 treats a Noul as yes only when the model leans clearly toward it.
+    # Purpose: Minimum yes-probability at which a party-quest dialogue Noul (for example asks how many coupons are needed) counts as true.
+    # Technical: Nouls report a single probability without separate confidence; values near 0.5 mean the model could not tell, so the threshold sits well above it.
+    server.agents.capabilities.partyquest.dialogue.AgentPartyQuestDialogueJudge.YES_PROBABILITY: '0.7'
+    # Values: a probability between 0 and 1. Recommended: 0.6-0.85; 0.7 avoids transferring an item on an ambiguous reply.
+    # Purpose: Minimum Choice confidence for the offer reply judge to treat a free-form reply as an accept or decline of a pending item offer.
+    # Technical: Accept and decline are re-dispatched as the canonical yes or no reply through the existing offer service; anything else leaves the offer pending.
+    server.agents.capabilities.trade.jev.AgentOfferReplyJudge.ACT_CONFIDENCE: '0.7'
+    # Values: a non-negative decimal; unit: US dollars per million input tokens. Recommended: the published TypeSafe price, 0.042 at the time of writing; output tokens are free.
+    # Purpose: Converts measured input token counts into the spend figures shown by the usage meter, the typesafe command, and the cost projector.
+    # Technical: Applied uniformly to every judgment kind; changing it never alters behaviour, only the money columns, so a price change is a configuration edit rather than a code change.
+    server.agents.integration.typesafe.JevCostModel.PRICE_USD_PER_MILLION_INPUT_TOKENS: '0.042'
+    # Values: a non-negative integer; unit: minutes; 0 disables. Recommended: 15-60; 30 gives a readable spend trail without cluttering the log.
+    # Purpose: Interval at which the live TypeSafe usage report is written to the server log and appended to logs/typesafe-usage.csv.
+    # Technical: Registered on the low-priority timer lane only when TYPESAFE_API_KEY is configured; each cycle logs totals, the observed rate, the day projection, and one CSV row per judgment kind.
+    server.agents.integration.typesafe.JevUsageReporter.LOG_INTERVAL_MINUTES: '30'

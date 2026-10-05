@@ -1,6 +1,7 @@
 package server.agents.capabilities.dialogue;
 
 
+import server.agents.capabilities.movement.AgentPartyGatherService;
 import server.agents.runtime.AgentSchedulerRuntime;
 import server.agents.capabilities.combat.AgentCombatBuffStateRuntime;
 import server.agents.capabilities.combat.AgentBuffStateRuntime;
@@ -28,7 +29,16 @@ public final class AgentControlRuntime {
             public void setSupport(boolean enabled) {
                 AgentSchedulerRuntime.afterRandomDelay(entry, 500, 700, () -> {
                     AgentCombatBuffStateRuntime.setSkillBuffsEnabled(entry, enabled);
-                    AgentDialogueTransportRuntime.replyNow(entry, AgentChatToggleFlow.supportReply(enabled));
+                    boolean calledPartyOver = false;
+                    if (enabled) {
+                        // "buff me again" means now, not when the current buffs run out, and for the
+                        // whole party: a spread-out party is called over before the party buffs go up.
+                        AgentCombatBuffStateRuntime.requestRebuff(entry);
+                        calledPartyOver = AgentPartyGatherService.onRebuffRequested(entry);
+                    }
+                    AgentDialogueTransportRuntime.replyNow(entry, calledPartyOver
+                            ? AgentChatToggleFlow.callForBuffsReply()
+                            : AgentChatToggleFlow.supportReply(enabled));
                 });
             }
 

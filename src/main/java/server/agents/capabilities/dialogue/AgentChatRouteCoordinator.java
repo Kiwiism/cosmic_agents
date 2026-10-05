@@ -16,6 +16,7 @@ import server.agents.social.conversation.AgentSocialDialogueRuntime;
 import server.agents.social.policy.AgentSocialResponderElection;
 import server.agents.capabilities.supplies.AgentGroupSupplyResponderSelector;
 import server.agents.capabilities.trade.AgentPendingOfferChatRouteService;
+import server.agents.capabilities.dialogue.jev.AgentChatIntentRuntime;
 import server.agents.commands.AgentCommandTypoSuggester;
 import server.agents.commands.AgentReplyChannel;
 import server.agents.capabilities.follow.AgentActivityStateRuntime;
@@ -28,11 +29,13 @@ import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentMailboxRuntime;
+import server.agents.capabilities.movement.AgentPartyGatherService;
 import server.agents.auth.AgentAuthorityService;
 import server.agents.integration.AgentRelationshipRuntime;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 public final class AgentChatRouteCoordinator {
@@ -110,6 +113,11 @@ public final class AgentChatRouteCoordinator {
                         commandLeader,
                         text,
                         transferAction),
+                (commandLeader, text) -> {
+                    List<E> leaderAgents = entriesByLeader.get(commandLeader.getId());
+                    return leaderAgents != null
+                            && AgentPartyGatherService.assembleOnCommand(commandLeader, text, leaderAgents);
+                },
                 (commandLeader, text) -> dispatchFormationCommand(
                         commandLeader,
                         text,
@@ -244,7 +252,17 @@ public final class AgentChatRouteCoordinator {
             AgentRuntimeEntry entry,
             String message,
             AgentReplyChannel channel) {
-        return AgentChatMailboxDispatcher.handleChat(entry, message, channel);
+        // Deterministic classifiers first; only a miss is offered to the TypeSafe intent judge,
+        // which re-dispatches a canonical phrase through this same dispatcher when confident.
+        return AgentChatMailboxDispatcher.handleChat(entry, message, channel)
+                .thenCompose(handled -> Boolean.TRUE.equals(handled)
+                        ? CompletableFuture.completedFuture(true)
+                        : AgentChatIntentRuntime.judgeUnmatched(
+                                entry,
+                                message,
+                                channel,
+                                AgentChatMailboxDispatcher::handleChat,
+                                AgentChatRouteCoordinator::queueReply));
     }
 
     private static void setInteractionTarget(AgentRuntimeEntry entry, Character sender) {

@@ -27,6 +27,7 @@ import net.AbstractPacketHandler;
 import net.packet.InPacket;
 import net.server.Server;
 import tools.DatabaseConnection;
+import server.security.typesafe.JevReportTriage;
 import tools.PacketCreator;
 
 import java.sql.Connection;
@@ -60,6 +61,7 @@ public final class ReportHandler extends AbstractPacketHandler {
             }
             Server.getInstance().broadcastGMMessage(c.getWorld(), PacketCreator.serverNotice(6, victim + " was reported for: " + description));
             addReport(c.getPlayer().getId(), Character.getIdByName(victim), 0, description, "");
+            triage(c, victim, description, "");
         } else if (type == 1) {
             String chatlog = p.readString();
             if (chatlog == null) {
@@ -76,9 +78,20 @@ public final class ReportHandler extends AbstractPacketHandler {
             }
             Server.getInstance().broadcastGMMessage(c.getWorld(), PacketCreator.serverNotice(6, victim + " was reported for: " + description));
             addReport(c.getPlayer().getId(), Character.getIdByName(victim), reason, description, chatlog);
+            triage(c, victim, description, chatlog);
         } else {
             Server.getInstance().broadcastGMMessage(c.getWorld(), PacketCreator.serverNotice(6, c.getPlayer().getName() + " is probably packet editing. Got unknown report type, which is impossible."));
         }
+    }
+
+    private static void triage(Client c, String victim, String description, String chatlog) {
+        if (!JevReportTriage.enabled()) {
+            return;
+        }
+        final int world = c.getWorld();
+        JevReportTriage.triageAsync(c.getPlayer().getId(), c.getPlayer().getName(),
+                Character.getIdByName(victim), victim, description, chatlog,
+                notice -> Server.getInstance().broadcastGMMessage(world, PacketCreator.serverNotice(6, notice)));
     }
 
     private void addReport(int reporterid, int victimid, int reason, String description, String chatlog) {

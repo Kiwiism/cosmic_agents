@@ -3,10 +3,15 @@ package server.agents.capabilities.dialogue;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
+import server.agents.capabilities.combat.AgentCombatBuffStateRuntime;
+import server.agents.capabilities.combat.AgentCombatSkillCacheStateRuntime;
 import server.agents.integration.AgentDialogueTransportRuntime;
 import server.agents.runtime.AgentSchedulerRuntime;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mockStatic;
@@ -29,6 +34,24 @@ class AgentControlRuntimeTest {
             scheduler.verify(() -> AgentSchedulerRuntime.afterRandomDelay(eq(entry), eq(500), eq(700), any(Runnable.class)),
                     times(5));
         }
+    }
+
+    @Test
+    void turningSkillBuffsBackOnRebuffsNowInsteadOfWaitingForTheOldBuffsToExpire() {
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
+        AgentCombatSkillCacheStateRuntime.addBuffSkillId(entry, 2311003);  // Holy Symbol, still running
+        AgentCombatBuffStateRuntime.setNextBuffAt(entry, 2311003, Long.MAX_VALUE);
+        ArgumentCaptor<Runnable> action = ArgumentCaptor.forClass(Runnable.class);
+
+        try (MockedStatic<AgentSchedulerRuntime> scheduler = mockStatic(AgentSchedulerRuntime.class);
+             MockedStatic<AgentDialogueTransportRuntime> ignored = mockStatic(AgentDialogueTransportRuntime.class)) {
+            AgentControlRuntime.toggleCallbacks(entry).setSupport(true);
+            scheduler.verify(() -> AgentSchedulerRuntime.afterRandomDelay(eq(entry), eq(500), eq(700), action.capture()));
+            action.getValue().run();
+        }
+
+        assertTrue(AgentCombatBuffStateRuntime.skillBuffsEnabled(entry));
+        assertEquals(0L, AgentCombatBuffStateRuntime.nextBuffAt(entry, 2311003));
     }
 
     @Test

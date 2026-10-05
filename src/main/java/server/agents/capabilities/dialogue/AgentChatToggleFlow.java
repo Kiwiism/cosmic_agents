@@ -1,5 +1,8 @@
 package server.agents.capabilities.dialogue;
 
+import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
+
 public final class AgentChatToggleFlow {
     private AgentChatToggleFlow() {
     }
@@ -46,6 +49,11 @@ public final class AgentChatToggleFlow {
             return true;
         }
         return false;
+    }
+
+    public static String callForBuffsReply() {
+        List<String> replies = AgentDialogueCatalog.callForBuffsReplies();
+        return replies.get(ThreadLocalRandom.current().nextInt(replies.size()));
     }
 
     public static String supportReply(boolean enabled) {
